@@ -1,26 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/cli/go-gh"
+	"github.com/github/gh-projects/cmd"
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	fmt.Println("hi world, this is the gh-projects extension!")
-	client, err := gh.RESTClient(nil)
-	if err != nil {
-		fmt.Println(err)
-		return
+	var rootCmd = &cobra.Command{
+		Use: "projects",
 	}
-	response := struct {Login string}{}
-	err = client.Get("user", &response)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("running as %s\n", response.Login)
-}
+	rootCmd.AddCommand(cmd.NewListCmd())
 
-// For more examples of using go-gh, see:
-// https://github.com/cli/go-gh/blob/trunk/example_gh_test.go
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
+}
