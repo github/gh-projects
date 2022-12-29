@@ -86,10 +86,6 @@ var queryViewer struct {
 	}
 }
 
-// look into generics?
-
-// inline these into a function?
-
 type query interface {
 	projects() projects
 	login() string
