@@ -79,10 +79,13 @@ func runList(client api.GQLClient, opts listOpts) {
 	}
 
 	if opts.web {
-		if err := openInBrowser(opts, client); err != nil {
+		url, err := buildURL(opts, client)
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		browser.OpenURL(url)
 		return
 	}
 
@@ -124,13 +127,13 @@ func buildQuery(opts listOpts) (query, map[string]interface{}) {
 	return projectsQuery, variables
 }
 
-func openInBrowser(opts listOpts, client api.GQLClient) error {
+func buildURL(opts listOpts, client api.GQLClient) (string, error) {
 	var url string
 	if opts.login == "" {
 		// get the current user's login
 		err := client.Query("Viewer", &queryViewer, map[string]interface{}{})
 		if err != nil {
-			return err
+			return "", err
 		}
 		user := queryViewer.Viewer.Login
 		url = fmt.Sprintf("https://github.com/users/%s/projects", user)
@@ -144,8 +147,7 @@ func openInBrowser(opts listOpts, client api.GQLClient) error {
 		url = fmt.Sprintf("%s?query=is%%3Aclosed", url)
 	}
 
-	browser.OpenURL(url)
-	return nil
+	return url, nil
 }
 
 func printResults(opts listOpts, projects []projectNode, login string) {
