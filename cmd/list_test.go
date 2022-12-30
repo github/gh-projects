@@ -339,3 +339,27 @@ func TestRunListWeb(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/users/monalisa/projects", buf.String())
 }
+
+func TestRunListErrorOnlyLogin(t *testing.T) {
+	config := listConfig{
+		opts: listOpts{
+			login: "monalisa",
+		},
+	}
+
+	err := runList(config)
+	assert.Error(t, err, "one of --user or --org is required with --login")
+}
+
+func TestRunListErrorUserAndOrg(t *testing.T) {
+	config := listConfig{
+		opts: listOpts{
+			login:     "monalisa",
+			userOwner: true,
+			orgOwner:  true,
+		},
+	}
+
+	err := runList(config)
+	assert.Error(t, err, "only one of --user or --org can be set")
+}

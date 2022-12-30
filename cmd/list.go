@@ -101,6 +101,9 @@ gh projects list --login github --org --closed
 }
 
 func runList(config listConfig) error {
+	if config.opts.userOwner && config.opts.orgOwner {
+		return fmt.Errorf("only one of --user or --org can be set")
+	}
 	if config.opts.login != "" && !config.opts.userOwner && !config.opts.orgOwner {
 		return fmt.Errorf("one of --user or --org is required with --login")
 	}
