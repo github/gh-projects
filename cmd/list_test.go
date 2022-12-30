@@ -206,3 +206,21 @@ func TestRunList(t *testing.T) {
 	runList(config)
 	assert.Equal(t, "Title\tDescription\tURL\nProject 1\tShort description 1\turl\n", buf.String())
 }
+
+func TestRunListWeb(t *testing.T) {
+	buf := bytes.Buffer{}
+	config := listConfig{
+		opts: listOpts{
+			login:     "monalisa",
+			userOwner: true,
+			web:       true,
+		},
+		URLOpener: func(url string) error {
+			buf.WriteString(url)
+			return nil
+		},
+	}
+
+	runList(config)
+	assert.Equal(t, "https://github.com/users/monalisa/projects", buf.String())
+}
