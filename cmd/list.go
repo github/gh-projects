@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -21,6 +22,14 @@ type listOpts struct {
 	userOwner bool
 	orgOwner  bool
 	closed    bool
+}
+
+type listConfig struct {
+	tp        tableprinter.TablePrinter
+	out       io.Writer
+	client    querier
+	opts      listOpts
+	URLOpener func(string) error
 }
 
 func (opts *listOpts) first() int {
@@ -59,7 +68,22 @@ gh projects list --login github --org --closed
 			URLOpener := func(url string) error {
 				return browser.OpenURL(url)
 			}
-			runList(client, opts, URLOpener)
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+			config := listConfig{
+				tp:        t,
+				out:       terminal.Out(),
+				client:    client,
+				opts:      opts,
+				URLOpener: URLOpener,
+			}
+			runList(config)
 		},
 	}
 
@@ -75,85 +99,85 @@ gh projects list --login github --org --closed
 	return listCmd
 }
 
-func runList(client querier, opts listOpts, URLOpener func(string) error) {
-	if opts.login != "" && !opts.userOwner && !opts.orgOwner {
+func runList(config listConfig) {
+	if config.opts.login != "" && !config.opts.userOwner && !config.opts.orgOwner {
 		fmt.Println("One of --user or --org is required with --login")
 		os.Exit(1)
 	}
 
-	if opts.web {
-		url, err := buildURL(opts, client)
+	if config.opts.web {
+		url, err := buildURL(config)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		if err := URLOpener(url); err != nil {
+		if err := config.URLOpener(url); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		return
 	}
 
-	projectsQuery, variables := buildQuery(opts)
+	projectsQuery, variables := buildQuery(config)
 
-	err := client.Query("ProjectsQuery", projectsQuery, variables)
+	err := config.client.Query("ProjectsQuery", projectsQuery, variables)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	projects := filterProjects(projectsQuery.projects().Nodes, opts)
+	projects := filterProjects(projectsQuery.projects().Nodes, config)
 
-	printResults(opts, projects, projectsQuery.login())
+	printResults(config, projects, projectsQuery.login())
 }
 
-func buildQuery(opts listOpts) (query, map[string]interface{}) {
+func buildQuery(config listConfig) (query, map[string]interface{}) {
 	var projectsQuery query
 	variables := map[string]interface{}{
-		"first": graphql.Int(opts.first()),
+		"first": graphql.Int(config.opts.first()),
 	}
 
-	if opts.login == "" {
+	if config.opts.login == "" {
 		projectsQuery = &viewerQuery{}
-	} else if opts.userOwner {
+	} else if config.opts.userOwner {
 		projectsQuery = &userQuery{}
-		variables["login"] = graphql.String(opts.login)
-	} else if opts.orgOwner {
+		variables["login"] = graphql.String(config.opts.login)
+	} else if config.opts.orgOwner {
 		projectsQuery = &organizationQuery{}
-		variables["login"] = graphql.String(opts.login)
+		variables["login"] = graphql.String(config.opts.login)
 	}
 
 	return projectsQuery, variables
 }
 
-func buildURL(opts listOpts, client querier) (string, error) {
+func buildURL(config listConfig) (string, error) {
 	var url string
-	if opts.login == "" {
+	if config.opts.login == "" {
 		// get the current user's login
-		err := client.Query("Viewer", &queryViewer, map[string]interface{}{})
+		err := config.client.Query("Viewer", &queryViewer, map[string]interface{}{})
 		if err != nil {
 			return "", err
 		}
 		user := queryViewer.Viewer.Login
 		url = fmt.Sprintf("https://github.com/users/%s/projects", user)
-	} else if opts.userOwner {
-		url = fmt.Sprintf("https://github.com/users/%s/projects", opts.login)
-	} else if opts.orgOwner {
-		url = fmt.Sprintf("https://github.com/orgs/%s/projects", opts.login)
+	} else if config.opts.userOwner {
+		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.login)
+	} else if config.opts.orgOwner {
+		url = fmt.Sprintf("https://github.com/orgs/%s/projects", config.opts.login)
 	}
 
-	if opts.closed {
+	if config.opts.closed {
 		url = fmt.Sprintf("%s?query=is%%3Aclosed", url)
 	}
 
 	return url, nil
 }
 
-func filterProjects(nodes []projectNode, opts listOpts) []projectNode {
+func filterProjects(nodes []projectNode, config listConfig) []projectNode {
 	projects := make([]projectNode, 0, len(nodes))
 	for _, p := range nodes {
-		if !opts.closed && p.Closed {
+		if !config.opts.closed && p.Closed {
 			continue
 		}
 		projects = append(projects, p)
@@ -161,54 +185,45 @@ func filterProjects(nodes []projectNode, opts listOpts) []projectNode {
 	return projects
 }
 
-func printResults(opts listOpts, projects []projectNode, login string) {
-	terminal := term.FromEnv()
+func printResults(config listConfig, projects []projectNode, login string) {
 	// no projects
 	if len(projects) == 0 {
-		fmt.Fprintf(terminal.Out(),
+		fmt.Fprintf(
+			config.out,
 			"No projects found for %s\n",
 			login,
 		)
 		return
 	}
-
-	termWidth, _, err := terminal.Size()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	config.tp.AddField("Title")
+	config.tp.AddField("Description")
+	config.tp.AddField("URL")
+	if config.opts.closed {
+		config.tp.AddField("State")
 	}
-
-	t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
-
-	t.AddField("Title")
-	t.AddField("Description")
-	t.AddField("URL")
-	if opts.closed {
-		t.AddField("State")
-	}
-	t.EndRow()
+	config.tp.EndRow()
 
 	for _, p := range projects {
-		t.AddField(p.Title)
+		config.tp.AddField(p.Title)
 		if p.ShortDescription == "" {
-			t.AddField(" - ")
+			config.tp.AddField(" - ")
 		} else {
-			t.AddField(p.ShortDescription)
+			config.tp.AddField(p.ShortDescription)
 		}
-		t.AddField(p.URL)
-		if opts.closed {
+		config.tp.AddField(p.URL)
+		if config.opts.closed {
 			var state string
 			if p.Closed {
 				state = "closed"
 			} else {
 				state = "open"
 			}
-			t.AddField(state)
+			config.tp.AddField(state)
 		}
-		t.EndRow()
+		config.tp.EndRow()
 	}
 
-	if err := t.Render(); err != nil {
+	if err := config.tp.Render(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
