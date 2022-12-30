@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	gh "github.com/cli/go-gh"
+	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/assert"
@@ -65,7 +66,7 @@ func TestBuildURLViewer(t *testing.T) {
 			}
 		`)
 
-	client, err := gh.GQLClient(nil)
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	url, err := buildURL(listConfig{
@@ -191,7 +192,7 @@ func TestRunList(t *testing.T) {
 			}
 		`)
 
-	client, err := gh.GQLClient(nil)
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
