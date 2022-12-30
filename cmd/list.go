@@ -127,6 +127,7 @@ func buildQuery(opts listOpts) (query, map[string]interface{}) {
 func openInBrowser(opts listOpts, client api.GQLClient) error {
 	var url string
 	if opts.login == "" {
+		// get the current user's login
 		err := client.Query("Viewer", &queryViewer, map[string]interface{}{})
 		if err != nil {
 			return err
