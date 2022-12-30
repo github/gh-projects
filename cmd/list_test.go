@@ -49,33 +49,34 @@ func TestBuildQueryOrganization(t *testing.T) {
 	assert.Equal(t, graphql.String("github"), variables["login"])
 }
 
-// func TestBuildURLViewer(t *testing.T) {
-// 	defer gock.Off()
+func TestBuildURLViewer(t *testing.T) {
+	defer gock.Off()
 
-// 	gock.New("https://api.github.com").
-// 		Post("/graphql").
-// 		Reply(200).
-// 		JSON(`
-// 			{"data":
-// 				{"viewer":
-// 					{
-// 						"login":"theviewer"
-// 					}
-// 				}
-// 			}
-// 		`)
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"viewer":
+					{
+						"login":"theviewer"
+					}
+				}
+			}
+		`)
 
-// 	client, _ := gh.GQLClient(nil)
+	client, err := gh.GQLClient(nil)
+	assert.NoError(t, err)
 
-// 	url, err := buildURL(listConfig{
-// 		opts: listOpts{
-// 			// login is empty
-// 		},
-// 		client: client,
-// 	})
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, "https://github.com/users/theviewer/projects", url)
-// }
+	url, err := buildURL(listConfig{
+		opts: listOpts{
+			// login is empty
+		},
+		client: client,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "https://github.com/users/theviewer/projects", url)
+}
 
 func TestBuildURLUser(t *testing.T) {
 	url, err := buildURL(listConfig{
@@ -190,7 +191,8 @@ func TestRunList(t *testing.T) {
 			}
 		`)
 
-	client, _ := gh.GQLClient(nil)
+	client, err := gh.GQLClient(nil)
+	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
 	config := listConfig{
