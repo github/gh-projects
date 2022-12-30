@@ -57,7 +57,7 @@ func (v viewerQuery) login() string {
 	return v.Owner.Login
 }
 
-var queryViewer struct {
+type queryViewer struct {
 	Viewer struct {
 		Login string
 	}
@@ -66,8 +66,4 @@ var queryViewer struct {
 type query interface {
 	projects() projects
 	login() string
-}
-
-type querier interface {
-	Query(name string, query interface{}, variables map[string]interface{}) error
 }

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	gh "github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestBuildQueryViewer(t *testing.T) {
@@ -47,22 +49,29 @@ func TestBuildQueryOrganization(t *testing.T) {
 	assert.Equal(t, graphql.String("github"), variables["login"])
 }
 
-type client struct {
-}
-
-func (c client) Query(name string, i interface{}, variables map[string]interface{}) error {
-	if name == "Viewer" {
-		queryViewer.Viewer.Login = "theviewer"
-	}
-	return nil
-}
-
 func TestBuildURLViewer(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"viewer":
+					{
+						"login":"theviewer"
+					}
+				}
+			}
+		`)
+
+	client, _ := gh.GQLClient(nil)
+
 	url, err := buildURL(listConfig{
 		opts: listOpts{
 			// login is empty
 		},
-		client: client{},
+		client: client,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/users/theviewer/projects", url)
@@ -74,7 +83,6 @@ func TestBuildURLUser(t *testing.T) {
 			userOwner: true,
 			login:     "monalisa",
 		},
-		client: client{},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/users/monalisa/projects", url)
@@ -86,7 +94,6 @@ func TestBuildURLOrg(t *testing.T) {
 			orgOwner: true,
 			login:    "github",
 		},
-		client: client{},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/orgs/github/projects", url)
@@ -99,7 +106,6 @@ func TestBuildURLWithClosed(t *testing.T) {
 			login:    "github",
 			closed:   true,
 		},
-		client: client{},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/orgs/github/projects?query=is%3Aclosed", url)
@@ -161,4 +167,42 @@ func TestPrintResultsClosed(t *testing.T) {
 		t,
 		"Title\tDescription\tURL\tState\nProject 1\tShort description 1\turl1\topen\nProject 2\t - \turl2\tclosed\n",
 		buf.String())
+}
+
+func TestRunList(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"user":
+					{
+						"login":"monalisa",
+						"projectsV2": {
+							"nodes": [
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url", "closed": false}
+							]
+						}
+					}
+				}
+			}
+		`)
+
+	client, _ := gh.GQLClient(nil)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp:  tableprinter.New(&buf, false, 0),
+		out: &buf,
+		opts: listOpts{
+			login:     "monalisa",
+			userOwner: true,
+		},
+		client: client,
+	}
+
+	runList(config)
+	assert.Equal(t, "Title\tDescription\tURL\nProject 1\tShort description 1\turl\n", buf.String())
 }

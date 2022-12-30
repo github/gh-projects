@@ -27,7 +27,7 @@ type listOpts struct {
 type listConfig struct {
 	tp        tableprinter.TablePrinter
 	out       io.Writer
-	client    querier
+	client    api.GQLClient
 	opts      listOpts
 	URLOpener func(string) error
 }
@@ -154,12 +154,13 @@ func buildQuery(config listConfig) (query, map[string]interface{}) {
 func buildURL(config listConfig) (string, error) {
 	var url string
 	if config.opts.login == "" {
+		viewer := &queryViewer{}
 		// get the current user's login
-		err := config.client.Query("Viewer", &queryViewer, map[string]interface{}{})
+		err := config.client.Query("Viewer", viewer, map[string]interface{}{})
 		if err != nil {
 			return "", err
 		}
-		user := queryViewer.Viewer.Login
+		user := viewer.Viewer.Login
 		url = fmt.Sprintf("https://github.com/users/%s/projects", user)
 	} else if config.opts.userOwner {
 		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.login)
