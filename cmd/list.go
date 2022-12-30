@@ -107,7 +107,19 @@ func NewListCmd() *cobra.Command {
 # show the list of projects
 gh projects list
 `,
-		Run: func(cmd *cobra.Command, args []string) { runList(opts) },
+		Run: func(cmd *cobra.Command, args []string) {
+			apiOpts := api.ClientOptions{
+				Timeout: 5 * time.Second,
+			}
+
+			client, err := gh.GQLClient(&apiOpts)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			runList(client, opts)
+		},
 	}
 
 	listCmd.Flags().StringVarP(&opts.login, "login", "l", "", "Login of the project owner. Defaults to current user.")
@@ -122,19 +134,9 @@ gh projects list
 	return listCmd
 }
 
-func runList(opts listOpts) {
+func runList(client api.GQLClient, opts listOpts) {
 	if opts.login != "" && !opts.userOwner && !opts.orgOwner {
 		fmt.Println("One of --user or --org is required with --login")
-		os.Exit(1)
-	}
-
-	apiOpts := api.ClientOptions{
-		Timeout: 5 * time.Second,
-	}
-
-	client, err := gh.GQLClient(&apiOpts)
-	if err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -148,7 +150,7 @@ func runList(opts listOpts) {
 
 	projectsQuery, variables := buildQuery(opts)
 
-	err = client.Query("ProjectsQuery", projectsQuery, variables)
+	err := client.Query("ProjectsQuery", projectsQuery, variables)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
