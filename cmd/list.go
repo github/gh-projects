@@ -80,7 +80,11 @@ gh projects list --login github --org --closed
 				opts:      opts,
 				URLOpener: URLOpener,
 			}
-			runList(config)
+			err = runList(config)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		},
 	}
 
@@ -96,37 +100,33 @@ gh projects list --login github --org --closed
 	return listCmd
 }
 
-func runList(config listConfig) {
+func runList(config listConfig) error {
 	if config.opts.login != "" && !config.opts.userOwner && !config.opts.orgOwner {
-		fmt.Println("One of --user or --org is required with --login")
-		os.Exit(1)
+		return fmt.Errorf("one of --user or --org is required with --login")
 	}
 
 	if config.opts.web {
 		url, err := buildURL(config)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		if err := config.URLOpener(url); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
-		return
+		return nil
 	}
 
 	projectsQuery, variables := buildQuery(config)
 
 	err := config.client.Query("ProjectsQuery", projectsQuery, variables)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	projects := filterProjects(projectsQuery.projects().Nodes, config)
 
-	printResults(config, projects, projectsQuery.login())
+	return printResults(config, projects, projectsQuery.login())
 }
 
 func buildQuery(config listConfig) (query, map[string]interface{}) {
@@ -183,13 +183,13 @@ func filterProjects(nodes []projectNode, config listConfig) []projectNode {
 	return projects
 }
 
-func printResults(config listConfig, projects []projectNode, login string) {
+func printResults(config listConfig, projects []projectNode, login string) error {
 	// no projects
 	if len(projects) == 0 {
 		config.tp.AddField(fmt.Sprintf("No projects found for %s", login))
 		config.tp.EndRow()
 		config.tp.Render()
-		return
+		return nil
 	}
 
 	config.tp.AddField("Title")
@@ -220,8 +220,5 @@ func printResults(config listConfig, projects []projectNode, login string) {
 		config.tp.EndRow()
 	}
 
-	if err := config.tp.Render(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	return config.tp.Render()
 }

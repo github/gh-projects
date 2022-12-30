@@ -148,7 +148,8 @@ func TestRunList(t *testing.T) {
 		client: client,
 	}
 
-	runList(config)
+	err = runList(config)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
@@ -188,7 +189,8 @@ func TestRunListViewer(t *testing.T) {
 		client: client,
 	}
 
-	runList(config)
+	err = runList(config)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
@@ -230,7 +232,8 @@ func TestRunListOrg(t *testing.T) {
 		client: client,
 	}
 
-	runList(config)
+	err = runList(config)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
@@ -266,7 +269,8 @@ func TestRunListEmpty(t *testing.T) {
 		client: client,
 	}
 
-	runList(config)
+	err = runList(config)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		"No projects found for monalisa\n",
@@ -309,7 +313,8 @@ func TestRunListWithClosed(t *testing.T) {
 		client: client,
 	}
 
-	runList(config)
+	err = runList(config)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		"Title\tDescription\tURL\tState\nProject 1\tShort description 1\turl1\topen\nProject 2\t - \turl2\tclosed\n",
@@ -330,6 +335,7 @@ func TestRunListWeb(t *testing.T) {
 		},
 	}
 
-	runList(config)
+	err := runList(config)
+	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/users/monalisa/projects", buf.String())
 }
