@@ -113,64 +113,6 @@ func TestBuildURLWithClosed(t *testing.T) {
 	assert.Equal(t, "https://github.com/orgs/github/projects?query=is%3Aclosed", url)
 }
 
-func TestPrintNoResults(t *testing.T) {
-	projects := []projectNode{}
-	buf := bytes.Buffer{}
-	config := listConfig{
-		tp: tableprinter.New(&buf, false, 0),
-	}
-
-	printResults(config, projects, "monalisa")
-	assert.Equal(t, "No projects found for monalisa\n", buf.String())
-}
-func TestPrintResults(t *testing.T) {
-	projects := []projectNode{
-		{
-			Title:            "Project 1",
-			ShortDescription: "Short description 1",
-			URL:              "url",
-			Closed:           false,
-		},
-	}
-	buf := bytes.Buffer{}
-	config := listConfig{
-		tp: tableprinter.New(&buf, false, 0),
-	}
-
-	printResults(config, projects, "monalisa")
-	assert.Equal(t, "Title\tDescription\tURL\nProject 1\tShort description 1\turl\n", buf.String())
-}
-
-func TestPrintResultsClosed(t *testing.T) {
-	projects := []projectNode{
-		{
-			Title:            "Project 1",
-			ShortDescription: "Short description 1",
-			URL:              "url1",
-			Closed:           false,
-		},
-		{
-			Title:            "Project 2",
-			ShortDescription: "",
-			URL:              "url2",
-			Closed:           true,
-		},
-	}
-	buf := bytes.Buffer{}
-	config := listConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: listOpts{
-			closed: true,
-		},
-	}
-
-	printResults(config, projects, "monalisa")
-	assert.Equal(
-		t,
-		"Title\tDescription\tURL\tState\nProject 1\tShort description 1\turl1\topen\nProject 2\t - \turl2\tclosed\n",
-		buf.String())
-}
-
 func TestRunList(t *testing.T) {
 	defer gock.Off()
 
@@ -184,7 +126,8 @@ func TestRunList(t *testing.T) {
 						"login":"monalisa",
 						"projectsV2": {
 							"nodes": [
-								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url", "closed": false}
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
 							]
 						}
 					}
@@ -206,7 +149,171 @@ func TestRunList(t *testing.T) {
 	}
 
 	runList(config)
-	assert.Equal(t, "Title\tDescription\tURL\nProject 1\tShort description 1\turl\n", buf.String())
+	assert.Equal(
+		t,
+		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		buf.String())
+}
+
+func TestRunListViewer(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		// BodyString(`{"query":"query ProjectsQuery($first:Int!){viewer{projectsV2(first: $first){nodes{title,number,url,shortDescription,closed}},login}}","variables":{"first":100}}`).
+		Reply(200).
+		JSON(`
+			{"data":
+				{"viewer":
+					{
+						"login":"monalisa",
+						"projectsV2": {
+							"nodes": [
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+							]
+						}
+					}
+				}
+			}
+		`)
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp:     tableprinter.New(&buf, false, 0),
+		opts:   listOpts{},
+		client: client,
+	}
+
+	runList(config)
+	assert.Equal(
+		t,
+		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		buf.String())
+}
+
+func TestRunListOrg(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"organization":
+					{
+						"login":"monalisa",
+						"projectsV2": {
+							"nodes": [
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+							]
+						}
+					}
+				}
+			}
+		`)
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			login:    "github",
+			orgOwner: true,
+		},
+		client: client,
+	}
+
+	runList(config)
+	assert.Equal(
+		t,
+		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		buf.String())
+}
+
+func TestRunListEmpty(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"viewer":
+					{
+						"login":"monalisa",
+						"projectsV2": {
+							"nodes": []
+						}
+					}
+				}
+			}
+		`)
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp:     tableprinter.New(&buf, false, 0),
+		opts:   listOpts{},
+		client: client,
+	}
+
+	runList(config)
+	assert.Equal(
+		t,
+		"No projects found for monalisa\n",
+		buf.String())
+}
+
+func TestRunListWithClosed(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		Reply(200).
+		JSON(`
+			{"data":
+				{"user":
+					{
+						"login":"monalisa",
+						"projectsV2": {
+							"nodes": [
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+							]
+						}
+					}
+				}
+			}
+		`)
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			login:     "monalisa",
+			userOwner: true,
+			closed:    true,
+		},
+		client: client,
+	}
+
+	runList(config)
+	assert.Equal(
+		t,
+		"Title\tDescription\tURL\tState\nProject 1\tShort description 1\turl1\topen\nProject 2\t - \turl2\tclosed\n",
+		buf.String())
 }
 
 func TestRunListWeb(t *testing.T) {
