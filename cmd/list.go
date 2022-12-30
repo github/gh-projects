@@ -154,14 +154,14 @@ func buildQuery(config listConfig) (query, map[string]interface{}) {
 func buildURL(config listConfig) (string, error) {
 	var url string
 	if config.opts.login == "" {
-		viewer := &queryViewer{}
+		viewer := &viewerLogin{}
 		// get the current user's login
 		err := config.client.Query("Viewer", viewer, map[string]interface{}{})
 		if err != nil {
 			return "", err
 		}
-		user := viewer.Viewer.Login
-		url = fmt.Sprintf("https://github.com/users/%s/projects", user)
+		login := viewer.Viewer.Login
+		url = fmt.Sprintf("https://github.com/users/%s/projects", login)
 	} else if config.opts.userOwner {
 		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.login)
 	} else if config.opts.orgOwner {

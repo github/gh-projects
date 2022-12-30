@@ -12,6 +12,12 @@ type projectNode struct {
 	Closed           bool
 }
 
+// userQuery, organizationQuery, and viewerQuery will all satisfy the query interface
+type query interface {
+	projects() projects
+	login() string
+}
+
 type userQuery struct {
 	Owner struct {
 		Projects projects `graphql:"projectsV2(first: $first)"`
@@ -57,13 +63,8 @@ func (v viewerQuery) login() string {
 	return v.Owner.Login
 }
 
-type queryViewer struct {
+type viewerLogin struct {
 	Viewer struct {
 		Login string
 	}
-}
-
-type query interface {
-	projects() projects
-	login() string
 }
