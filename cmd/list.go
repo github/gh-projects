@@ -97,13 +97,7 @@ func runList(client api.GQLClient, opts listOpts) {
 		os.Exit(1)
 	}
 
-	projects := make([]projectNode, 0, len(projectsQuery.projects().Nodes))
-	for _, p := range projectsQuery.projects().Nodes {
-		if !opts.closed && p.Closed {
-			continue
-		}
-		projects = append(projects, p)
-	}
+	projects := filterProjects(projectsQuery.projects().Nodes, opts)
 
 	printResults(opts, projects, projectsQuery.login())
 }
@@ -148,6 +142,17 @@ func buildURL(opts listOpts, client api.GQLClient) (string, error) {
 	}
 
 	return url, nil
+}
+
+func filterProjects(nodes []projectNode, opts listOpts) []projectNode {
+	projects := make([]projectNode, 0, len(nodes))
+	for _, p := range nodes {
+		if !opts.closed && p.Closed {
+			continue
+		}
+		projects = append(projects, p)
+	}
+	return projects
 }
 
 func printResults(opts listOpts, projects []projectNode, login string) {
