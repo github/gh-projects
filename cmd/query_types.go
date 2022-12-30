@@ -67,3 +67,7 @@ type query interface {
 	projects() projects
 	login() string
 }
+
+type querier interface {
+	Query(name string, query interface{}, variables map[string]interface{}) error
+}

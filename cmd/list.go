@@ -75,7 +75,7 @@ gh projects list --login github --org --closed
 	return listCmd
 }
 
-func runList(client api.GQLClient, opts listOpts, URLOpener func(string) error) {
+func runList(client querier, opts listOpts, URLOpener func(string) error) {
 	if opts.login != "" && !opts.userOwner && !opts.orgOwner {
 		fmt.Println("One of --user or --org is required with --login")
 		os.Exit(1)
@@ -127,7 +127,7 @@ func buildQuery(opts listOpts) (query, map[string]interface{}) {
 	return projectsQuery, variables
 }
 
-func buildURL(opts listOpts, client api.GQLClient) (string, error) {
+func buildURL(opts listOpts, client querier) (string, error) {
 	var url string
 	if opts.login == "" {
 		// get the current user's login
