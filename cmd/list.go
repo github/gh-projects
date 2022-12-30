@@ -56,7 +56,10 @@ gh projects list --login github --org --closed
 				os.Exit(1)
 			}
 
-			runList(client, opts)
+			URLOpener := func(url string) error {
+				return browser.OpenURL(url)
+			}
+			runList(client, opts, URLOpener)
 		},
 	}
 
@@ -72,7 +75,7 @@ gh projects list --login github --org --closed
 	return listCmd
 }
 
-func runList(client api.GQLClient, opts listOpts) {
+func runList(client api.GQLClient, opts listOpts, URLOpener func(string) error) {
 	if opts.login != "" && !opts.userOwner && !opts.orgOwner {
 		fmt.Println("One of --user or --org is required with --login")
 		os.Exit(1)
@@ -85,7 +88,10 @@ func runList(client api.GQLClient, opts listOpts) {
 			os.Exit(1)
 		}
 
-		browser.OpenURL(url)
+		if err := URLOpener(url); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		return
 	}
 
