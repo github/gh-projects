@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -26,7 +25,6 @@ type listOpts struct {
 
 type listConfig struct {
 	tp        tableprinter.TablePrinter
-	out       io.Writer
 	client    api.GQLClient
 	opts      listOpts
 	URLOpener func(string) error
@@ -78,7 +76,6 @@ gh projects list --login github --org --closed
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
 			config := listConfig{
 				tp:        t,
-				out:       terminal.Out(),
 				client:    client,
 				opts:      opts,
 				URLOpener: URLOpener,
@@ -189,13 +186,12 @@ func filterProjects(nodes []projectNode, config listConfig) []projectNode {
 func printResults(config listConfig, projects []projectNode, login string) {
 	// no projects
 	if len(projects) == 0 {
-		fmt.Fprintf(
-			config.out,
-			"No projects found for %s\n",
-			login,
-		)
+		config.tp.AddField(fmt.Sprintf("No projects found for %s", login))
+		config.tp.EndRow()
+		config.tp.Render()
 		return
 	}
+
 	config.tp.AddField("Title")
 	config.tp.AddField("Description")
 	config.tp.AddField("URL")

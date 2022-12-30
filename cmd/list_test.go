@@ -117,7 +117,7 @@ func TestPrintNoResults(t *testing.T) {
 	projects := []projectNode{}
 	buf := bytes.Buffer{}
 	config := listConfig{
-		out: &buf,
+		tp: tableprinter.New(&buf, false, 0),
 	}
 
 	printResults(config, projects, "monalisa")
@@ -197,8 +197,7 @@ func TestRunList(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	config := listConfig{
-		tp:  tableprinter.New(&buf, false, 0),
-		out: &buf,
+		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
 			login:     "monalisa",
 			userOwner: true,
