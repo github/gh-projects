@@ -36,8 +36,14 @@ func NewListCmd() *cobra.Command {
 		Short: "list the projects",
 		Use:   "list",
 		Example: `
-# show the list of projects
+# list the projects for the current user
 gh projects list
+
+# open projects for user "hubot" in the browser
+gh projects list --login hubot --user --web
+
+# list the projects for the github organization including closed projects
+gh projects list --login github --org --closed
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			apiOpts := api.ClientOptions{
