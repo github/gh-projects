@@ -1,15 +1,16 @@
-package cmd
+package list
 
 import (
 	"fmt"
 	"os"
-	"time"
+
+	"github.com/cli/cli/v2/pkg/cmdutil"
 
 	"github.com/cli/browser"
-	gh "github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/graphql"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,7 @@ func (opts *listOpts) first() int {
 	return opts.limit
 }
 
-func NewListCmd() *cobra.Command {
+func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
 		Short: "list the projects",
@@ -52,15 +53,10 @@ gh projects list --login hubot --user --web
 # list the projects for the github organization including closed projects
 gh projects list --login github --org --closed
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			apiOpts := api.ClientOptions{
-				Timeout: 5 * time.Second,
-			}
-
-			client, err := gh.GQLClient(&apiOpts)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := queries.NewClient()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return err
 			}
 
 			URLOpener := func(url string) error {
@@ -80,11 +76,7 @@ gh projects list --login github --org --closed
 				opts:      opts,
 				URLOpener: URLOpener,
 			}
-			err = runList(config)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			return runList(config)
 		},
 	}
 
@@ -127,24 +119,24 @@ func runList(config listConfig) error {
 		return err
 	}
 
-	projects := filterProjects(projectsQuery.projects().Nodes, config)
+	projects := filterProjects(projectsQuery.Projects().Nodes, config)
 
-	return printResults(config, projects, projectsQuery.login())
+	return printResults(config, projects, projectsQuery.Login())
 }
 
-func buildQuery(config listConfig) (query, map[string]interface{}) {
-	var projectsQuery query
+func buildQuery(config listConfig) (queries.ProjectQuery, map[string]interface{}) {
+	var projectsQuery queries.ProjectQuery
 	variables := map[string]interface{}{
 		"first": graphql.Int(config.opts.first()),
 	}
 
 	if config.opts.login == "" {
-		projectsQuery = &viewerQuery{}
+		projectsQuery = &queries.ProjectViewerQuery{}
 	} else if config.opts.userOwner {
-		projectsQuery = &userQuery{}
+		projectsQuery = &queries.ProjectUserQuery{}
 		variables["login"] = graphql.String(config.opts.login)
 	} else if config.opts.orgOwner {
-		projectsQuery = &organizationQuery{}
+		projectsQuery = &queries.ProjectOrganizationQuery{}
 		variables["login"] = graphql.String(config.opts.login)
 	}
 
@@ -154,7 +146,7 @@ func buildQuery(config listConfig) (query, map[string]interface{}) {
 func buildURL(config listConfig) (string, error) {
 	var url string
 	if config.opts.login == "" {
-		viewer := &viewerLogin{}
+		viewer := &queries.ProjectViewerLogin{}
 		// get the current user's login
 		err := config.client.Query("Viewer", viewer, map[string]interface{}{})
 		if err != nil {
@@ -175,8 +167,8 @@ func buildURL(config listConfig) (string, error) {
 	return url, nil
 }
 
-func filterProjects(nodes []projectNode, config listConfig) []projectNode {
-	projects := make([]projectNode, 0, len(nodes))
+func filterProjects(nodes []queries.ProjectNode, config listConfig) []queries.ProjectNode {
+	projects := make([]queries.ProjectNode, 0, len(nodes))
 	for _, p := range nodes {
 		if !config.opts.closed && p.Closed {
 			continue
@@ -186,7 +178,7 @@ func filterProjects(nodes []projectNode, config listConfig) []projectNode {
 	return projects
 }
 
-func printResults(config listConfig, projects []projectNode, login string) error {
+func printResults(config listConfig, projects []queries.ProjectNode, login string) error {
 	// no projects
 	if len(projects) == 0 {
 		config.tp.AddField(fmt.Sprintf("No projects found for %s", login))

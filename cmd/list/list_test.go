@@ -1,4 +1,4 @@
-package cmd
+package list
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	gh "github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
@@ -19,7 +20,7 @@ func TestBuildQueryViewer(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &viewerQuery{}, query)
+	assert.Equal(t, &queries.ProjectViewerQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Empty(t, variables["login"])
 }
@@ -32,7 +33,7 @@ func TestBuildQueryOwner(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &userQuery{}, query)
+	assert.Equal(t, &queries.ProjectUserQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Equal(t, graphql.String("monalisa"), variables["login"])
 }
@@ -45,7 +46,7 @@ func TestBuildQueryOrganization(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &organizationQuery{}, query)
+	assert.Equal(t, &queries.ProjectOrganizationQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Equal(t, graphql.String("github"), variables["login"])
 }
