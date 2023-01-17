@@ -20,7 +20,7 @@ func TestBuildQueryViewer(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &queries.ProjectViewerQuery{}, query)
+	assert.Equal(t, &queries.ProjectsViewerQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Empty(t, variables["login"])
 }
@@ -33,7 +33,7 @@ func TestBuildQueryOwner(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &queries.ProjectUserQuery{}, query)
+	assert.Equal(t, &queries.ProjectsUserQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Equal(t, graphql.String("monalisa"), variables["login"])
 }
@@ -46,7 +46,7 @@ func TestBuildQueryOrganization(t *testing.T) {
 			// first is empty
 		},
 	})
-	assert.Equal(t, &queries.ProjectOrganizationQuery{}, query)
+	assert.Equal(t, &queries.ProjectsOrganizationQuery{}, query)
 	assert.Equal(t, graphql.Int(100), variables["first"])
 	assert.Equal(t, graphql.String("github"), variables["login"])
 }

@@ -46,6 +46,26 @@ type ProjectOrgLogin struct {
 	} `graphql:"organization(login: $login)"`
 }
 
+type ProjectUserQuery struct {
+	Owner struct {
+		Project ProjectV2 `graphql:"projectV2(number: $number)"`
+		Login   string
+	} `graphql:"user(login: $login)"`
+}
+
+type ProjectOrganizationQuery struct {
+	Owner struct {
+		Project ProjectV2 `graphql:"projectV2(number: $number)"`
+		Login   string
+	} `graphql:"organization(login: $login)"`
+}
+type ProjectViewerQuery struct {
+	Owner struct {
+		Project ProjectV2 `graphql:"projectV2(number: $number)"`
+		Login   string
+	} `graphql:"viewer"`
+}
+
 type OwnerType string
 
 const UserOwner OwnerType = "USER"
@@ -72,6 +92,27 @@ func GetOwnerId(client api.GQLClient, login string, t OwnerType) (string, error)
 	return "", errors.New("unknown owner type")
 }
 
+func GetProjectId(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
+	variables := map[string]interface{}{
+		"login":  graphql.String(login),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		var query ProjectUserQuery
+		err := client.Query("UserProject", &query, variables)
+		return query.Owner.Project.Id, err
+	} else if t == OrgOwner {
+		var query ProjectOrganizationQuery
+		err := client.Query("OrgProject", &query, variables)
+		return query.Owner.Project.Id, err
+	} else if t == ViewerOwner {
+		var query ProjectViewerQuery
+		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
+		return query.Owner.Project.Id, err
+	}
+	return "", errors.New("unknown owner type")
+}
+
 // List Queries
 
 type Projects struct {
@@ -87,53 +128,53 @@ type ProjectNode struct {
 }
 
 // userQuery, organizationQuery, and viewerQuery will all satisfy the query interface
-type ProjectQuery interface {
+type ProjectsQuery interface {
 	Projects() Projects
 	Login() string
 }
 
-type ProjectUserQuery struct {
+type ProjectsUserQuery struct {
 	Owner struct {
 		Projects Projects `graphql:"projectsV2(first: $first)"`
 		Login    string
 	} `graphql:"user(login: $login)"`
 }
 
-func (u ProjectUserQuery) Projects() Projects {
+func (u ProjectsUserQuery) Projects() Projects {
 	return u.Owner.Projects
 }
 
-func (u ProjectUserQuery) Login() string {
+func (u ProjectsUserQuery) Login() string {
 	return u.Owner.Login
 }
 
-type ProjectOrganizationQuery struct {
+type ProjectsOrganizationQuery struct {
 	Owner struct {
 		Projects Projects `graphql:"projectsV2(first: $first)"`
 		Login    string
 	} `graphql:"organization(login: $login)"`
 }
 
-func (o ProjectOrganizationQuery) Projects() Projects {
+func (o ProjectsOrganizationQuery) Projects() Projects {
 	return o.Owner.Projects
 }
 
-func (o ProjectOrganizationQuery) Login() string {
+func (o ProjectsOrganizationQuery) Login() string {
 	return o.Owner.Login
 }
 
-type ProjectViewerQuery struct {
+type ProjectsViewerQuery struct {
 	Owner struct {
 		Projects Projects `graphql:"projectsV2(first: $first)"`
 		Login    string
 	} `graphql:"viewer"`
 }
 
-func (v ProjectViewerQuery) Projects() Projects {
+func (v ProjectsViewerQuery) Projects() Projects {
 	return v.Owner.Projects
 }
 
-func (v ProjectViewerQuery) Login() string {
+func (v ProjectsViewerQuery) Login() string {
 	return v.Owner.Login
 }
 
@@ -164,4 +205,11 @@ type ProjectV2 struct {
 			Login string
 		} `graphql:"... on Organization"`
 	}
+}
+
+// Update Queries
+type UpdateProjectMutation struct {
+	UpdateProjectV2 struct {
+		ProjectV2 ProjectV2 `graphql:"projectV2"`
+	} `graphql:"updateProjectV2(input:$input)"`
 }

@@ -67,7 +67,7 @@ gh projects create --org github --title "a new project"
 		},
 	}
 
-	createCmd.Flags().StringVar(&opts.title, "title", "t", "Title of the project.")
+	createCmd.Flags().StringVar(&opts.title, "title", "t", "Title of the project. Titles do not need to be unique.")
 	createCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	createCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	createCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")

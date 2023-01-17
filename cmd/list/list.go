@@ -122,19 +122,19 @@ func runList(config listConfig) error {
 	return printResults(config, projects, projectsQuery.Login())
 }
 
-func buildQuery(config listConfig) (queries.ProjectQuery, map[string]interface{}) {
-	var projectsQuery queries.ProjectQuery
+func buildQuery(config listConfig) (queries.ProjectsQuery, map[string]interface{}) {
+	var projectsQuery queries.ProjectsQuery
 	variables := map[string]interface{}{
 		"first": graphql.Int(config.opts.first()),
 	}
 
 	if config.opts.login == "" {
-		projectsQuery = &queries.ProjectViewerQuery{}
+		projectsQuery = &queries.ProjectsViewerQuery{}
 	} else if config.opts.userOwner {
-		projectsQuery = &queries.ProjectUserQuery{}
+		projectsQuery = &queries.ProjectsUserQuery{}
 		variables["login"] = graphql.String(config.opts.login)
 	} else if config.opts.orgOwner {
-		projectsQuery = &queries.ProjectOrganizationQuery{}
+		projectsQuery = &queries.ProjectsOrganizationQuery{}
 		variables["login"] = graphql.String(config.opts.login)
 	}
 
