@@ -2,7 +2,6 @@ package list
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -65,8 +64,7 @@ gh projects list --login github --org --closed
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return nil
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
