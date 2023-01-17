@@ -72,7 +72,7 @@ func TestRunUpdate_User(t *testing.T) {
 
 	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
-	public := true
+
 	buf := bytes.Buffer{}
 	config := updateConfig{
 		tp: tableprinter.New(&buf, false, 0),
@@ -81,7 +81,7 @@ func TestRunUpdate_User(t *testing.T) {
 			userOwner:        "monalisa",
 			title:            "a new title",
 			shortDescription: "a new description",
-			public:           &public,
+			visibility:       "PUBLIC",
 			readme:           "a new readme",
 		},
 		client: client,
@@ -155,7 +155,7 @@ func TestRunUpdate_Org(t *testing.T) {
 
 	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
-	public := true
+
 	buf := bytes.Buffer{}
 	config := updateConfig{
 		tp: tableprinter.New(&buf, false, 0),
@@ -164,7 +164,7 @@ func TestRunUpdate_Org(t *testing.T) {
 			orgOwner:         "github",
 			title:            "a new title",
 			shortDescription: "a new description",
-			public:           &public,
+			visibility:       "PUBLIC",
 			readme:           "a new readme",
 		},
 		client: client,
@@ -237,7 +237,7 @@ func TestRunUpdate_Me(t *testing.T) {
 
 	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
-	public := false
+
 	buf := bytes.Buffer{}
 	config := updateConfig{
 		tp: tableprinter.New(&buf, false, 0),
@@ -246,7 +246,7 @@ func TestRunUpdate_Me(t *testing.T) {
 			viewer:           true,
 			title:            "a new title",
 			shortDescription: "a new description",
-			public:           &public,
+			visibility:       "PRIVATE",
 			readme:           "a new readme",
 		},
 		client: client,
@@ -260,7 +260,7 @@ func TestRunUpdate_Me(t *testing.T) {
 		buf.String())
 }
 
-func TestRunUpdate_NoParams(t *testing.T) {
+func TestRunUpdate_OmitParams(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
@@ -291,12 +291,13 @@ func TestRunUpdate_NoParams(t *testing.T) {
 		Post("/graphql").
 		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
 		// TODO: would love to figure out why
-		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID"}}}`).
+		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"another title"}}}`).
 		// JSON(map[string]interface{}{
 		// 	"query": "mutation UpdateProjectV2.*",
 		// 	"variables": map[string]interface{}{
 		// 		"input": map[string]interface{}{
 		// 			"projectId": "an ID",
+		// 			"title": "another title",
 		// 		},
 		// 	},
 		// }).
@@ -324,6 +325,7 @@ func TestRunUpdate_NoParams(t *testing.T) {
 		opts: updateOpts{
 			number:    1,
 			userOwner: "monalisa",
+			title:     "another title",
 		},
 		client: client,
 	}
@@ -334,6 +336,20 @@ func TestRunUpdate_NoParams(t *testing.T) {
 		t,
 		"Updated project http://a-url.com\n",
 		buf.String())
+}
+
+func TestRunUpdate_EmptyUpdateParams(t *testing.T) {
+	buf := bytes.Buffer{}
+	config := updateConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: updateOpts{
+			number:    1,
+			userOwner: "monalisa",
+		},
+	}
+
+	err := runUpdate(config)
+	assert.Error(t, err, "no fields to update")
 }
 
 func TestRunUpdate_NoOrgOrUserSpecified(t *testing.T) {

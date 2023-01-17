@@ -14,15 +14,13 @@ import (
 )
 
 type updateOpts struct {
-	number    int
-	userOwner string
-	orgOwner  string
-	viewer    bool
-	title     string
-	readme    string
-	// using a pointer to a boolean here to know if the user set the flag for public or not
-	// otherwise we would make public projects private if the user didn't set the flag
-	public           *bool
+	number           int
+	userOwner        string
+	orgOwner         string
+	viewer           bool
+	title            string
+	readme           string
+	visibility       string
 	shortDescription string
 }
 
@@ -32,6 +30,9 @@ type updateConfig struct {
 	opts      updateOpts
 	projectId string
 }
+
+const projectVisibilityPublic = "PUBLIC"
+const projectVisibilityPrivate = "PRIVATE"
 
 func NewCmdUpdate(f *cmdutil.Factory, runF func(config updateConfig) error) *cobra.Command {
 	opts := updateOpts{}
@@ -47,6 +48,9 @@ gh projects update --user monalisa --number 1 --title "New title"
 
 # update a project owned by org github
 gh projects update --org github --number 1 --title "New title"
+
+# update a project owned by org github to public
+gh projects update --org github --number 1 --visibility PUBLIC
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -74,7 +78,7 @@ gh projects update --org github --number 1 --title "New title"
 	updateCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	updateCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	updateCmd.Flags().BoolVar(&opts.viewer, "me", false, "Use the login of the current use as the organization owner.")
-	updateCmd.Flags().BoolVar(opts.public, "public", false, "Change the visibility to public.")
+	updateCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
 	updateCmd.Flags().StringVar(&opts.title, "title", "", "The updated title of the project.")
 	updateCmd.Flags().StringVar(&opts.readme, "readme", "", "The updated readme of the project.")
 	updateCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The updated short description of the project.")
@@ -86,6 +90,14 @@ func runUpdate(config updateConfig) error {
 	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
+	}
+
+	if config.opts.visibility != "" && config.opts.visibility != projectVisibilityPublic && config.opts.visibility != projectVisibilityPrivate {
+		return fmt.Errorf("visibility must match either PUBLIC or PRIVATE")
+	}
+
+	if config.opts.title == "" && config.opts.shortDescription == "" && config.opts.readme == "" && config.opts.visibility == "" {
+		return fmt.Errorf("no fields to update")
 	}
 
 	var login string
@@ -127,8 +139,12 @@ func buildUpdateQuery(config updateConfig) (*queries.UpdateProjectMutation, map[
 	if config.opts.readme != "" {
 		variables.Readme = githubv4.NewString(githubv4.String(config.opts.readme))
 	}
-	if config.opts.public != nil {
-		variables.Public = githubv4.NewBoolean(githubv4.Boolean(*config.opts.public))
+	if config.opts.visibility != "" {
+		if config.opts.visibility == projectVisibilityPublic {
+			variables.Public = githubv4.NewBoolean(githubv4.Boolean(true))
+		} else if config.opts.visibility == projectVisibilityPrivate {
+			variables.Public = githubv4.NewBoolean(githubv4.Boolean(false))
+		}
 	}
 
 	return &queries.UpdateProjectMutation{}, map[string]interface{}{
