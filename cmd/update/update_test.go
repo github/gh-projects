@@ -347,5 +347,4 @@ func TestRunUpdate_NoOrgOrUserSpecified(t *testing.T) {
 
 	err := runUpdate(config)
 	assert.EqualError(t, err, "one of --user, --org or --me is required")
-
 }

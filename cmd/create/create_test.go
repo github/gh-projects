@@ -233,5 +233,4 @@ func TestRunCreate_NoOrgOrUserSpecified(t *testing.T) {
 
 	err := runCreate(config)
 	assert.EqualError(t, err, "one of --user, --org or --me is required")
-
 }

@@ -2,15 +2,11 @@ package close
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
-	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
-	"github.com/github/gh-projects/queries"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -332,92 +328,4 @@ func TestRunClose_NoOrgOrUserSpecified(t *testing.T) {
 
 	err := runClose(config)
 	assert.EqualError(t, err, "one of --user, --org or --me is required")
-
-}
-
-func TestNewCmdClose(t *testing.T) {
-	type args struct {
-		f    *cmdutil.Factory
-		runF func(config closeConfig) error
-	}
-	tests := []struct {
-		name string
-		args args
-		want *cobra.Command
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewCmdClose(tt.args.f, tt.args.runF); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewCmdClose() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_runClose(t *testing.T) {
-	type args struct {
-		config closeConfig
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := runClose(tt.args.config); (err != nil) != tt.wantErr {
-				t.Errorf("runClose() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_buildCloseQuery(t *testing.T) {
-	type args struct {
-		config closeConfig
-	}
-	tests := []struct {
-		name  string
-		args  args
-		want  *queries.UpdateProjectMutation
-		want1 map[string]interface{}
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := buildCloseQuery(tt.args.config)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildCloseQuery() got = %v, want %v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("buildCloseQuery() got1 = %v, want %v", got1, tt.want1)
-			}
-		})
-	}
-}
-
-func Test_printResults(t *testing.T) {
-	type args struct {
-		config  closeConfig
-		project queries.ProjectV2
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := printResults(tt.args.config, tt.args.project); (err != nil) != tt.wantErr {
-				t.Errorf("printResults() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
 }
