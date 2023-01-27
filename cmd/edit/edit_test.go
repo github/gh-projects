@@ -1,4 +1,4 @@
-package update
+package edit
 
 import (
 	"bytes"
@@ -37,7 +37,7 @@ func TestRunUpdate_User(t *testing.T) {
 			},
 		})
 
-	// update project
+	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
@@ -74,9 +74,9 @@ func TestRunUpdate_User(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number:           1,
 			userOwner:        "monalisa",
 			title:            "a new title",
@@ -87,7 +87,7 @@ func TestRunUpdate_User(t *testing.T) {
 		client: client,
 	}
 
-	err = runUpdate(config)
+	err = runEdit(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -120,7 +120,7 @@ func TestRunUpdate_Org(t *testing.T) {
 			},
 		})
 
-	// update project
+	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
@@ -157,9 +157,9 @@ func TestRunUpdate_Org(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number:           1,
 			orgOwner:         "github",
 			title:            "a new title",
@@ -170,7 +170,7 @@ func TestRunUpdate_Org(t *testing.T) {
 		client: client,
 	}
 
-	err = runUpdate(config)
+	err = runEdit(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -202,7 +202,7 @@ func TestRunUpdate_Me(t *testing.T) {
 			},
 		})
 
-	// update project
+	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
@@ -239,9 +239,9 @@ func TestRunUpdate_Me(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number:           1,
 			viewer:           true,
 			title:            "a new title",
@@ -252,7 +252,7 @@ func TestRunUpdate_Me(t *testing.T) {
 		client: client,
 	}
 
-	err = runUpdate(config)
+	err = runEdit(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -320,9 +320,9 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number:    1,
 			userOwner: "monalisa",
 			title:     "another title",
@@ -330,7 +330,7 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 		client: client,
 	}
 
-	err = runUpdate(config)
+	err = runEdit(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -340,27 +340,27 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 
 func TestRunUpdate_EmptyUpdateParams(t *testing.T) {
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number:    1,
 			userOwner: "monalisa",
 		},
 	}
 
-	err := runUpdate(config)
-	assert.Error(t, err, "no fields to update")
+	err := runEdit(config)
+	assert.Error(t, err, "no fields to edit")
 }
 
 func TestRunUpdate_NoOrgOrUserSpecified(t *testing.T) {
 	buf := bytes.Buffer{}
-	config := updateConfig{
+	config := editConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: updateOpts{
+		opts: editOpts{
 			number: 1,
 		},
 	}
 
-	err := runUpdate(config)
+	err := runEdit(config)
 	assert.EqualError(t, err, "one of --user, --org or --me is required")
 }

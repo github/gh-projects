@@ -6,8 +6,8 @@ import (
 	"github.com/cli/cli/v2/pkg/cmd/factory"
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
+	cmdEdit "github.com/github/gh-projects/cmd/edit"
 	cmdList "github.com/github/gh-projects/cmd/list"
-	cmdUpdate "github.com/github/gh-projects/cmd/update"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	rootCmd.AddCommand(cmdList.NewCmdList(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCreate.NewCmdCreate(cmdFactory, nil))
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
-	rootCmd.AddCommand(cmdUpdate.NewCmdUpdate(cmdFactory, nil))
+	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

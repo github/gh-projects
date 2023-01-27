@@ -1,4 +1,4 @@
-package update
+package edit
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type updateOpts struct {
+type editOpts struct {
 	number           int
 	userOwner        string
 	orgOwner         string
@@ -24,33 +24,33 @@ type updateOpts struct {
 	shortDescription string
 }
 
-type updateConfig struct {
+type editConfig struct {
 	tp        tableprinter.TablePrinter
 	client    api.GQLClient
-	opts      updateOpts
+	opts      editOpts
 	projectId string
 }
 
 const projectVisibilityPublic = "PUBLIC"
 const projectVisibilityPrivate = "PRIVATE"
 
-func NewCmdUpdate(f *cmdutil.Factory, runF func(config updateConfig) error) *cobra.Command {
-	opts := updateOpts{}
-	updateCmd := &cobra.Command{
-		Short: "update a project",
-		Use:   "update",
+func NewCmdEdit(f *cmdutil.Factory, runF func(config editConfig) error) *cobra.Command {
+	opts := editOpts{}
+	editCmd := &cobra.Command{
+		Short: "edit a project",
+		Use:   "edit",
 		Example: `
-# update a project in interative mode
-gh projects update
+# edit a project in interative mode
+gh projects edit
 
-# update a project owned by user monalisa
-gh projects update --user monalisa --number 1 --title "New title"
+# edit a project owned by user monalisa
+gh projects edit --user monalisa --number 1 --title "New title"
 
-# update a project owned by org github
-gh projects update --org github --number 1 --title "New title"
+# edit a project owned by org github
+gh projects edit --org github --number 1 --title "New title"
 
-# update a project owned by org github to public
-gh projects update --org github --number 1 --visibility PUBLIC
+# edit a project owned by org github to public
+gh projects edit --org github --number 1 --visibility PUBLIC
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -65,28 +65,28 @@ gh projects update --org github --number 1 --visibility PUBLIC
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
-			config := updateConfig{
+			config := editConfig{
 				tp:     t,
 				client: client,
 				opts:   opts,
 			}
-			return runUpdate(config)
+			return runEdit(config)
 		},
 	}
 
-	updateCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
-	updateCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
-	updateCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	updateCmd.Flags().BoolVar(&opts.viewer, "me", false, "Use the login of the current use as the organization owner.")
-	updateCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
-	updateCmd.Flags().StringVar(&opts.title, "title", "", "The updated title of the project.")
-	updateCmd.Flags().StringVar(&opts.readme, "readme", "", "The updated readme of the project.")
-	updateCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The updated short description of the project.")
-	updateCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	return updateCmd
+	editCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
+	editCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	editCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Use the login of the current use as the organization owner.")
+	editCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
+	editCmd.Flags().StringVar(&opts.title, "title", "", "The edited title of the project.")
+	editCmd.Flags().StringVar(&opts.readme, "readme", "", "The edited readme of the project.")
+	editCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The edited short description of the project.")
+	editCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	return editCmd
 }
 
-func runUpdate(config updateConfig) error {
+func runEdit(config editConfig) error {
 	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
@@ -97,7 +97,7 @@ func runUpdate(config updateConfig) error {
 	}
 
 	if config.opts.title == "" && config.opts.shortDescription == "" && config.opts.readme == "" && config.opts.visibility == "" {
-		return fmt.Errorf("no fields to update")
+		return fmt.Errorf("no fields to edit")
 	}
 
 	var login string
@@ -128,7 +128,7 @@ func runUpdate(config updateConfig) error {
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
 }
 
-func buildUpdateQuery(config updateConfig) (*queries.UpdateProjectMutation, map[string]interface{}) {
+func buildUpdateQuery(config editConfig) (*queries.UpdateProjectMutation, map[string]interface{}) {
 	variables := githubv4.UpdateProjectV2Input{ProjectID: githubv4.ID(config.projectId)}
 	if config.opts.title != "" {
 		variables.Title = githubv4.NewString(githubv4.String(config.opts.title))
@@ -152,7 +152,7 @@ func buildUpdateQuery(config updateConfig) (*queries.UpdateProjectMutation, map[
 	}
 }
 
-func printResults(config updateConfig, project queries.ProjectV2) error {
+func printResults(config editConfig, project queries.ProjectV2) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField(fmt.Sprintf("Updated project %s", project.Url))
 	config.tp.EndRow()
