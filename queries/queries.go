@@ -2,10 +2,12 @@ package queries
 
 import (
 	"errors"
+	"net/url"
 	"time"
 
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
+	"github.com/shurcooL/githubv4"
 	"github.com/shurcooL/graphql"
 )
 
@@ -25,6 +27,17 @@ func NewClient() (api.GQLClient, error) {
 
 // General Queries
 
+type IssueOrPullRequest struct {
+	Resource struct {
+		Typename string `graphql:"__typename"`
+		Issue    struct {
+			ID string
+		} `graphql:"... on Issue"`
+		PullRequest struct {
+			ID string
+		} `graphql:"... on PullRequest"`
+	} `graphql:"resource(url: $url)"`
+}
 type ProjectViewerLogin struct {
 	Viewer struct {
 		Login string
@@ -236,6 +249,27 @@ func GetProjectItems(client api.GQLClient, login string, t OwnerType, number int
 	return []ProjectV2Item{}, errors.New("unknown owner type")
 }
 
+func GetIssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
+	uri, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+	variables := map[string]interface{}{
+		"url": githubv4.URI{URL: uri},
+	}
+	var query IssueOrPullRequest
+	err = client.Query("GetIssueOrPullRequest", &query, variables)
+	if err != nil {
+		return "", err
+	}
+	if query.Resource.Typename == "Issue" {
+		return query.Resource.Issue.ID, nil
+	} else if query.Resource.Typename == "PullRequest" {
+		return query.Resource.PullRequest.ID, nil
+	}
+	return "", errors.New("unknown resource type")
+}
+
 // List Queries
 
 type Projects struct {
@@ -314,6 +348,18 @@ type CreateProjectMutation struct {
 	CreateProjectV2 struct {
 		ProjectV2 ProjectV2 `graphql:"projectV2"`
 	} `graphql:"createProjectV2(input:$input)"`
+}
+
+type CreateProjectDraftItem struct {
+	CreateProjectDraftItem struct {
+		ProjectV2Item ProjectV2Item `graphql:"projectItem"`
+	} `graphql:"addProjectV2DraftIssue(input:$input)"`
+}
+
+type CreateProjectItem struct {
+	CreateProjectItem struct {
+		ProjectV2Item ProjectV2Item `graphql:"item"`
+	} `graphql:"addProjectV2ItemById(input:$input)"`
 }
 
 type ProjectV2 struct {

@@ -76,7 +76,7 @@ gh projects items --number 1 --user monalisa
 	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
 
 	// owner can be a user or an org
-	listCmd.MarkFlagsMutuallyExclusive("user", "org")
+	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 
 	listCmd.MarkFlagRequired("number")
 
