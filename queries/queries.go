@@ -53,10 +53,29 @@ type ProjectUserQuery struct {
 	} `graphql:"user(login: $login)"`
 }
 
+type ProjectUserQueryWithItems struct {
+	Owner struct {
+		Project struct {
+			Items struct {
+				Nodes []ProjectV2Item
+			} `graphql:"items(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"user(login: $login)"`
+}
 type ProjectOrganizationQuery struct {
 	Owner struct {
 		Project ProjectV2 `graphql:"projectV2(number: $number)"`
 		Login   string
+	} `graphql:"organization(login: $login)"`
+}
+
+type ProjectOrganizationQueryWithItems struct {
+	Owner struct {
+		Project struct {
+			Items struct {
+				Nodes []ProjectV2Item
+			} `graphql:"items(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 type ProjectViewerQuery struct {
@@ -64,6 +83,87 @@ type ProjectViewerQuery struct {
 		Project ProjectV2 `graphql:"projectV2(number: $number)"`
 		Login   string
 	} `graphql:"viewer"`
+}
+
+type ProjectViewerQueryWithItems struct {
+	Owner struct {
+		Project struct {
+			Items struct {
+				Nodes []ProjectV2Item
+			} `graphql:"items(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"viewer"`
+}
+
+type ProjectV2Item struct {
+	Id      string
+	Type    string
+	Content struct {
+		DraftIssue struct {
+			Body  string
+			Title string
+		} `graphql:"... on DraftIssue"`
+		PullRequest struct {
+			Body       string
+			Title      string
+			Number     int
+			Repository struct {
+				NameWithOwner string
+			}
+		} `graphql:"... on PullRequest"`
+		Issue struct {
+			Body       string
+			Title      string
+			Number     int
+			Repository struct {
+				NameWithOwner string
+			}
+		} `graphql:"... on Issue"`
+	}
+}
+
+func (p ProjectV2Item) ItemType() string {
+	return p.Type
+}
+
+func (p ProjectV2Item) ItemTitle() string {
+	if p.Type == "ISSUE" {
+		return p.Content.Issue.Title
+	} else if p.Type == "PULL_REQUEST" {
+		return p.Content.PullRequest.Title
+	} else if p.Type == "DRAFT_ISSUE" {
+		return p.Content.DraftIssue.Title
+	}
+	return ""
+}
+
+func (p ProjectV2Item) ItemBody() string {
+	if p.Type == "ISSUE" {
+		return p.Content.Issue.Body
+	} else if p.Type == "PULL_REQUEST" {
+		return p.Content.PullRequest.Body
+	} else if p.Type == "DRAFT_ISSUE" {
+		return p.Content.DraftIssue.Body
+	}
+	return ""
+}
+
+func (p ProjectV2Item) ItemNumber() int {
+	if p.Type == "ISSUE" {
+		return p.Content.Issue.Number
+	} else if p.Type == "PULL_REQUEST" {
+		return p.Content.PullRequest.Number
+	}
+	return 0
+}
+
+func (p ProjectV2Item) ItemRepo() string {
+	if p.Type == "ISSUE" {
+		return p.Content.Issue.Repository.NameWithOwner
+	} else if p.Type == "PULL_REQUEST" {
+		return p.Content.PullRequest.Repository.NameWithOwner
+	}
+	return ""
 }
 
 type OwnerType string
@@ -111,6 +211,29 @@ func GetProjectId(client api.GQLClient, login string, t OwnerType, number int) (
 		return query.Owner.Project.Id, err
 	}
 	return "", errors.New("unknown owner type")
+}
+
+func GetProjectItems(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectV2Item, error) {
+	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		variables["login"] = graphql.String(login)
+		var query ProjectUserQueryWithItems
+		err := client.Query("UserProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	} else if t == OrgOwner {
+		variables["login"] = graphql.String(login)
+		var query ProjectOrganizationQueryWithItems
+		err := client.Query("OrgProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	} else if t == ViewerOwner {
+		var query ProjectViewerQueryWithItems
+		err := client.Query("ViewerProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	}
+	return []ProjectV2Item{}, errors.New("unknown owner type")
 }
 
 // List Queries

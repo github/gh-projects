@@ -7,6 +7,7 @@ import (
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
+	cmdItemsList "github.com/github/gh-projects/cmd/items/list"
 	cmdList "github.com/github/gh-projects/cmd/list"
 	"github.com/spf13/cobra"
 )
@@ -17,12 +18,20 @@ func main() {
 		Use: "projects",
 	}
 
+	var itemsCmd = &cobra.Command{
+		Use: "items",
+	}
+
 	cmdFactory := factory.New("0.1.0") // will be replaced by buildVersion := build.Version
 
 	rootCmd.AddCommand(cmdList.NewCmdList(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCreate.NewCmdCreate(cmdFactory, nil))
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
 	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
+
+	// items subcommand
+	rootCmd.AddCommand(itemsCmd)
+	itemsCmd.AddCommand(cmdItemsList.NewCmdList(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
