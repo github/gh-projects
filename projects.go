@@ -7,7 +7,9 @@ import (
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
+	cmdItemsArchive "github.com/github/gh-projects/cmd/items/archive"
 	cmdItemsCreate "github.com/github/gh-projects/cmd/items/create"
+	cmdItemsDelete "github.com/github/gh-projects/cmd/items/delete"
 	cmdItemsList "github.com/github/gh-projects/cmd/items/list"
 	cmdList "github.com/github/gh-projects/cmd/list"
 	"github.com/spf13/cobra"
@@ -34,6 +36,8 @@ func main() {
 	rootCmd.AddCommand(itemsCmd)
 	itemsCmd.AddCommand(cmdItemsList.NewCmdList(cmdFactory, nil))
 	itemsCmd.AddCommand(cmdItemsCreate.NewCmdCreateItem(cmdFactory, nil))
+	itemsCmd.AddCommand(cmdItemsArchive.NewCmdArchiveItem(cmdFactory, nil))
+	itemsCmd.AddCommand(cmdItemsDelete.NewCmdDeleteItem(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

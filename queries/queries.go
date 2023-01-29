@@ -362,6 +362,18 @@ type CreateProjectItem struct {
 	} `graphql:"addProjectV2ItemById(input:$input)"`
 }
 
+type ArchiveProjectItem struct {
+	ArchiveProjectItem struct {
+		ProjectV2Item ProjectV2Item `graphql:"item"`
+	} `graphql:"archiveProjectV2Item(input:$input)"`
+}
+
+type DeleteProjectItem struct {
+	DeleteProjectItem struct {
+		DeletedItemId githubv4.ID `graphql:"deletedItemId"`
+	} `graphql:"deleteProjectV2Item(input:$input)"`
+}
+
 type ProjectV2 struct {
 	Title string
 	Id    string
