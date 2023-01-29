@@ -72,7 +72,7 @@ gh projects close --org github --number 1 --reopen
 	closeCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	closeCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	closeCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	closeCmd.Flags().BoolVar(&opts.viewer, "me", false, "Use the login of the current use as the organization owner.")
+	closeCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	closeCmd.Flags().BoolVar(&opts.reopen, "reopen", false, "Reopen a closed project.")
 	closeCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 	return closeCmd

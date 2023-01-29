@@ -77,7 +77,7 @@ gh projects edit --org github --number 1 --visibility PUBLIC
 	editCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	editCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	editCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Use the login of the current use as the organization owner.")
+	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	editCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
 	editCmd.Flags().StringVar(&opts.title, "title", "", "The edited title of the project.")
 	editCmd.Flags().StringVar(&opts.readme, "readme", "", "The edited readme of the project.")

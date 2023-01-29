@@ -69,7 +69,7 @@ gh projects item add --org github --number 1 --url https://github.com/cli/go-gh/
 	addItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	addItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	addItemCmd.Flags().StringVar(&opts.itemURL, "url", "", "URL of the issue or pull request to add to the project. Must be of form https://github.com/OWNER/REPO/issues/NUMBER or https://github.com/OWNER/REPO/pull/NUMBER")
-	addItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	addItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	addItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	addItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 

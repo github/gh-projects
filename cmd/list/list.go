@@ -83,11 +83,10 @@ gh projects list --org github --closed
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return listCmd
 }

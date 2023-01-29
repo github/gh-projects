@@ -67,11 +67,11 @@ gh projects item create --org github --number 1 --title "a new item"
 		},
 	}
 
-	createItemCmd.Flags().StringVar(&opts.title, "title", "t", "Title of the draft issue item.")
-	createItemCmd.Flags().StringVar(&opts.body, "body", "b", "Body of the draft issue item.")
+	createItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item.")
+	createItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item.")
 	createItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	createItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	createItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	createItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 

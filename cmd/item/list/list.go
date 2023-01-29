@@ -14,7 +14,6 @@ import (
 
 type listOpts struct {
 	limit     int
-	login     string
 	userOwner string
 	orgOwner  string
 	viewer    bool
@@ -68,12 +67,11 @@ gh projects item --number 1 --user monalisa
 		},
 	}
 
-	listCmd.Flags().StringVarP(&opts.login, "login", "l", "", "Login of the project owner. Defaults to current user.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")

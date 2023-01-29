@@ -69,7 +69,7 @@ gh projects item archive --org github --number 1 --id ID
 	archiveItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	archiveItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	archiveItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to archive from the project.")
-	archiveItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	archiveItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	archiveItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	archiveItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 

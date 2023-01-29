@@ -68,7 +68,7 @@ gh projects item delete --org github --number 1 --id ID
 	deleteItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	deleteItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	deleteItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to delete from the project.")
-	deleteItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+	deleteItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 	deleteItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 
 	deleteItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
