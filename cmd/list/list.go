@@ -16,10 +16,10 @@ import (
 
 type listOpts struct {
 	limit     int
-	login     string
 	web       bool
-	userOwner bool
-	orgOwner  bool
+	userOwner string
+	orgOwner  string
+	viewer    bool
 	closed    bool
 }
 
@@ -47,10 +47,10 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 gh projects list
 
 # open projects for user "hubot" in the browser
-gh projects list --login hubot --user --web
+gh projects list --user hubot --web
 
 # list the projects for the github organization including closed projects
-gh projects list --login github --org --closed
+gh projects list --org github --closed
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -78,24 +78,24 @@ gh projects list --login github --org --closed
 		},
 	}
 
-	listCmd.Flags().StringVarP(&opts.login, "login", "l", "", "Login of the project owner. Defaults to current user.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of queue entries to get. Defaults to 100.")
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
-	listCmd.Flags().BoolVar(&opts.userOwner, "user", false, "Owner is a user.")
-	listCmd.Flags().BoolVar(&opts.orgOwner, "org", false, "Owner is an organization.")
+	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
+
 	// owner can be a user or an org
+	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return listCmd
 }
 
 func runList(config listConfig) error {
-	if config.opts.userOwner && config.opts.orgOwner {
-		return fmt.Errorf("only one of --user or --org can be set")
-	}
-	if config.opts.login != "" && !config.opts.userOwner && !config.opts.orgOwner {
-		return fmt.Errorf("one of --user or --org is required with --login")
+	// TODO interactive survey if no arguments are provided
+	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user, --org or --me is required")
 	}
 
 	if config.opts.web {
@@ -128,14 +128,14 @@ func buildQuery(config listConfig) (queries.ProjectsQuery, map[string]interface{
 		"first": graphql.Int(config.opts.first()),
 	}
 
-	if config.opts.login == "" {
+	if config.opts.viewer {
 		projectsQuery = &queries.ProjectsViewerQuery{}
-	} else if config.opts.userOwner {
+	} else if config.opts.userOwner != "" {
 		projectsQuery = &queries.ProjectsUserQuery{}
-		variables["login"] = graphql.String(config.opts.login)
-	} else if config.opts.orgOwner {
+		variables["login"] = graphql.String(config.opts.userOwner)
+	} else if config.opts.orgOwner != "" {
 		projectsQuery = &queries.ProjectsOrganizationQuery{}
-		variables["login"] = graphql.String(config.opts.login)
+		variables["login"] = graphql.String(config.opts.orgOwner)
 	}
 
 	return projectsQuery, variables
@@ -143,7 +143,7 @@ func buildQuery(config listConfig) (queries.ProjectsQuery, map[string]interface{
 
 func buildURL(config listConfig) (string, error) {
 	var url string
-	if config.opts.login == "" {
+	if config.opts.viewer {
 		viewer := &queries.ProjectViewerLogin{}
 		// get the current user's login
 		err := config.client.Query("Viewer", viewer, map[string]interface{}{})
@@ -152,10 +152,10 @@ func buildURL(config listConfig) (string, error) {
 		}
 		login := viewer.Viewer.Login
 		url = fmt.Sprintf("https://github.com/users/%s/projects", login)
-	} else if config.opts.userOwner {
-		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.login)
-	} else if config.opts.orgOwner {
-		url = fmt.Sprintf("https://github.com/orgs/%s/projects", config.opts.login)
+	} else if config.opts.userOwner != "" {
+		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.userOwner)
+	} else if config.opts.orgOwner != "" {
+		url = fmt.Sprintf("https://github.com/orgs/%s/projects", config.opts.orgOwner)
 	}
 
 	if config.opts.closed {

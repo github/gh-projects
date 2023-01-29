@@ -16,6 +16,7 @@ import (
 func TestBuildQueryViewer(t *testing.T) {
 	query, variables := buildQuery(listConfig{
 		opts: listOpts{
+			viewer: true,
 			// login is empty
 			// first is empty
 		},
@@ -28,8 +29,7 @@ func TestBuildQueryViewer(t *testing.T) {
 func TestBuildQueryOwner(t *testing.T) {
 	query, variables := buildQuery(listConfig{
 		opts: listOpts{
-			userOwner: true,
-			login:     "monalisa",
+			userOwner: "monalisa",
 			// first is empty
 		},
 	})
@@ -41,8 +41,7 @@ func TestBuildQueryOwner(t *testing.T) {
 func TestBuildQueryOrganization(t *testing.T) {
 	query, variables := buildQuery(listConfig{
 		opts: listOpts{
-			orgOwner: true,
-			login:    "github",
+			orgOwner: "github",
 			// first is empty
 		},
 	})
@@ -72,7 +71,7 @@ func TestBuildURLViewer(t *testing.T) {
 
 	url, err := buildURL(listConfig{
 		opts: listOpts{
-			// login is empty
+			viewer: true,
 		},
 		client: client,
 	})
@@ -83,8 +82,7 @@ func TestBuildURLViewer(t *testing.T) {
 func TestBuildURLUser(t *testing.T) {
 	url, err := buildURL(listConfig{
 		opts: listOpts{
-			userOwner: true,
-			login:     "monalisa",
+			userOwner: "monalisa",
 		},
 	})
 	assert.NoError(t, err)
@@ -94,8 +92,7 @@ func TestBuildURLUser(t *testing.T) {
 func TestBuildURLOrg(t *testing.T) {
 	url, err := buildURL(listConfig{
 		opts: listOpts{
-			orgOwner: true,
-			login:    "github",
+			orgOwner: "github",
 		},
 	})
 	assert.NoError(t, err)
@@ -105,8 +102,7 @@ func TestBuildURLOrg(t *testing.T) {
 func TestBuildURLWithClosed(t *testing.T) {
 	url, err := buildURL(listConfig{
 		opts: listOpts{
-			orgOwner: true,
-			login:    "github",
+			orgOwner: "github",
 			closed:   true,
 		},
 	})
@@ -143,8 +139,7 @@ func TestRunList(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			login:     "monalisa",
-			userOwner: true,
+			userOwner: "monalisa",
 		},
 		client: client,
 	}
@@ -185,8 +180,10 @@ func TestRunListViewer(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	config := listConfig{
-		tp:     tableprinter.New(&buf, false, 0),
-		opts:   listOpts{},
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			viewer: true,
+		},
 		client: client,
 	}
 
@@ -227,8 +224,7 @@ func TestRunListOrg(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			login:    "github",
-			orgOwner: true,
+			orgOwner: "github",
 		},
 		client: client,
 	}
@@ -265,8 +261,10 @@ func TestRunListEmpty(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	config := listConfig{
-		tp:     tableprinter.New(&buf, false, 0),
-		opts:   listOpts{},
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			viewer: true,
+		},
 		client: client,
 	}
 
@@ -307,8 +305,7 @@ func TestRunListWithClosed(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			login:     "monalisa",
-			userOwner: true,
+			userOwner: "monalisa",
 			closed:    true,
 		},
 		client: client,
@@ -326,8 +323,7 @@ func TestRunListWeb(t *testing.T) {
 	buf := bytes.Buffer{}
 	config := listConfig{
 		opts: listOpts{
-			login:     "monalisa",
-			userOwner: true,
+			userOwner: "monalisa",
 			web:       true,
 		},
 		URLOpener: func(url string) error {
@@ -341,26 +337,11 @@ func TestRunListWeb(t *testing.T) {
 	assert.Equal(t, "https://github.com/users/monalisa/projects", buf.String())
 }
 
-func TestRunListErrorOnlyLogin(t *testing.T) {
+func TestRunListErrorNoLogin(t *testing.T) {
 	config := listConfig{
-		opts: listOpts{
-			login: "monalisa",
-		},
+		opts: listOpts{},
 	}
 
 	err := runList(config)
-	assert.Error(t, err, "one of --user or --org is required with --login")
-}
-
-func TestRunListErrorUserAndOrg(t *testing.T) {
-	config := listConfig{
-		opts: listOpts{
-			login:     "monalisa",
-			userOwner: true,
-			orgOwner:  true,
-		},
-	}
-
-	err := runList(config)
-	assert.Error(t, err, "only one of --user or --org can be set")
+	assert.Error(t, err, "one of --user, --org or --me is required")
 }
