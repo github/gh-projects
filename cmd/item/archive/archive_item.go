@@ -18,6 +18,7 @@ type archiveItemOpts struct {
 	orgOwner  string
 	viewer    bool
 	number    int
+	undo      bool
 	// itemURL   string
 	itemID string
 }
@@ -70,6 +71,7 @@ gh projects item archive --org github --number 1 --id ID
 	archiveItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	archiveItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to archive from the project.")
 	archiveItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	archiveItemCmd.Flags().BoolVar(&opts.undo, "undo", false, "Undo archive (unarchive) of an item.")
 	archiveItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	archiveItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 
@@ -102,6 +104,15 @@ func runArchiveItem(config archiveItemConfig) error {
 	}
 	config.projectID = projectID
 
+	if config.opts.undo {
+		query, variables := buildUnarchiveItem(config, config.opts.itemID)
+		err = config.client.Mutate("UnarchiveProjectItem", query, variables)
+		if err != nil {
+			return err
+		}
+
+		return printResults(config, query.UnarchiveProjectItem.ProjectV2Item)
+	}
 	query, variables := buildArchiveItem(config, config.opts.itemID)
 	err = config.client.Mutate("ArchiveProjectItem", query, variables)
 	if err != nil {
@@ -120,9 +131,22 @@ func buildArchiveItem(config archiveItemConfig, itemID string) (*queries.Archive
 	}
 }
 
+func buildUnarchiveItem(config archiveItemConfig, itemID string) (*queries.UnarchiveProjectItem, map[string]interface{}) {
+	return &queries.UnarchiveProjectItem{}, map[string]interface{}{
+		"input": githubv4.UnarchiveProjectV2ItemInput{
+			ProjectID: githubv4.ID(config.projectID),
+			ItemID:    githubv4.ID(itemID),
+		},
+	}
+}
+
 func printResults(config archiveItemConfig, item queries.ProjectV2Item) error {
 	// using table printer here for consistency in case it ends up being needed in the future
-	config.tp.AddField("Archived item")
+	if config.opts.undo {
+		config.tp.AddField("Unarchived item")
+	} else {
+		config.tp.AddField("Archived item")
+	}
 	config.tp.EndRow()
 	return config.tp.Render()
 }
