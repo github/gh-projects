@@ -41,10 +41,10 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		Use:   "list",
 		Example: `
 # list the items in project number 1 for the current user
-gh projects items list --number 1
+gh projects item list --number 1
 
 # list the items in project number 1 for user monalisa
-gh projects items --number 1 --user monalisa
+gh projects item --number 1 --user monalisa
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

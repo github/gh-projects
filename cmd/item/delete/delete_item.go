@@ -35,13 +35,13 @@ func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) err
 		Use:   "delete",
 		Example: `
 # delete an item in the current user's project
-gh projects items delete --me --number 1 --id ID
+gh projects item delete --me --number 1 --id ID
 
 # delete an item in a user project
-gh projects items delete --user monalisa --number 1 --id ID
+gh projects item delete --user monalisa --number 1 --id ID
 
 # delete an item in an org project
-gh projects items delete --org github --number 1 --id ID
+gh projects item delete --org github --number 1 --id ID
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

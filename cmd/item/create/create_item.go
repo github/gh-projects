@@ -39,22 +39,22 @@ func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) err
 		Use:   "create",
 		Example: `
 # create a draft item in the current user's project
-gh projects items create --draft --me --number 1 --title "a new item"
+gh projects item create --draft --me --number 1 --title "a new item"
 
 # create a draft item in a user project
-gh projects items create --draft --user monalisa --number 1 --title "a new item"
+gh projects item create --draft --user monalisa --number 1 --title "a new item"
 
 # create a draft item in an org project
-gh projects items create --draft --org github --number 1 --title "a new item"
+gh projects item create --draft --org github --number 1 --title "a new item"
 
 # create an item in the current user's project
-gh projects items create  --me --number 1 --url https://github.com/cli/go-gh/issues/1
+gh projects item create  --me --number 1 --url https://github.com/cli/go-gh/issues/1
 
 # create an item in a user project
-gh projects items create --user monalisa --number 1 --url https://github.com/cli/go-gh/issues/1
+gh projects item create --user monalisa --number 1 --url https://github.com/cli/go-gh/issues/1
 
 # create an item in an org project
-gh projects items create --org github --number 1 --url https://github.com/cli/go-gh/issues/1
+gh projects item create --org github --number 1 --url https://github.com/cli/go-gh/issues/1
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

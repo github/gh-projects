@@ -36,13 +36,13 @@ func NewCmdArchiveItem(f *cmdutil.Factory, runF func(config archiveItemConfig) e
 		Use:   "archive",
 		Example: `
 # archive an item in the current user's project
-gh projects items archive --me --number 1 --id ID
+gh projects item archive --me --number 1 --id ID
 
 # archive an item in a user project
-gh projects items archive --user monalisa --number 1 --id ID
+gh projects item archive --user monalisa --number 1 --id ID
 
 # archive an item in an org project
-gh projects items archive --org github --number 1 --id ID
+gh projects item archive --org github --number 1 --id ID
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

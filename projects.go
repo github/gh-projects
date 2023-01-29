@@ -7,10 +7,10 @@ import (
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
-	cmdItemsArchive "github.com/github/gh-projects/cmd/items/archive"
-	cmdItemsCreate "github.com/github/gh-projects/cmd/items/create"
-	cmdItemsDelete "github.com/github/gh-projects/cmd/items/delete"
-	cmdItemsList "github.com/github/gh-projects/cmd/items/list"
+	cmdItemArchive "github.com/github/gh-projects/cmd/item/archive"
+	cmdItemCreate "github.com/github/gh-projects/cmd/item/create"
+	cmdItemDelete "github.com/github/gh-projects/cmd/item/delete"
+	cmdItemList "github.com/github/gh-projects/cmd/item/list"
 	cmdList "github.com/github/gh-projects/cmd/list"
 	"github.com/spf13/cobra"
 )
@@ -21,8 +21,9 @@ func main() {
 		Use: "projects",
 	}
 
-	var itemsCmd = &cobra.Command{
-		Use: "items",
+	var itemCmd = &cobra.Command{
+		Use:   "item",
+		Short: "Commands for items",
 	}
 
 	cmdFactory := factory.New("0.1.0") // will be replaced by buildVersion := build.Version
@@ -32,12 +33,12 @@ func main() {
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
 	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
 
-	// items subcommand
-	rootCmd.AddCommand(itemsCmd)
-	itemsCmd.AddCommand(cmdItemsList.NewCmdList(cmdFactory, nil))
-	itemsCmd.AddCommand(cmdItemsCreate.NewCmdCreateItem(cmdFactory, nil))
-	itemsCmd.AddCommand(cmdItemsArchive.NewCmdArchiveItem(cmdFactory, nil))
-	itemsCmd.AddCommand(cmdItemsDelete.NewCmdDeleteItem(cmdFactory, nil))
+	// item subcommand
+	rootCmd.AddCommand(itemCmd)
+	itemCmd.AddCommand(cmdItemList.NewCmdList(cmdFactory, nil))
+	itemCmd.AddCommand(cmdItemCreate.NewCmdCreateItem(cmdFactory, nil))
+	itemCmd.AddCommand(cmdItemArchive.NewCmdArchiveItem(cmdFactory, nil))
+	itemCmd.AddCommand(cmdItemDelete.NewCmdDeleteItem(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
