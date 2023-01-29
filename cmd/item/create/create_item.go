@@ -19,9 +19,7 @@ type createItemOpts struct {
 	userOwner string
 	orgOwner  string
 	viewer    bool
-	draft     bool
 	number    int
-	itemURL   string
 	// assignees []string
 }
 
@@ -35,26 +33,17 @@ type createItemConfig struct {
 func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) error) *cobra.Command {
 	opts := createItemOpts{}
 	createItemCmd := &cobra.Command{
-		Short: "create an item in a project",
+		Short: "create a draft issue in a project",
 		Use:   "create",
 		Example: `
-# create a draft item in the current user's project
-gh projects item create --draft --me --number 1 --title "a new item"
+# create a draft issue in the current user's project
+gh projects item create --me --number 1 --title "a new item"
 
-# create a draft item in a user project
-gh projects item create --draft --user monalisa --number 1 --title "a new item"
+# create a draft issue in a user project
+gh projects item create --user monalisa --number 1 --title "a new item"
 
-# create a draft item in an org project
-gh projects item create --draft --org github --number 1 --title "a new item"
-
-# create an item in the current user's project
-gh projects item create  --me --number 1 --url https://github.com/cli/go-gh/issues/1
-
-# create an item in a user project
-gh projects item create --user monalisa --number 1 --url https://github.com/cli/go-gh/issues/1
-
-# create an item in an org project
-gh projects item create --org github --number 1 --url https://github.com/cli/go-gh/issues/1
+# create a draft issue in an org project
+gh projects item create --org github --number 1 --title "a new item"
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -82,14 +71,12 @@ gh projects item create --org github --number 1 --url https://github.com/cli/go-
 	createItemCmd.Flags().StringVar(&opts.body, "body", "b", "Body of the draft issue item.")
 	createItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	createItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createItemCmd.Flags().StringVar(&opts.itemURL, "url", "", "URL of the issue or pull request to add to the project. Must be of form https://github.com/OWNER/REPO/issues/NUMBER or https://github.com/OWNER/REPO/pull/NUMBER")
 	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "User the login of the current use as the organization owner.")
-	createItemCmd.Flags().BoolVar(&opts.draft, "draft", false, "Create a draft issue.")
 	createItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	createItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	createItemCmd.MarkFlagsMutuallyExclusive("draft", "url")
 
 	createItemCmd.MarkFlagRequired("number")
+	createItemCmd.MarkFlagRequired("title")
 	return createItemCmd
 }
 
@@ -97,14 +84,6 @@ func runCreateItem(config createItemConfig) error {
 	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
-	}
-
-	if config.opts.draft && config.opts.title == "" {
-		return fmt.Errorf("--title is required with draft issues")
-	}
-
-	if !config.opts.draft && config.opts.itemURL == "" {
-		return fmt.Errorf("one of --url or --draft is required")
 	}
 
 	var login string
@@ -125,38 +104,14 @@ func runCreateItem(config createItemConfig) error {
 	}
 	config.projectID = projectID
 
-	if config.opts.draft {
-		query, variables := buildCreateDraftIssue(config)
+	query, variables := buildCreateDraftIssue(config)
 
-		err = config.client.Mutate("CreateDraftItem", query, variables)
-		if err != nil {
-			return err
-		}
-
-		return printResults(config, query.CreateProjectDraftItem.ProjectV2Item)
-	}
-
-	itemID, err := queries.GetIssueOrPullRequestID(config.client, config.opts.itemURL)
-	if err != nil {
-		return err
-	}
-	query, variables := buildCreateItem(config, itemID)
 	err = config.client.Mutate("CreateDraftItem", query, variables)
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, query.CreateProjectItem.ProjectV2Item)
-
-}
-
-func buildCreateItem(config createItemConfig, itemID string) (*queries.CreateProjectItem, map[string]interface{}) {
-	return &queries.CreateProjectItem{}, map[string]interface{}{
-		"input": githubv4.AddProjectV2ItemByIdInput{
-			ProjectID: githubv4.ID(config.projectID),
-			ContentID: githubv4.ID(itemID),
-		},
-	}
+	return printResults(config, query.CreateProjectDraftItem.ProjectV2Item)
 }
 
 func buildCreateDraftIssue(config createItemConfig) (*queries.CreateProjectDraftItem, map[string]interface{}) {

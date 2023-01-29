@@ -1,4 +1,4 @@
-package create
+package add
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"gopkg.in/h2non/gock.v1"
 )
 
-func TestRunCreateItem_Draft_User(t *testing.T) {
+func TestRunAddItem_User(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
@@ -37,15 +37,35 @@ func TestRunCreateItem_Draft_User(t *testing.T) {
 			},
 		})
 
-	// create item
+	// get item ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateDraftItem.*","variables":{"input":{"projectId":"an ID","title":"a title","body":""}}}`).
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query GetIssueOrPullRequest.*",
+			"variables": map[string]interface{}{
+				"url": "https://github.com/cli/go-gh/issues/1",
+			},
+		}).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
-				"addProjectV2DraftIssue": map[string]interface{}{
-					"projectItem": map[string]interface{}{
+				"resource": map[string]interface{}{
+					"id":         "item ID",
+					"__typename": "Issue",
+				},
+			},
+		})
+
+	// create item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation AddItem.*","variables":{"input":{"projectId":"an ID","contentId":"item ID"}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"addProjectV2ItemById": map[string]interface{}{
+					"item": map[string]interface{}{
 						"id": "item ID",
 					},
 				},
@@ -56,25 +76,25 @@ func TestRunCreateItem_Draft_User(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := createItemConfig{
+	config := addItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: createItemOpts{
-			title:     "a title",
+		opts: addItemOpts{
 			userOwner: "monalisa",
 			number:    1,
+			itemURL:   "https://github.com/cli/go-gh/issues/1",
 		},
 		client: client,
 	}
 
-	err = runCreateItem(config)
+	err = runAddItem(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Created item\n",
+		"Added item\n",
 		buf.String())
 }
 
-func TestRunCreateItem_Draft_Org(t *testing.T) {
+func TestRunAddItem_Org(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 	// get project ID
@@ -99,15 +119,35 @@ func TestRunCreateItem_Draft_Org(t *testing.T) {
 			},
 		})
 
-	// create item
+	// get item ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateDraftItem.*","variables":{"input":{"projectId":"an ID","title":"a title","body":""}}}`).
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query GetIssueOrPullRequest.*",
+			"variables": map[string]interface{}{
+				"url": "https://github.com/cli/go-gh/issues/1",
+			},
+		}).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
-				"addProjectV2DraftIssue": map[string]interface{}{
-					"projectItem": map[string]interface{}{
+				"resource": map[string]interface{}{
+					"id":         "item ID",
+					"__typename": "Issue",
+				},
+			},
+		})
+
+	// create item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation AddItem.*","variables":{"input":{"projectId":"an ID","contentId":"item ID"}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"addProjectV2ItemById": map[string]interface{}{
+					"item": map[string]interface{}{
 						"id": "item ID",
 					},
 				},
@@ -118,25 +158,25 @@ func TestRunCreateItem_Draft_Org(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := createItemConfig{
+	config := addItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: createItemOpts{
-			title:    "a title",
+		opts: addItemOpts{
 			orgOwner: "github",
 			number:   1,
+			itemURL:  "https://github.com/cli/go-gh/issues/1",
 		},
 		client: client,
 	}
 
-	err = runCreateItem(config)
+	err = runAddItem(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Created item\n",
+		"Added item\n",
 		buf.String())
 }
 
-func TestRunCreateItem_Draft_Me(t *testing.T) {
+func TestRunAddItem_Me(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 	// get project ID
@@ -160,15 +200,35 @@ func TestRunCreateItem_Draft_Me(t *testing.T) {
 			},
 		})
 
-	// create item
+	// get item ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateDraftItem.*","variables":{"input":{"projectId":"an ID","title":"a title","body":"a body"}}}`).
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query GetIssueOrPullRequest.*",
+			"variables": map[string]interface{}{
+				"url": "https://github.com/cli/go-gh/pull/1",
+			},
+		}).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
-				"addProjectV2DraftIssue": map[string]interface{}{
-					"projectItem": map[string]interface{}{
+				"resource": map[string]interface{}{
+					"id":         "item ID",
+					"__typename": "PullRequest",
+				},
+			},
+		})
+
+	// create item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation AddItem.*","variables":{"input":{"projectId":"an ID","contentId":"item ID"}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"addProjectV2ItemById": map[string]interface{}{
+					"item": map[string]interface{}{
 						"id": "item ID",
 					},
 				},
@@ -179,34 +239,33 @@ func TestRunCreateItem_Draft_Me(t *testing.T) {
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
-	config := createItemConfig{
+	config := addItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: createItemOpts{
-			title:  "a title",
-			viewer: true,
-			number: 1,
-			body:   "a body",
+		opts: addItemOpts{
+			viewer:  true,
+			number:  1,
+			itemURL: "https://github.com/cli/go-gh/pull/1",
 		},
 		client: client,
 	}
 
-	err = runCreateItem(config)
+	err = runAddItem(config)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Created item\n",
+		"Added item\n",
 		buf.String())
 }
 
-func TestRunCreateItem_NoOrgOrUserSpecified(t *testing.T) {
+func TestRunAddItem_NoOrgOrUserSpecified(t *testing.T) {
 	buf := bytes.Buffer{}
-	config := createItemConfig{
+	config := addItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
-		opts: createItemOpts{
-			title: "a title",
+		opts: addItemOpts{
+			itemURL: "a URL",
 		},
 	}
 
-	err := runCreateItem(config)
+	err := runAddItem(config)
 	assert.EqualError(t, err, "one of --user, --org or --me is required")
 }

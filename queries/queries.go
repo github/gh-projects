@@ -356,7 +356,7 @@ type CreateProjectDraftItem struct {
 	} `graphql:"addProjectV2DraftIssue(input:$input)"`
 }
 
-type CreateProjectItem struct {
+type AddProjectItem struct {
 	CreateProjectItem struct {
 		ProjectV2Item ProjectV2Item `graphql:"item"`
 	} `graphql:"addProjectV2ItemById(input:$input)"`
