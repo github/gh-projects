@@ -75,6 +75,16 @@ type ProjectUserQueryWithItems struct {
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
+
+type ProjectUserQueryWithFields struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectV2Field
+			} `graphql:"fields(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"user(login: $login)"`
+}
 type ProjectOrganizationQuery struct {
 	Owner struct {
 		Project ProjectV2 `graphql:"projectV2(number: $number)"`
@@ -91,6 +101,17 @@ type ProjectOrganizationQueryWithItems struct {
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
+
+type ProjectOrganizationQueryWithFields struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectV2Field
+			} `graphql:"fields(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"organization(login: $login)"`
+}
+
 type ProjectViewerQuery struct {
 	Owner struct {
 		Project ProjectV2 `graphql:"projectV2(number: $number)"`
@@ -104,6 +125,16 @@ type ProjectViewerQueryWithItems struct {
 			Items struct {
 				Nodes []ProjectV2Item
 			} `graphql:"items(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"viewer"`
+}
+
+type ProjectViewerQueryWithFields struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectV2Field
+			} `graphql:"fields(first: $first)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
@@ -179,6 +210,51 @@ func (p ProjectV2Item) ItemRepo() string {
 	return ""
 }
 
+type ProjectV2Field struct {
+	Type  string `graphql:"__typename"`
+	Field struct {
+		ID       string
+		Name     string
+		DataType string
+	} `graphql:"... on ProjectV2Field"`
+	IterationField struct {
+		ID       string
+		Name     string
+		DataType string
+	} `graphql:"... on ProjectV2IterationField"`
+	SingleSelectField struct {
+		ID       string
+		Name     string
+		DataType string
+	} `graphql:"... on ProjectV2SingleSelectField"`
+}
+
+func (p ProjectV2Field) ID() string {
+	if p.Type == "ProjectV2Field" {
+		return p.Field.ID
+	} else if p.Type == "ProjectV2IterationField" {
+		return p.IterationField.ID
+	} else if p.Type == "ProjectV2SingleSelectField" {
+		return p.SingleSelectField.ID
+	}
+	return ""
+}
+
+func (p ProjectV2Field) Name() string {
+	if p.Type == "ProjectV2Field" {
+		return p.Field.Name
+	} else if p.Type == "ProjectV2IterationField" {
+		return p.IterationField.Name
+	} else if p.Type == "ProjectV2SingleSelectField" {
+		return p.SingleSelectField.Name
+	}
+	return ""
+}
+
+func (p ProjectV2Field) DataType() string {
+	return p.Type
+}
+
 type OwnerType string
 
 const UserOwner OwnerType = "USER"
@@ -249,6 +325,28 @@ func GetProjectItems(client api.GQLClient, login string, t OwnerType, number int
 	return []ProjectV2Item{}, errors.New("unknown owner type")
 }
 
+func GetProjectFields(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectV2Field, error) {
+	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		variables["login"] = graphql.String(login)
+		var query ProjectUserQueryWithFields
+		err := client.Query("UserProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	} else if t == OrgOwner {
+		variables["login"] = graphql.String(login)
+		var query ProjectOrganizationQueryWithFields
+		err := client.Query("OrgProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	} else if t == ViewerOwner {
+		var query ProjectViewerQueryWithFields
+		err := client.Query("ViewerProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	}
+	return []ProjectV2Field{}, errors.New("unknown owner type")
+}
 func GetIssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
 	uri, err := url.Parse(rawURL)
 	if err != nil {

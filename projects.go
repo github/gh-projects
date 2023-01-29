@@ -7,6 +7,7 @@ import (
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
+	cmdFieldList "github.com/github/gh-projects/cmd/field/list"
 	cmdItemAdd "github.com/github/gh-projects/cmd/item/add"
 	cmdItemArchive "github.com/github/gh-projects/cmd/item/archive"
 	cmdItemCreate "github.com/github/gh-projects/cmd/item/create"
@@ -27,6 +28,11 @@ func main() {
 		Short: "Commands for items",
 	}
 
+	var fieldCmd = &cobra.Command{
+		Use:   "field",
+		Short: "Commands for fields",
+	}
+
 	cmdFactory := factory.New("0.1.0") // will be replaced by buildVersion := build.Version
 
 	rootCmd.AddCommand(cmdList.NewCmdList(cmdFactory, nil))
@@ -42,6 +48,9 @@ func main() {
 	itemCmd.AddCommand(cmdItemArchive.NewCmdArchiveItem(cmdFactory, nil))
 	itemCmd.AddCommand(cmdItemDelete.NewCmdDeleteItem(cmdFactory, nil))
 
+	// field subcommand
+	rootCmd.AddCommand(fieldCmd)
+	fieldCmd.AddCommand(cmdFieldList.NewCmdList(cmdFactory, nil))
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

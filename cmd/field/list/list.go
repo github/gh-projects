@@ -36,14 +36,14 @@ func (opts *listOpts) first() int {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "list the items in a project",
+		Short: "list the fields in a project",
 		Use:   "list",
 		Example: `
-# list the items in project number 1 for the current user
-gh projects item list --number 1
+# list the fields in project number 1 for the current user
+gh projects field list --number 1
 
-# list the items in project number 1 for user monalisa
-gh projects item list --number 1 --user monalisa
+# list the fields in project number 1 for user monalisa
+gh projects field list --number 1 --user monalisa
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -67,7 +67,7 @@ gh projects item list --number 1 --user monalisa
 		},
 	}
 
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
+	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
@@ -100,48 +100,29 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	items, err := queries.GetProjectItems(config.client, login, ownerType, config.opts.number, config.opts.first())
+	fields, err := queries.GetProjectFields(config.client, login, ownerType, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, items, login)
+	return printResults(config, fields, login)
 }
 
-func printResults(config listConfig, items []queries.ProjectV2Item, login string) error {
-	// no items
-	if len(items) == 0 {
-		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no items", config.opts.number, login))
+func printResults(config listConfig, fields []queries.ProjectV2Field, login string) error {
+	if len(fields) == 0 {
+		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields", config.opts.number, login))
 		config.tp.EndRow()
 		config.tp.Render()
 		return nil
 	}
 
-	config.tp.AddField("Type")
-	config.tp.AddField("Title")
-	config.tp.AddField("Body")
-	config.tp.AddField("Number")
-	config.tp.AddField("Repository")
+	config.tp.AddField("Name")
+	config.tp.AddField("DataType")
 	config.tp.EndRow()
 
-	for _, i := range items {
-		config.tp.AddField(i.ItemType())
-		config.tp.AddField(i.ItemTitle())
-		if i.ItemBody() == "" {
-			config.tp.AddField(" - ")
-		} else {
-			config.tp.AddField(i.ItemBody())
-		}
-		if i.ItemNumber() == 0 {
-			config.tp.AddField(" - ")
-		} else {
-			config.tp.AddField(fmt.Sprintf("%d", i.ItemNumber()))
-		}
-		if i.ItemRepo() == "" {
-			config.tp.AddField(" - ")
-		} else {
-			config.tp.AddField(i.ItemRepo())
-		}
+	for _, f := range fields {
+		config.tp.AddField(f.Name())
+		config.tp.AddField(f.DataType())
 		config.tp.EndRow()
 	}
 
