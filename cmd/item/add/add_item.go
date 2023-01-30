@@ -19,7 +19,6 @@ type addItemOpts struct {
 	viewer    bool
 	number    int
 	itemURL   string
-	// assignees []string
 }
 
 type addItemConfig struct {
@@ -38,16 +37,16 @@ type addProjectItemMutation struct {
 func NewCmdAddItem(f *cmdutil.Factory, runF func(config addItemConfig) error) *cobra.Command {
 	opts := addItemOpts{}
 	addItemCmd := &cobra.Command{
-		Short: "add a pull request or an issue to a project",
+		Short: "Add a pull request or an issue to a project",
 		Use:   "add",
 		Example: `
-# add an item to the current user's project
+# add an item to the current user's project 1
 gh projects item add --me --number 1 --url https://github.com/cli/go-gh/issues/1
 
-# add an item to a user project
+# add an item to user monalisa project 1
 gh projects item add --user monalisa --number 1 --url https://github.com/cli/go-gh/issues/1
 
-# add an item to an org project
+# add an item to the github org project 1
 gh projects item add --org github --number 1 --url https://github.com/cli/go-gh/issues/1
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,18 +73,18 @@ gh projects item add --org github --number 1 --url https://github.com/cli/go-gh/
 
 	addItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	addItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	addItemCmd.Flags().StringVar(&opts.itemURL, "url", "", "URL of the issue or pull request to add to the project. Must be of form https://github.com/OWNER/REPO/issues/NUMBER or https://github.com/OWNER/REPO/pull/NUMBER")
-	addItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	addItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
 	addItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
+	addItemCmd.Flags().StringVar(&opts.itemURL, "url", "", "URL of the issue or pull request to add to the project. Must be of form https://github.com/OWNER/REPO/issues/NUMBER or https://github.com/OWNER/REPO/pull/NUMBER")
 	addItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 
 	addItemCmd.MarkFlagRequired("number")
 	addItemCmd.MarkFlagRequired("url")
+
 	return addItemCmd
 }
 
 func runAddItem(config addItemConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
 	}
@@ -112,7 +111,7 @@ func runAddItem(config addItemConfig) error {
 	if err != nil {
 		return err
 	}
-	query, variables := buildAddItem(config, itemID)
+	query, variables := addItemArgs(config, itemID)
 	err = config.client.Mutate("AddItem", query, variables)
 	if err != nil {
 		return err
@@ -122,7 +121,7 @@ func runAddItem(config addItemConfig) error {
 
 }
 
-func buildAddItem(config addItemConfig, itemID string) (*addProjectItemMutation, map[string]interface{}) {
+func addItemArgs(config addItemConfig, itemID string) (*addProjectItemMutation, map[string]interface{}) {
 	return &addProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.AddProjectV2ItemByIdInput{
 			ProjectID: githubv4.ID(config.projectID),

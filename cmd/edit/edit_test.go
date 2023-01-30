@@ -40,21 +40,7 @@ func TestRunUpdate_User(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation UpdateProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"title":    "a new title",
-		// 			"shortDescription":    "a new description",
-		// 			"public":    true,
-		// 			"readme":    "a new readme",
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -123,21 +109,7 @@ func TestRunUpdate_Org(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation UpdateProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"title":    "a new title",
-		// 			"shortDescription":    "a new description",
-		// 			"public":    true,
-		// 			"readme":    "a new readme",
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -205,21 +177,7 @@ func TestRunUpdate_Me(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":false}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation UpdateProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"title":    "a new title",
-		// 			"shortDescription":    "a new description",
-		// 			"public":    false,
-		// 			"readme":    "a new readme",
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -289,18 +247,7 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 	// Update project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"another title"}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation UpdateProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"title": "another title",
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{

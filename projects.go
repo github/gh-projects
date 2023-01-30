@@ -21,7 +21,9 @@ import (
 // analogous to cli/pkg/cmd/pr.go in cli/cli
 func main() {
 	var rootCmd = &cobra.Command{
-		Use: "projects",
+		Use:   "projects",
+		Short: "Work with GitHub Projects.",
+		Long:  "Work with GitHub Projects. Note that the token you are using must have 'project' scope, which is not set by default. You can verify your token scope by running 'gh auth status' and add the project scope by running 'gh auth refresh -s project'.",
 	}
 
 	var itemCmd = &cobra.Command{

@@ -36,14 +36,17 @@ func (opts *listOpts) first() int {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "list the fields in a project",
+		Short: "List the fields in a project",
 		Use:   "list",
 		Example: `
 # list the fields in project number 1 for the current user
-gh projects field list --number 1
+gh projects field list --number 1 --me
 
 # list the fields in project number 1 for user monalisa
 gh projects field list --number 1 --user monalisa
+
+# list the first 30 fields in project number 1 for org github
+gh projects field list --number 1 --org github --limit 30
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -67,22 +70,20 @@ gh projects field list --number 1 --user monalisa
 		},
 	}
 
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
 	listCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-
 	listCmd.MarkFlagRequired("number")
 
 	return listCmd
 }
 
 func runList(config listConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
 	}

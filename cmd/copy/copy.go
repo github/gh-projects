@@ -14,17 +14,17 @@ import (
 )
 
 type copyOpts struct {
-	title              string
-	sourceUserOwner    string
-	targetUserOwner    string
-	sourceOrgOwner     string
-	targetOrgOwner     string
-	sourceViewer       bool
-	targetViewer       bool
 	includeDraftIssues bool
 	number             int
 	ownerID            string
 	projectID          string
+	sourceOrgOwner     string
+	sourceUserOwner    string
+	sourceViewer       bool
+	targetOrgOwner     string
+	targetUserOwner    string
+	targetViewer       bool
+	title              string
 }
 
 type copyConfig struct {
@@ -50,18 +50,17 @@ type CopyProjectV2Input struct {
 func NewCmdCopy(f *cmdutil.Factory, runF func(config copyConfig) error) *cobra.Command {
 	opts := copyOpts{}
 	copyCmd := &cobra.Command{
-		Short: "copy a project",
+		Short: "Copy a project",
 		Use:   "copy",
 		Example: `
-# copy a project in interative mode
-gh projects copy
+# copy project 1 owned by user monalisa to org github with title "a new project"
+gh projects copy --source-user monalisa --number 1 --title "a new project" --target-org github
 
-# copy a project owned by user monalisa
-gh projects copy --user monalisa --number 1 --title "a new project"
+# copy project 1 owned by the org github to current user with title "a new project"
+gh projects copy --source-org github --number 1 --title "a new project" --target-me
 
-# copy a project owned by the org github
-gh projects copy --org github --number 1 --title "a new project"
-
+# copy project 1 owned by the org github to user monalisa with title "a new project" and include draft issues
+gh projects copy --source-org github --number 1 --title "a new project" --target-user monalisa --drafts
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -85,22 +84,25 @@ gh projects copy --org github --number 1 --title "a new project"
 		},
 	}
 
-	copyCmd.Flags().StringVar(&opts.title, "title", "", "Title of the project copy. Titles do not need to be unique.")
 	copyCmd.Flags().StringVar(&opts.sourceUserOwner, "source-user", "", "Login of the source user owner.")
 	copyCmd.Flags().StringVar(&opts.sourceOrgOwner, "source-org", "", "Login of the source organization owner.")
 	copyCmd.Flags().BoolVar(&opts.sourceViewer, "source-me", false, "Login of the current user as the source project owner.")
-	copyCmd.Flags().StringVar(&opts.targetOrgOwner, "target-org", "", "Login of the target organization owner.")
 	copyCmd.Flags().StringVar(&opts.targetUserOwner, "target-user", "", "Login of the target organization owner.")
+	copyCmd.Flags().StringVar(&opts.targetOrgOwner, "target-org", "", "Login of the target organization owner.")
 	copyCmd.Flags().BoolVar(&opts.targetViewer, "target-me", false, "Login of the current user as the target project owner.")
-	copyCmd.Flags().BoolVar(&opts.includeDraftIssues, "drafts", false, "Include draft issues in new copy.")
 	copyCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the source project.")
+	copyCmd.Flags().StringVar(&opts.title, "title", "", "Title of the new project copy. Titles do not need to be unique.")
+	copyCmd.Flags().BoolVar(&opts.includeDraftIssues, "drafts", false, "Include draft issues in new copy.")
+
+	copyCmd.MarkFlagRequired("number")
+	copyCmd.MarkFlagRequired("title")
 	copyCmd.MarkFlagsMutuallyExclusive("source-user", "source-org", "source-me")
 	copyCmd.MarkFlagsMutuallyExclusive("target-user", "target-org", "target-me")
+
 	return copyCmd
 }
 
 func runCopy(config copyConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.sourceViewer && config.opts.sourceUserOwner == "" && config.opts.sourceOrgOwner == "" {
 		return fmt.Errorf("one of --source-user, --source-org or --source-me is required")
 	}
@@ -147,7 +149,7 @@ func runCopy(config copyConfig) error {
 	}
 	config.opts.ownerID = ownerId
 
-	query, variables := buildCopyQuery(config)
+	query, variables := copyArgs(config)
 
 	err = config.client.Mutate("CopyProjectV2", query, variables)
 	if err != nil {
@@ -157,7 +159,7 @@ func runCopy(config copyConfig) error {
 	return printResults(config, query.CopyProjectV2.ProjectV2)
 }
 
-func buildCopyQuery(config copyConfig) (*copyProjectMutation, map[string]interface{}) {
+func copyArgs(config copyConfig) (*copyProjectMutation, map[string]interface{}) {
 	return &copyProjectMutation{}, map[string]interface{}{
 		"input": CopyProjectV2Input{
 			OwnerID:            githubv4.ID(config.opts.ownerID),

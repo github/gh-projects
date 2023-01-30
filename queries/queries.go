@@ -46,6 +46,28 @@ type Project struct {
 	}
 }
 
+// ProjectId returns the ID of a project. If the OwnerType is VIEWER, no login is required.
+func ProjectId(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
+	variables := map[string]interface{}{
+		"login":  graphql.String(login),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		var query userOwner
+		err := client.Query("UserProject", &query, variables)
+		return query.Owner.Project.ID, err
+	} else if t == OrgOwner {
+		var query orgOwner
+		err := client.Query("OrgProject", &query, variables)
+		return query.Owner.Project.ID, err
+	} else if t == ViewerOwner {
+		var query viewerOwner
+		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
+		return query.Owner.Project.ID, err
+	}
+	return "", errors.New("unknown owner type")
+}
+
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
 	Id       string
@@ -123,6 +145,30 @@ func (p ProjectItem) Repo() string {
 	return ""
 }
 
+// ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
+func ProjectItems(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectItem, error) {
+	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		variables["login"] = graphql.String(login)
+		var query userOwnerWithItems
+		err := client.Query("UserProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	} else if t == OrgOwner {
+		variables["login"] = graphql.String(login)
+		var query orgOwnerWithItems
+		err := client.Query("OrgProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	} else if t == ViewerOwner {
+		var query viewerOwnerWithItems
+		err := client.Query("ViewerProjectWithItems", &query, variables)
+		return query.Owner.Project.Items.Nodes, err
+	}
+	return []ProjectItem{}, errors.New("unknown owner type")
+}
+
 // ProjectField is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration.
 type ProjectField struct {
 	TypeName string `graphql:"__typename"`
@@ -170,6 +216,30 @@ func (p ProjectField) Name() string {
 // Type is the typename of the project field.
 func (p ProjectField) Type() string {
 	return p.TypeName
+}
+
+// ProjectFields returns the fields of a project. If the OwnerType is VIEWER, no login is required.
+func ProjectFields(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectField, error) {
+	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
+		"number": graphql.Int(number),
+	}
+	if t == UserOwner {
+		variables["login"] = graphql.String(login)
+		var query userOwnerWithFields
+		err := client.Query("UserProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	} else if t == OrgOwner {
+		variables["login"] = graphql.String(login)
+		var query orgOwnerWithFields
+		err := client.Query("OrgProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	} else if t == ViewerOwner {
+		var query viewerOwnerWithFields
+		err := client.Query("ViewerProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	}
+	return []ProjectField{}, errors.New("unknown owner type")
 }
 
 // viewerLogin is used to query the Login of the viewer.
@@ -322,76 +392,6 @@ func OwnerID(client api.GQLClient, login string, t OwnerType) (string, error) {
 		return query.Viewer.Id, err
 	}
 	return "", errors.New("unknown owner type")
-}
-
-// ProjectId returns the ID of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectId(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
-	variables := map[string]interface{}{
-		"login":  graphql.String(login),
-		"number": graphql.Int(number),
-	}
-	if t == UserOwner {
-		var query userOwner
-		err := client.Query("UserProject", &query, variables)
-		return query.Owner.Project.ID, err
-	} else if t == OrgOwner {
-		var query orgOwner
-		err := client.Query("OrgProject", &query, variables)
-		return query.Owner.Project.ID, err
-	} else if t == ViewerOwner {
-		var query viewerOwner
-		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
-		return query.Owner.Project.ID, err
-	}
-	return "", errors.New("unknown owner type")
-}
-
-// ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectItem, error) {
-	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
-		"number": graphql.Int(number),
-	}
-	if t == UserOwner {
-		variables["login"] = graphql.String(login)
-		var query userOwnerWithItems
-		err := client.Query("UserProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
-	} else if t == OrgOwner {
-		variables["login"] = graphql.String(login)
-		var query orgOwnerWithItems
-		err := client.Query("OrgProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
-	} else if t == ViewerOwner {
-		var query viewerOwnerWithItems
-		err := client.Query("ViewerProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
-	}
-	return []ProjectItem{}, errors.New("unknown owner type")
-}
-
-// ProjectFields returns the fields of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectField, error) {
-	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
-		"number": graphql.Int(number),
-	}
-	if t == UserOwner {
-		variables["login"] = graphql.String(login)
-		var query userOwnerWithFields
-		err := client.Query("UserProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
-	} else if t == OrgOwner {
-		variables["login"] = graphql.String(login)
-		var query orgOwnerWithFields
-		err := client.Query("OrgProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
-	} else if t == ViewerOwner {
-		var query viewerOwnerWithFields
-		err := client.Query("ViewerProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
-	}
-	return []ProjectField{}, errors.New("unknown owner type")
 }
 
 // issueOrPullRequest is used to query the global id of an issue or pull request by its URL.

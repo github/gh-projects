@@ -40,18 +40,7 @@ func TestRunClose_User(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation CloseProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"closed":    true,
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -116,18 +105,7 @@ func TestRunClose_Org(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation CloseProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"closed":  true,
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -191,18 +169,7 @@ func TestRunClose_Me(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation CloseProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"closed":    true,
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -268,18 +235,7 @@ func TestRunClose_Reopen(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		// this is the same as the below JSON, but for some reason gock doesn't match on the graphql boolean
-		// TODO: would love to figure out why
 		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":false}}}`).
-		// JSON(map[string]interface{}{
-		// 	"query": "mutation CloseProjectV2.*",
-		// 	"variables": map[string]interface{}{
-		// 		"input": map[string]interface{}{
-		// 			"projectId": "an ID",
-		// 			"closed":    false,
-		// 		},
-		// 	},
-		// }).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{

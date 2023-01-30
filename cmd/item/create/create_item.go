@@ -20,7 +20,6 @@ type createItemOpts struct {
 	orgOwner  string
 	viewer    bool
 	number    int
-	// assignees []string
 }
 
 type createItemConfig struct {
@@ -39,17 +38,17 @@ type createProjectDraftItemMutation struct {
 func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) error) *cobra.Command {
 	opts := createItemOpts{}
 	createItemCmd := &cobra.Command{
-		Short: "create a draft issue in a project",
+		Short: "Create a draft issue in a project",
 		Use:   "create",
 		Example: `
-# create a draft issue in the current user's project
-gh projects item create --me --number 1 --title "a new item"
+# create a draft issue in the current user's project 1 with title "new item" and body "new item body"
+gh projects item create --me --number 1 --title "new item" --body "new item body"
 
-# create a draft issue in a user project
-gh projects item create --user monalisa --number 1 --title "a new item"
+# create a draft issue in monalisa user project 1 with title "new item" and body "new item body"
+gh projects item create --user monalisa --number 1 --title "new item" --body "new item body"
 
-# create a draft issue in an org project
-gh projects item create --org github --number 1 --title "a new item"
+# create a draft issue in github org project 1 with title "new item" and body "new item body"
+gh projects item create --org github --number 1 --title "new item" --body "new item body"
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -73,21 +72,21 @@ gh projects item create --org github --number 1 --title "a new item"
 		},
 	}
 
-	createItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item.")
-	createItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item.")
 	createItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	createItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
 	createItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
-	createItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	createItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item.")
+	createItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item.")
 
+	createItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 	createItemCmd.MarkFlagRequired("number")
 	createItemCmd.MarkFlagRequired("title")
+
 	return createItemCmd
 }
 
 func runCreateItem(config createItemConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
 	}
@@ -110,7 +109,7 @@ func runCreateItem(config createItemConfig) error {
 	}
 	config.projectID = projectID
 
-	query, variables := buildCreateDraftIssue(config)
+	query, variables := createDraftIssueArgs(config)
 
 	err = config.client.Mutate("CreateDraftItem", query, variables)
 	if err != nil {
@@ -120,13 +119,12 @@ func runCreateItem(config createItemConfig) error {
 	return printResults(config, query.CreateProjectDraftItem.ProjectV2Item)
 }
 
-func buildCreateDraftIssue(config createItemConfig) (*createProjectDraftItemMutation, map[string]interface{}) {
+func createDraftIssueArgs(config createItemConfig) (*createProjectDraftItemMutation, map[string]interface{}) {
 	return &createProjectDraftItemMutation{}, map[string]interface{}{
 		"input": githubv4.AddProjectV2DraftIssueInput{
 			Body:      githubv4.NewString(githubv4.String(config.opts.body)),
 			ProjectID: githubv4.ID(config.projectID),
 			Title:     githubv4.String(config.opts.title),
-			// optionally include assignees
 		},
 	}
 }

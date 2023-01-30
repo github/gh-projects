@@ -37,16 +37,16 @@ type deleteProjectItemMutation struct {
 func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) error) *cobra.Command {
 	opts := deleteItemOpts{}
 	deleteItemCmd := &cobra.Command{
-		Short: "delete an item from a project",
+		Short: "Delete an item from a project",
 		Use:   "delete",
 		Example: `
-# delete an item in the current user's project
+# delete an item in the current user's project 1
 gh projects item delete --me --number 1 --id ID
 
-# delete an item in a user project
+# delete an item in the monalisa user project 1
 gh projects item delete --user monalisa --number 1 --id ID
 
-# delete an item in an org project
+# delete an item in the github org project 1
 gh projects item delete --org github --number 1 --id ID
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,13 +73,14 @@ gh projects item delete --org github --number 1 --id ID
 
 	deleteItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	deleteItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	deleteItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to delete from the project.")
-	deleteItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	deleteItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
 	deleteItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
+	deleteItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to delete from the project.")
 
 	deleteItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
 	deleteItemCmd.MarkFlagRequired("number")
 	deleteItemCmd.MarkFlagRequired("id")
+
 	return deleteItemCmd
 }
 
@@ -107,7 +108,7 @@ func runDeleteItem(config deleteItemConfig) error {
 	}
 	config.projectID = projectID
 
-	query, variables := buildDeleteItem(config, config.opts.itemID)
+	query, variables := deleteItemArgs(config, config.opts.itemID)
 	err = config.client.Mutate("DeleteProjectItem", query, variables)
 	if err != nil {
 		return err
@@ -117,7 +118,7 @@ func runDeleteItem(config deleteItemConfig) error {
 
 }
 
-func buildDeleteItem(config deleteItemConfig, itemID string) (*deleteProjectItemMutation, map[string]interface{}) {
+func deleteItemArgs(config deleteItemConfig, itemID string) (*deleteProjectItemMutation, map[string]interface{}) {
 	return &deleteProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.DeleteProjectV2ItemInput{
 			ProjectID: githubv4.ID(config.projectID),

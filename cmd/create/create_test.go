@@ -38,15 +38,7 @@ func TestRunCreate_User(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		JSON(map[string]interface{}{
-			"query": "mutation CreateProjectV2.*",
-			"variables": map[string]interface{}{
-				"input": map[string]string{
-					"ownerId": "an ID",
-					"title":   "a title",
-				},
-			},
-		}).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -109,16 +101,7 @@ func TestRunCreate_Org(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		JSON(map[string]interface{}{
-			"query": "mutation CreateProjectV2.*",
-			"variables": map[string]interface{}{
-				"input": map[string]string{
-					"ownerId": "an ID",
-					"title":   "a title",
-				},
-			},
-		}).
-		Reply(200).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
 				"createProjectV2": map[string]interface{}{
@@ -177,16 +160,7 @@ func TestRunCreate_Me(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		JSON(map[string]interface{}{
-			"query": "mutation CreateProjectV2.*",
-			"variables": map[string]interface{}{
-				"input": map[string]string{
-					"ownerId": "an ID",
-					"title":   "a title",
-				},
-			},
-		}).
-		Reply(200).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
 				"createProjectV2": map[string]interface{}{

@@ -43,19 +43,16 @@ const projectVisibilityPrivate = "PRIVATE"
 func NewCmdEdit(f *cmdutil.Factory, runF func(config editConfig) error) *cobra.Command {
 	opts := editOpts{}
 	editCmd := &cobra.Command{
-		Short: "edit a project",
+		Short: "Edit a project",
 		Use:   "edit",
 		Example: `
-# edit a project in interative mode
-gh projects edit
-
-# edit a project owned by user monalisa
+# edit project 1 owned by user monalisa to have the new title "New title"
 gh projects edit --user monalisa --number 1 --title "New title"
 
-# edit a project owned by org github
+# edit project 1 owned by org github to have the new title "New title"
 gh projects edit --org github --number 1 --title "New title"
 
-# edit a project owned by org github to public
+# edit project 1 owned by org github to have visibility public
 gh projects edit --org github --number 1 --visibility PUBLIC
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,20 +77,22 @@ gh projects edit --org github --number 1 --visibility PUBLIC
 		},
 	}
 
-	editCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	editCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
 	editCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
+	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
+	editCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	editCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
 	editCmd.Flags().StringVar(&opts.title, "title", "", "The edited title of the project.")
 	editCmd.Flags().StringVar(&opts.readme, "readme", "", "The edited readme of the project.")
 	editCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The edited short description of the project.")
+
+	editCmd.MarkFlagRequired("number")
 	editCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+
 	return editCmd
 }
 
 func runEdit(config editConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
 	}
@@ -115,8 +114,8 @@ func runEdit(config editConfig) error {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
 	} else {
+		login = "me"
 		ownerType = queries.ViewerOwner
-		// login intentionally empty here
 	}
 
 	projectId, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
@@ -124,7 +123,7 @@ func runEdit(config editConfig) error {
 		return err
 	}
 	config.projectId = projectId
-	query, variables := buildUpdateQuery(config)
+	query, variables := editArgs(config)
 
 	err = config.client.Mutate("UpdateProjectV2", query, variables)
 	if err != nil {
@@ -134,7 +133,7 @@ func runEdit(config editConfig) error {
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
 }
 
-func buildUpdateQuery(config editConfig) (*updateProjectMutation, map[string]interface{}) {
+func editArgs(config editConfig) (*updateProjectMutation, map[string]interface{}) {
 	variables := githubv4.UpdateProjectV2Input{ProjectID: githubv4.ID(config.projectId)}
 	if config.opts.title != "" {
 		variables.Title = githubv4.NewString(githubv4.String(config.opts.title))

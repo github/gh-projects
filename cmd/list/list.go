@@ -39,11 +39,11 @@ func (opts *listOpts) first() int {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "list the projects",
+		Short: "List the projects for a user or organization",
 		Use:   "list",
 		Example: `
 # list the projects for the current user
-gh projects list
+gh projects list --me
 
 # open projects for user "hubot" in the browser
 gh projects list --user hubot --web
@@ -77,12 +77,12 @@ gh projects list --org github --closed
 		},
 	}
 
+	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of queue entries to get. Defaults to 100.")
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
-	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
-	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project owner.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
@@ -91,7 +91,6 @@ gh projects list --org github --closed
 }
 
 func runList(config listConfig) error {
-	// TODO interactive survey if no arguments are provided
 	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
 		return fmt.Errorf("one of --user, --org or --me is required")
 	}
@@ -163,7 +162,6 @@ func filterProjects(nodes []queries.Project, config listConfig) []queries.Projec
 }
 
 func printResults(config listConfig, projects []queries.Project, login string) error {
-	// no projects
 	if len(projects) == 0 {
 		config.tp.AddField(fmt.Sprintf("No projects found for %s", login))
 		config.tp.EndRow()
