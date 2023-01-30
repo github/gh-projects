@@ -84,8 +84,8 @@ func TestRunList(t *testing.T) {
 						"login":"monalisa",
 						"projectsV2": {
 							"nodes": [
-								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
-								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false, "ID": "1"},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true, "ID": "2"}
 							]
 						}
 					}
@@ -109,7 +109,7 @@ func TestRunList(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		"Title\tDescription\tURL\tID\nProject 1\tShort description 1\turl1\t1\n",
 		buf.String())
 }
 
@@ -127,8 +127,8 @@ func TestRunListViewer(t *testing.T) {
 						"login":"monalisa",
 						"projectsV2": {
 							"nodes": [
-								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
-								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false, "ID": "1"},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true, "ID": "2"}
 							]
 						}
 					}
@@ -152,7 +152,7 @@ func TestRunListViewer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		"Title\tDescription\tURL\tID\nProject 1\tShort description 1\turl1\t1\n",
 		buf.String())
 }
 
@@ -169,8 +169,8 @@ func TestRunListOrg(t *testing.T) {
 						"login":"monalisa",
 						"projectsV2": {
 							"nodes": [
-								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
-								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false, "ID": "1"},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true, "ID": "2"}
 							]
 						}
 					}
@@ -194,7 +194,7 @@ func TestRunListOrg(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Title\tDescription\tURL\nProject 1\tShort description 1\turl1\n",
+		"Title\tDescription\tURL\tID\nProject 1\tShort description 1\turl1\t1\n",
 		buf.String())
 }
 
@@ -250,8 +250,8 @@ func TestRunListWithClosed(t *testing.T) {
 						"login":"monalisa",
 						"projectsV2": {
 							"nodes": [
-								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false},
-								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true}
+								{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false, "ID": "1"},
+								{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true, "ID": "2"}
 							]
 						}
 					}
@@ -276,7 +276,7 @@ func TestRunListWithClosed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Title\tDescription\tURL\tState\nProject 1\tShort description 1\turl1\topen\nProject 2\t - \turl2\tclosed\n",
+		"Title\tDescription\tURL\tState\tID\nProject 1\tShort description 1\turl1\topen\t1\nProject 2\t - \turl2\tclosed\t2\n",
 		buf.String())
 }
 

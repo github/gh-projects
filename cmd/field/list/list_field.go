@@ -119,11 +119,13 @@ func printResults(config listConfig, fields []queries.ProjectField, login string
 
 	config.tp.AddField("Name")
 	config.tp.AddField("DataType")
+	config.tp.AddField("ID")
 	config.tp.EndRow()
 
 	for _, f := range fields {
 		config.tp.AddField(f.Name())
 		config.tp.AddField(f.Type())
+		config.tp.AddField(f.ID())
 		config.tp.EndRow()
 	}
 

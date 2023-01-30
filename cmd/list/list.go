@@ -175,6 +175,7 @@ func printResults(config listConfig, projects []queries.Project, login string) e
 	if config.opts.closed {
 		config.tp.AddField("State")
 	}
+	config.tp.AddField("ID")
 	config.tp.EndRow()
 
 	for _, p := range projects {
@@ -194,6 +195,7 @@ func printResults(config listConfig, projects []queries.Project, login string) e
 			}
 			config.tp.AddField(state)
 		}
+		config.tp.AddField(p.ID)
 		config.tp.EndRow()
 	}
 

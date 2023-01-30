@@ -135,6 +135,10 @@ func (p ProjectItem) Number() int {
 	return 0
 }
 
+func (p ProjectItem) ID() string {
+	return p.Id
+}
+
 // Repo is the repository of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Repo() string {
 	if p.TypeName == "ISSUE" {
@@ -460,10 +464,10 @@ type viewerProjects struct {
 }
 
 // Projects returns the projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func Projects(client api.GQLClient, login string, t OwnerType, number int) ([]Project, error) {
+func Projects(client api.GQLClient, login string, t OwnerType, first int) ([]Project, error) {
 	variables := map[string]interface{}{
-		"login":  graphql.String(login),
-		"number": graphql.Int(number),
+		"login": graphql.String(login),
+		"first": graphql.Int(first),
 	}
 	if t == UserOwner {
 		var query userProjects
@@ -475,7 +479,7 @@ func Projects(client api.GQLClient, login string, t OwnerType, number int) ([]Pr
 		return query.Owner.Projects.Nodes, err
 	} else if t == ViewerOwner {
 		var query viewerProjects
-		err := client.Query("ViewerProjects", &query, map[string]interface{}{"number": graphql.Int(number)})
+		err := client.Query("ViewerProjects", &query, map[string]interface{}{"first": graphql.Int(first)})
 		return query.Owner.Projects.Nodes, err
 	}
 	return []Project{}, errors.New("unknown owner type")

@@ -122,6 +122,7 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	config.tp.AddField("Body")
 	config.tp.AddField("Number")
 	config.tp.AddField("Repository")
+	config.tp.AddField("ID")
 	config.tp.EndRow()
 
 	for _, i := range items {
@@ -142,6 +143,7 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 		} else {
 			config.tp.AddField(i.Repo())
 		}
+		config.tp.AddField(i.ID())
 		config.tp.EndRow()
 	}
 

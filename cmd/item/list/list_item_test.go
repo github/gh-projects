@@ -35,6 +35,7 @@ func TestRunList_User(t *testing.T) {
 							"nodes": []map[string]interface{}{
 								{
 									"type": "ISSUE",
+									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
 										"body":   "a body",
@@ -46,6 +47,7 @@ func TestRunList_User(t *testing.T) {
 								},
 								{
 									"type": "PULL_REQUEST",
+									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
 										"body":   "the body",
@@ -57,6 +59,7 @@ func TestRunList_User(t *testing.T) {
 								},
 								{
 									"type": "DRAFT_ISSUE",
+									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
 										"body":  "",
@@ -86,7 +89,7 @@ func TestRunList_User(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\nISSUE\tan issue\ta body\t1\tcli/go-gh\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \n",
+		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -114,6 +117,7 @@ func TestRunList_Org(t *testing.T) {
 							"nodes": []map[string]interface{}{
 								{
 									"type": "ISSUE",
+									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
 										"body":   "a body",
@@ -125,6 +129,7 @@ func TestRunList_Org(t *testing.T) {
 								},
 								{
 									"type": "PULL_REQUEST",
+									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
 										"body":   "the body",
@@ -136,6 +141,7 @@ func TestRunList_Org(t *testing.T) {
 								},
 								{
 									"type": "DRAFT_ISSUE",
+									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
 										"body":  "",
@@ -165,7 +171,7 @@ func TestRunList_Org(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\nISSUE\tan issue\ta body\t1\tcli/go-gh\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \n",
+		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -192,6 +198,7 @@ func TestRunList_Me(t *testing.T) {
 							"nodes": []map[string]interface{}{
 								{
 									"type": "ISSUE",
+									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
 										"body":   "a body",
@@ -203,6 +210,7 @@ func TestRunList_Me(t *testing.T) {
 								},
 								{
 									"type": "PULL_REQUEST",
+									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
 										"body":   "the body",
@@ -214,6 +222,7 @@ func TestRunList_Me(t *testing.T) {
 								},
 								{
 									"type": "DRAFT_ISSUE",
+									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
 										"body":  "",
@@ -243,7 +252,7 @@ func TestRunList_Me(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\nISSUE\tan issue\ta body\t1\tcli/go-gh\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \n",
+		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
