@@ -5,6 +5,7 @@ import (
 
 	"github.com/cli/cli/v2/pkg/cmd/factory"
 	cmdClose "github.com/github/gh-projects/cmd/close"
+	cmdCopy "github.com/github/gh-projects/cmd/copy"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
 	cmdFieldList "github.com/github/gh-projects/cmd/field/list"
@@ -37,6 +38,7 @@ func main() {
 
 	rootCmd.AddCommand(cmdList.NewCmdList(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCreate.NewCmdCreate(cmdFactory, nil))
+	rootCmd.AddCommand(cmdCopy.NewCmdCopy(cmdFactory, nil))
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
 	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
 
