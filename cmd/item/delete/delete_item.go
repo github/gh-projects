@@ -28,6 +28,12 @@ type deleteItemConfig struct {
 	projectID string
 }
 
+type deleteProjectItemMutation struct {
+	DeleteProjectItem struct {
+		DeletedItemId githubv4.ID `graphql:"deletedItemId"`
+	} `graphql:"deleteProjectV2Item(input:$input)"`
+}
+
 func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) error) *cobra.Command {
 	opts := deleteItemOpts{}
 	deleteItemCmd := &cobra.Command{
@@ -95,7 +101,7 @@ func runDeleteItem(config deleteItemConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projectID, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
@@ -111,8 +117,8 @@ func runDeleteItem(config deleteItemConfig) error {
 
 }
 
-func buildDeleteItem(config deleteItemConfig, itemID string) (*queries.DeleteProjectItem, map[string]interface{}) {
-	return &queries.DeleteProjectItem{}, map[string]interface{}{
+func buildDeleteItem(config deleteItemConfig, itemID string) (*deleteProjectItemMutation, map[string]interface{}) {
+	return &deleteProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.DeleteProjectV2ItemInput{
 			ProjectID: githubv4.ID(config.projectID),
 			ItemID:    githubv4.ID(itemID),

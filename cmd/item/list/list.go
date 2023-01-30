@@ -100,7 +100,7 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	items, err := queries.GetProjectItems(config.client, login, ownerType, config.opts.number, config.opts.first())
+	items, err := queries.ProjectItems(config.client, login, ownerType, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func runList(config listConfig) error {
 	return printResults(config, items, login)
 }
 
-func printResults(config listConfig, items []queries.ProjectV2Item, login string) error {
+func printResults(config listConfig, items []queries.ProjectItem, login string) error {
 	// no items
 	if len(items) == 0 {
 		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no items", config.opts.number, login))
@@ -125,22 +125,22 @@ func printResults(config listConfig, items []queries.ProjectV2Item, login string
 	config.tp.EndRow()
 
 	for _, i := range items {
-		config.tp.AddField(i.ItemType())
-		config.tp.AddField(i.ItemTitle())
-		if i.ItemBody() == "" {
+		config.tp.AddField(i.Type())
+		config.tp.AddField(i.Title())
+		if i.Body() == "" {
 			config.tp.AddField(" - ")
 		} else {
-			config.tp.AddField(i.ItemBody())
+			config.tp.AddField(i.Body())
 		}
-		if i.ItemNumber() == 0 {
+		if i.Number() == 0 {
 			config.tp.AddField(" - ")
 		} else {
-			config.tp.AddField(fmt.Sprintf("%d", i.ItemNumber()))
+			config.tp.AddField(fmt.Sprintf("%d", i.Number()))
 		}
-		if i.ItemRepo() == "" {
+		if i.Repo() == "" {
 			config.tp.AddField(" - ")
 		} else {
-			config.tp.AddField(i.ItemRepo())
+			config.tp.AddField(i.Repo())
 		}
 		config.tp.EndRow()
 	}

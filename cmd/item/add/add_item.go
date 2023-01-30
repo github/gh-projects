@@ -29,6 +29,12 @@ type addItemConfig struct {
 	projectID string
 }
 
+type addProjectItemMutation struct {
+	CreateProjectItem struct {
+		ProjectV2Item queries.ProjectItem `graphql:"item"`
+	} `graphql:"addProjectV2ItemById(input:$input)"`
+}
+
 func NewCmdAddItem(f *cmdutil.Factory, runF func(config addItemConfig) error) *cobra.Command {
 	opts := addItemOpts{}
 	addItemCmd := &cobra.Command{
@@ -96,13 +102,13 @@ func runAddItem(config addItemConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projectID, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
 	config.projectID = projectID
 
-	itemID, err := queries.GetIssueOrPullRequestID(config.client, config.opts.itemURL)
+	itemID, err := queries.IssueOrPullRequestID(config.client, config.opts.itemURL)
 	if err != nil {
 		return err
 	}
@@ -116,8 +122,8 @@ func runAddItem(config addItemConfig) error {
 
 }
 
-func buildAddItem(config addItemConfig, itemID string) (*queries.AddProjectItem, map[string]interface{}) {
-	return &queries.AddProjectItem{}, map[string]interface{}{
+func buildAddItem(config addItemConfig, itemID string) (*addProjectItemMutation, map[string]interface{}) {
+	return &addProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.AddProjectV2ItemByIdInput{
 			ProjectID: githubv4.ID(config.projectID),
 			ContentID: githubv4.ID(itemID),
@@ -125,7 +131,7 @@ func buildAddItem(config addItemConfig, itemID string) (*queries.AddProjectItem,
 	}
 }
 
-func printResults(config addItemConfig, item queries.ProjectV2Item) error {
+func printResults(config addItemConfig, item queries.ProjectItem) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Added item")
 	config.tp.EndRow()

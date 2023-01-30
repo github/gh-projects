@@ -10,7 +10,6 @@ import (
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
 	"github.com/github/gh-projects/queries"
-	"github.com/shurcooL/graphql"
 	"github.com/spf13/cobra"
 )
 
@@ -109,47 +108,35 @@ func runList(config listConfig) error {
 		return nil
 	}
 
-	projectsQuery, variables := buildQuery(config)
+	var login string
+	var ownerType queries.OwnerType
+	if config.opts.userOwner != "" {
+		login = config.opts.userOwner
+		ownerType = queries.UserOwner
+	} else if config.opts.orgOwner != "" {
+		login = config.opts.orgOwner
+		ownerType = queries.OrgOwner
+	} else {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	}
 
-	err := config.client.Query("ProjectsQuery", projectsQuery, variables)
+	projects, err := queries.Projects(config.client, login, ownerType, config.opts.first())
 	if err != nil {
 		return err
 	}
+	projects = filterProjects(projects, config)
 
-	projects := filterProjects(projectsQuery.Projects().Nodes, config)
-
-	return printResults(config, projects, projectsQuery.Login())
-}
-
-func buildQuery(config listConfig) (queries.ProjectsQuery, map[string]interface{}) {
-	var projectsQuery queries.ProjectsQuery
-	variables := map[string]interface{}{
-		"first": graphql.Int(config.opts.first()),
-	}
-
-	if config.opts.viewer {
-		projectsQuery = &queries.ProjectsViewerQuery{}
-	} else if config.opts.userOwner != "" {
-		projectsQuery = &queries.ProjectsUserQuery{}
-		variables["login"] = graphql.String(config.opts.userOwner)
-	} else if config.opts.orgOwner != "" {
-		projectsQuery = &queries.ProjectsOrganizationQuery{}
-		variables["login"] = graphql.String(config.opts.orgOwner)
-	}
-
-	return projectsQuery, variables
+	return printResults(config, projects, login)
 }
 
 func buildURL(config listConfig) (string, error) {
 	var url string
 	if config.opts.viewer {
-		viewer := &queries.ProjectViewerLogin{}
-		// get the current user's login
-		err := config.client.Query("Viewer", viewer, map[string]interface{}{})
+		login, err := queries.ViewerLoginName(config.client)
 		if err != nil {
 			return "", err
 		}
-		login := viewer.Viewer.Login
 		url = fmt.Sprintf("https://github.com/users/%s/projects", login)
 	} else if config.opts.userOwner != "" {
 		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.userOwner)
@@ -164,8 +151,8 @@ func buildURL(config listConfig) (string, error) {
 	return url, nil
 }
 
-func filterProjects(nodes []queries.ProjectNode, config listConfig) []queries.ProjectNode {
-	projects := make([]queries.ProjectNode, 0, len(nodes))
+func filterProjects(nodes []queries.Project, config listConfig) []queries.Project {
+	projects := make([]queries.Project, 0, len(nodes))
 	for _, p := range nodes {
 		if !config.opts.closed && p.Closed {
 			continue
@@ -175,7 +162,7 @@ func filterProjects(nodes []queries.ProjectNode, config listConfig) []queries.Pr
 	return projects
 }
 
-func printResults(config listConfig, projects []queries.ProjectNode, login string) error {
+func printResults(config listConfig, projects []queries.Project, login string) error {
 	// no projects
 	if len(projects) == 0 {
 		config.tp.AddField(fmt.Sprintf("No projects found for %s", login))

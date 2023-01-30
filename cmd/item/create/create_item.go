@@ -30,6 +30,12 @@ type createItemConfig struct {
 	projectID string
 }
 
+type createProjectDraftItemMutation struct {
+	CreateProjectDraftItem struct {
+		ProjectV2Item queries.ProjectItem `graphql:"projectItem"`
+	} `graphql:"addProjectV2DraftIssue(input:$input)"`
+}
+
 func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) error) *cobra.Command {
 	opts := createItemOpts{}
 	createItemCmd := &cobra.Command{
@@ -98,7 +104,7 @@ func runCreateItem(config createItemConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projectID, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
@@ -114,8 +120,8 @@ func runCreateItem(config createItemConfig) error {
 	return printResults(config, query.CreateProjectDraftItem.ProjectV2Item)
 }
 
-func buildCreateDraftIssue(config createItemConfig) (*queries.CreateProjectDraftItem, map[string]interface{}) {
-	return &queries.CreateProjectDraftItem{}, map[string]interface{}{
+func buildCreateDraftIssue(config createItemConfig) (*createProjectDraftItemMutation, map[string]interface{}) {
+	return &createProjectDraftItemMutation{}, map[string]interface{}{
 		"input": githubv4.AddProjectV2DraftIssueInput{
 			Body:      githubv4.NewString(githubv4.String(config.opts.body)),
 			ProjectID: githubv4.ID(config.projectID),
@@ -125,7 +131,7 @@ func buildCreateDraftIssue(config createItemConfig) (*queries.CreateProjectDraft
 	}
 }
 
-func printResults(config createItemConfig, item queries.ProjectV2Item) error {
+func printResults(config createItemConfig, item queries.ProjectItem) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Created item")
 	config.tp.EndRow()

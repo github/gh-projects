@@ -30,6 +30,18 @@ type archiveItemConfig struct {
 	projectID string
 }
 
+type archiveProjectItemMutation struct {
+	ArchiveProjectItem struct {
+		ProjectV2Item queries.ProjectItem `graphql:"item"`
+	} `graphql:"archiveProjectV2Item(input:$input)"`
+}
+
+type unarchiveProjectItemMutation struct {
+	UnarchiveProjectItem struct {
+		ProjectV2Item queries.ProjectItem `graphql:"item"`
+	} `graphql:"unarchiveProjectV2Item(input:$input)"`
+}
+
 func NewCmdArchiveItem(f *cmdutil.Factory, runF func(config archiveItemConfig) error) *cobra.Command {
 	opts := archiveItemOpts{}
 	archiveItemCmd := &cobra.Command{
@@ -98,7 +110,7 @@ func runArchiveItem(config archiveItemConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projectID, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
@@ -122,8 +134,8 @@ func runArchiveItem(config archiveItemConfig) error {
 	return printResults(config, query.ArchiveProjectItem.ProjectV2Item)
 }
 
-func buildArchiveItem(config archiveItemConfig, itemID string) (*queries.ArchiveProjectItem, map[string]interface{}) {
-	return &queries.ArchiveProjectItem{}, map[string]interface{}{
+func buildArchiveItem(config archiveItemConfig, itemID string) (*archiveProjectItemMutation, map[string]interface{}) {
+	return &archiveProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.ArchiveProjectV2ItemInput{
 			ProjectID: githubv4.ID(config.projectID),
 			ItemID:    githubv4.ID(itemID),
@@ -131,8 +143,8 @@ func buildArchiveItem(config archiveItemConfig, itemID string) (*queries.Archive
 	}
 }
 
-func buildUnarchiveItem(config archiveItemConfig, itemID string) (*queries.UnarchiveProjectItem, map[string]interface{}) {
-	return &queries.UnarchiveProjectItem{}, map[string]interface{}{
+func buildUnarchiveItem(config archiveItemConfig, itemID string) (*unarchiveProjectItemMutation, map[string]interface{}) {
+	return &unarchiveProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.UnarchiveProjectV2ItemInput{
 			ProjectID: githubv4.ID(config.projectID),
 			ItemID:    githubv4.ID(itemID),
@@ -140,7 +152,7 @@ func buildUnarchiveItem(config archiveItemConfig, itemID string) (*queries.Unarc
 	}
 }
 
-func printResults(config archiveItemConfig, item queries.ProjectV2Item) error {
+func printResults(config archiveItemConfig, item queries.ProjectItem) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	if config.opts.undo {
 		config.tp.AddField("Unarchived item")

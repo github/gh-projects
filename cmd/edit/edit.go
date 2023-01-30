@@ -31,6 +31,12 @@ type editConfig struct {
 	projectId string
 }
 
+type updateProjectMutation struct {
+	UpdateProjectV2 struct {
+		ProjectV2 queries.Project `graphql:"projectV2"`
+	} `graphql:"updateProjectV2(input:$input)"`
+}
+
 const projectVisibilityPublic = "PUBLIC"
 const projectVisibilityPrivate = "PRIVATE"
 
@@ -113,7 +119,7 @@ func runEdit(config editConfig) error {
 		// login intentionally empty here
 	}
 
-	projectId, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectId, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
@@ -128,7 +134,7 @@ func runEdit(config editConfig) error {
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
 }
 
-func buildUpdateQuery(config editConfig) (*queries.UpdateProjectMutation, map[string]interface{}) {
+func buildUpdateQuery(config editConfig) (*updateProjectMutation, map[string]interface{}) {
 	variables := githubv4.UpdateProjectV2Input{ProjectID: githubv4.ID(config.projectId)}
 	if config.opts.title != "" {
 		variables.Title = githubv4.NewString(githubv4.String(config.opts.title))
@@ -147,14 +153,14 @@ func buildUpdateQuery(config editConfig) (*queries.UpdateProjectMutation, map[st
 		}
 	}
 
-	return &queries.UpdateProjectMutation{}, map[string]interface{}{
+	return &updateProjectMutation{}, map[string]interface{}{
 		"input": variables,
 	}
 }
 
-func printResults(config editConfig, project queries.ProjectV2) error {
+func printResults(config editConfig, project queries.Project) error {
 	// using table printer here for consistency in case it ends up being needed in the future
-	config.tp.AddField(fmt.Sprintf("Updated project %s", project.Url))
+	config.tp.AddField(fmt.Sprintf("Updated project %s", project.URL))
 	config.tp.EndRow()
 	return config.tp.Render()
 }

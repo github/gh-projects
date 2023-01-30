@@ -29,6 +29,12 @@ type createConfig struct {
 	ownerId string
 }
 
+type createProjectMutation struct {
+	CreateProjectV2 struct {
+		ProjectV2 queries.Project `graphql:"projectV2"`
+	} `graphql:"createProjectV2(input:$input)"`
+}
+
 func NewCmdCreate(f *cmdutil.Factory, runF func(config createConfig) error) *cobra.Command {
 	opts := createOpts{}
 	createCmd := &cobra.Command{
@@ -93,7 +99,7 @@ func runCreate(config createConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	ownerId, err := queries.GetOwnerId(config.client, login, ownerType)
+	ownerId, err := queries.OwnerID(config.client, login, ownerType)
 	if err != nil {
 		return err
 	}
@@ -108,8 +114,8 @@ func runCreate(config createConfig) error {
 	return printResults(config, query.CreateProjectV2.ProjectV2)
 }
 
-func buildCreateQuery(config createConfig) (*queries.CreateProjectMutation, map[string]interface{}) {
-	return &queries.CreateProjectMutation{}, map[string]interface{}{
+func buildCreateQuery(config createConfig) (*createProjectMutation, map[string]interface{}) {
+	return &createProjectMutation{}, map[string]interface{}{
 		"input": githubv4.CreateProjectV2Input{
 			OwnerID: githubv4.ID(config.ownerId),
 			Title:   githubv4.String(config.opts.title),
@@ -118,11 +124,11 @@ func buildCreateQuery(config createConfig) (*queries.CreateProjectMutation, map[
 	}
 }
 
-func printResults(config createConfig, project queries.ProjectV2) error {
+func printResults(config createConfig, project queries.Project) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField(fmt.Sprintf("Created project '%s'", project.Title))
 	config.tp.EndRow()
-	config.tp.AddField(project.Url)
+	config.tp.AddField(project.URL)
 	config.tp.EndRow()
 	return config.tp.Render()
 }

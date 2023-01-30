@@ -28,6 +28,12 @@ type closeConfig struct {
 	projectId string
 }
 
+type updateProjectMutation struct {
+	UpdateProjectV2 struct {
+		ProjectV2 queries.Project `graphql:"projectV2"`
+	} `graphql:"updateProjectV2(input:$input)"`
+}
+
 func NewCmdClose(f *cmdutil.Factory, runF func(config closeConfig) error) *cobra.Command {
 	opts := closeOpts{}
 	closeCmd := &cobra.Command{
@@ -97,7 +103,7 @@ func runClose(config closeConfig) error {
 		// login intentionally empty here
 	}
 
-	projectId, err := queries.GetProjectId(config.client, login, ownerType, config.opts.number)
+	projectId, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
@@ -112,9 +118,9 @@ func runClose(config closeConfig) error {
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
 }
 
-func buildCloseQuery(config closeConfig) (*queries.UpdateProjectMutation, map[string]interface{}) {
+func buildCloseQuery(config closeConfig) (*updateProjectMutation, map[string]interface{}) {
 	closed := !config.opts.reopen
-	return &queries.UpdateProjectMutation{}, map[string]interface{}{
+	return &updateProjectMutation{}, map[string]interface{}{
 		"input": githubv4.UpdateProjectV2Input{
 			ProjectID: githubv4.ID(config.projectId),
 			Closed:    githubv4.NewBoolean(githubv4.Boolean(closed)),
@@ -122,7 +128,7 @@ func buildCloseQuery(config closeConfig) (*queries.UpdateProjectMutation, map[st
 	}
 }
 
-func printResults(config closeConfig, project queries.ProjectV2) error {
+func printResults(config closeConfig, project queries.Project) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	var action string
 	if config.opts.reopen {
@@ -130,7 +136,7 @@ func printResults(config closeConfig, project queries.ProjectV2) error {
 	} else {
 		action = "Closed"
 	}
-	config.tp.AddField(fmt.Sprintf("%s project %s", action, project.Url))
+	config.tp.AddField(fmt.Sprintf("%s project %s", action, project.URL))
 	config.tp.EndRow()
 	return config.tp.Render()
 }

@@ -100,7 +100,7 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	fields, err := queries.GetProjectFields(config.client, login, ownerType, config.opts.number, config.opts.first())
+	fields, err := queries.ProjectFields(config.client, login, ownerType, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func runList(config listConfig) error {
 	return printResults(config, fields, login)
 }
 
-func printResults(config listConfig, fields []queries.ProjectV2Field, login string) error {
+func printResults(config listConfig, fields []queries.ProjectField, login string) error {
 	if len(fields) == 0 {
 		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields", config.opts.number, login))
 		config.tp.EndRow()
@@ -122,7 +122,7 @@ func printResults(config listConfig, fields []queries.ProjectV2Field, login stri
 
 	for _, f := range fields {
 		config.tp.AddField(f.Name())
-		config.tp.AddField(f.DataType())
+		config.tp.AddField(f.Type())
 		config.tp.EndRow()
 	}
 

@@ -7,48 +7,9 @@ import (
 	gh "github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
-	"github.com/github/gh-projects/queries"
-	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
-
-func TestBuildQueryViewer(t *testing.T) {
-	query, variables := buildQuery(listConfig{
-		opts: listOpts{
-			viewer: true,
-			// login is empty
-			// first is empty
-		},
-	})
-	assert.Equal(t, &queries.ProjectsViewerQuery{}, query)
-	assert.Equal(t, graphql.Int(100), variables["first"])
-	assert.Empty(t, variables["login"])
-}
-
-func TestBuildQueryOwner(t *testing.T) {
-	query, variables := buildQuery(listConfig{
-		opts: listOpts{
-			userOwner: "monalisa",
-			// first is empty
-		},
-	})
-	assert.Equal(t, &queries.ProjectsUserQuery{}, query)
-	assert.Equal(t, graphql.Int(100), variables["first"])
-	assert.Equal(t, graphql.String("monalisa"), variables["login"])
-}
-
-func TestBuildQueryOrganization(t *testing.T) {
-	query, variables := buildQuery(listConfig{
-		opts: listOpts{
-			orgOwner: "github",
-			// first is empty
-		},
-	})
-	assert.Equal(t, &queries.ProjectsOrganizationQuery{}, query)
-	assert.Equal(t, graphql.Int(100), variables["first"])
-	assert.Equal(t, graphql.String("github"), variables["login"])
-}
 
 func TestBuildURLViewer(t *testing.T) {
 	defer gock.Off()
@@ -272,7 +233,7 @@ func TestRunListEmpty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"No projects found for monalisa\n",
+		"No projects found for me\n",
 		buf.String())
 }
 
