@@ -16,6 +16,7 @@ import (
 	cmdItemArchive "github.com/github/gh-projects/cmd/item/archive"
 	cmdItemCreate "github.com/github/gh-projects/cmd/item/create"
 	cmdItemDelete "github.com/github/gh-projects/cmd/item/delete"
+	cmdItemEdit "github.com/github/gh-projects/cmd/item/edit"
 	cmdItemList "github.com/github/gh-projects/cmd/item/list"
 	cmdList "github.com/github/gh-projects/cmd/list"
 	"github.com/spf13/cobra"
@@ -52,6 +53,7 @@ func main() {
 	itemCmd.AddCommand(cmdItemList.NewCmdList(cmdFactory, nil))
 	itemCmd.AddCommand(cmdItemCreate.NewCmdCreateItem(cmdFactory, nil))
 	itemCmd.AddCommand(cmdItemAdd.NewCmdAddItem(cmdFactory, nil))
+	itemCmd.AddCommand(cmdItemEdit.NewCmdEditItem(cmdFactory, nil))
 	itemCmd.AddCommand(cmdItemArchive.NewCmdArchiveItem(cmdFactory, nil))
 	itemCmd.AddCommand(cmdItemDelete.NewCmdDeleteItem(cmdFactory, nil))
 

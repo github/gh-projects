@@ -73,26 +73,32 @@ type ProjectItem struct {
 	Id       string
 	TypeName string `graphql:"type"`
 	Content  struct {
-		DraftIssue struct {
-			Body  string
-			Title string
-		} `graphql:"... on DraftIssue"`
-		PullRequest struct {
-			Body       string
-			Title      string
-			Number     int
-			Repository struct {
-				NameWithOwner string
-			}
-		} `graphql:"... on PullRequest"`
-		Issue struct {
-			Body       string
-			Title      string
-			Number     int
-			Repository struct {
-				NameWithOwner string
-			}
-		} `graphql:"... on Issue"`
+		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
+		PullRequest PullRequest `graphql:"... on PullRequest"`
+		Issue       Issue       `graphql:"... on Issue"`
+	}
+}
+
+type DraftIssue struct {
+	Body  string
+	Title string
+}
+
+type PullRequest struct {
+	Body       string
+	Title      string
+	Number     int
+	Repository struct {
+		NameWithOwner string
+	}
+}
+
+type Issue struct {
+	Body       string
+	Title      string
+	Number     int
+	Repository struct {
+		NameWithOwner string
 	}
 }
 

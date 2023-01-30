@@ -82,6 +82,7 @@ gh projects field edit --id ID --single-select-options "one,two,three"
 func runEditField(config editFieldConfig) error {
 	if config.opts.name == "" && len(config.opts.singleSelectOptions) == 0 {
 		config.tp.AddField("No changes to make")
+		config.tp.Render()
 		return nil
 	}
 
