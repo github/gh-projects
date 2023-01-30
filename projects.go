@@ -9,6 +9,7 @@ import (
 	cmdCreate "github.com/github/gh-projects/cmd/create"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
 	cmdFieldCreate "github.com/github/gh-projects/cmd/field/create"
+	cmdFieldDelete "github.com/github/gh-projects/cmd/field/delete"
 	cmdFieldList "github.com/github/gh-projects/cmd/field/list"
 	cmdItemAdd "github.com/github/gh-projects/cmd/item/add"
 	cmdItemArchive "github.com/github/gh-projects/cmd/item/archive"
@@ -57,6 +58,8 @@ func main() {
 	rootCmd.AddCommand(fieldCmd)
 	fieldCmd.AddCommand(cmdFieldList.NewCmdList(cmdFactory, nil))
 	fieldCmd.AddCommand(cmdFieldCreate.NewCmdCreateField(cmdFactory, nil))
+	fieldCmd.AddCommand(cmdFieldDelete.NewCmdDeleteField(cmdFactory, nil))
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

@@ -129,7 +129,7 @@ func runCreateField(config createFieldConfig) error {
 
 	query, variables := createFieldArgs(config)
 
-	err = config.client.Mutate("CreateFieldItem", query, variables)
+	err = config.client.Mutate("CreateField", query, variables)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ func TestRunCreateField_User(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -103,7 +103,7 @@ func TestRunCreateField_Org(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -165,7 +165,7 @@ func TestRunCreateField_Me(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -227,7 +227,7 @@ func TestRunCreateField_TEXT(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"TEXT","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -289,7 +289,7 @@ func TestRunCreateField_DATE(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"DATE","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"DATE","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -351,7 +351,7 @@ func TestRunCreateField_NUMBER(t *testing.T) {
 	// create Field
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"NUMBER","name":"a name"}}}`).
+		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"NUMBER","name":"a name"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -416,7 +416,7 @@ func TestRunCreateField_NUMBER(t *testing.T) {
 // 	// create Field
 // 	gock.New("https://api.github.com").
 // 		Post("/graphql").
-// 		BodyString(`{"query":"mutation CreateFieldItem.*","variables":{"input":{"projectId":"an ID","dataType":"SINGLE_SELECT","name":"a name","singleSelectOptions":["a","b","c"]}}}`).
+// 		BodyString(`{"query":"mutation CreateField.*","variables":{"input":{"projectId":"an ID","dataType":"SINGLE_SELECT","name":"a name","singleSelectOptions":["a","b","c"]}}}`).
 // 		Reply(200).
 // 		JSON(map[string]interface{}{
 // 			"data": map[string]interface{}{
