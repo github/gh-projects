@@ -7,6 +7,7 @@ import (
 	cmdClose "github.com/github/gh-projects/cmd/close"
 	cmdCopy "github.com/github/gh-projects/cmd/copy"
 	cmdCreate "github.com/github/gh-projects/cmd/create"
+	cmdDelete "github.com/github/gh-projects/cmd/delete"
 	cmdEdit "github.com/github/gh-projects/cmd/edit"
 	cmdFieldCreate "github.com/github/gh-projects/cmd/field/create"
 	cmdFieldDelete "github.com/github/gh-projects/cmd/field/delete"
@@ -46,6 +47,7 @@ func main() {
 	rootCmd.AddCommand(cmdCreate.NewCmdCreate(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCopy.NewCmdCopy(cmdFactory, nil))
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
+	rootCmd.AddCommand(cmdDelete.NewCmdDelete(cmdFactory, nil))
 	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
 
 	// item subcommand
