@@ -3,7 +3,9 @@ package view
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
 	"github.com/cli/browser"
@@ -139,52 +141,104 @@ func buildURL(config viewConfig) (string, error) {
 
 func printResults(config viewConfig, project queries.Project, login string) error {
 
-	config.tp.AddField("Title")
-	config.tp.AddField("Description")
-	config.tp.AddField("Visibility")
-	config.tp.AddField("URL")
-	config.tp.AddField("ID")
-	config.tp.AddField("Item count")
-	config.tp.EndRow()
+	var sb strings.Builder
+	sb.WriteString("# Title\n")
+	sb.WriteString(project.Title)
+	sb.WriteString("\n")
 
-	config.tp.AddField(project.Title)
+	sb.WriteString("## Description\n")
 	if project.ShortDescription == "" {
-		config.tp.AddField(" - ")
+		sb.WriteString(" -- ")
 	} else {
-		config.tp.AddField(project.ShortDescription)
+		sb.WriteString(project.ShortDescription)
 	}
+	sb.WriteString("\n")
+
+	sb.WriteString("## Visibility\n")
 	if project.Public {
-		config.tp.AddField("Public")
+		sb.WriteString("Public")
 	} else {
-		config.tp.AddField("Private")
+		sb.WriteString("Private")
 	}
-	config.tp.AddField(project.URL)
-	config.tp.AddField(project.ID)
-	config.tp.AddField(fmt.Sprintf("%d", project.Items.TotalCount))
-	config.tp.EndRow()
-	// empty space
-	config.tp.AddField("")
-	config.tp.EndRow()
+	sb.WriteString("\n")
 
-	config.tp.AddField("Readme")
-	config.tp.EndRow()
+	sb.WriteString("## URL\n")
+	sb.WriteString(project.URL)
+	sb.WriteString("\n")
+
+	sb.WriteString("## ID\n")
+	sb.WriteString(project.ID)
+	sb.WriteString("\n")
+
+	sb.WriteString("## Item count\n")
+	sb.WriteString(fmt.Sprintf("%d", project.Items.TotalCount))
+	sb.WriteString("\n")
+
+	sb.WriteString("## Readme\n")
 	if project.Readme == "" {
-		config.tp.AddField(" - ")
+		sb.WriteString(" -- ")
 	} else {
-		config.tp.AddField(project.Readme)
+		sb.WriteString(project.Readme)
 	}
-	config.tp.EndRow()
-	// empty space
-	config.tp.AddField("")
-	config.tp.EndRow()
+	sb.WriteString("\n")
 
-	config.tp.AddField("Field Name")
-	config.tp.AddField("Field Type")
-	config.tp.EndRow()
+	sb.WriteString("## Field Name (Field Type)\n")
 	for _, f := range project.Fields.Nodes {
-		config.tp.AddField(f.Name())
-		config.tp.AddField(f.Type())
-		config.tp.EndRow()
+		sb.WriteString(fmt.Sprintf("%s (%s)\n\n", f.Name(), f.Type()))
 	}
+	// config.tp.AddField("Title")
+	// config.tp.AddField("Description")
+	// config.tp.AddField("Visibility")
+	// config.tp.AddField("URL")
+	// config.tp.AddField("ID")
+	// config.tp.AddField("Item count")
+	// config.tp.EndRow()
+
+	// config.tp.AddField(project.Title)
+	// if project.ShortDescription == "" {
+	// 	config.tp.AddField(" - ")
+	// } else {
+	// 	config.tp.AddField(project.ShortDescription)
+	// }
+	// if project.Public {
+	// 	config.tp.AddField("Public")
+	// } else {
+	// 	config.tp.AddField("Private")
+	// }
+	// config.tp.AddField(project.URL)
+	// config.tp.AddField(project.ID)
+	// config.tp.AddField(fmt.Sprintf("%d", project.Items.TotalCount))
+	// config.tp.EndRow()
+	// // empty space
+	// config.tp.AddField("")
+	// config.tp.EndRow()
+
+	// config.tp.AddField("Readme")
+	// config.tp.EndRow()
+	// if project.Readme == "" {
+	// 	config.tp.AddField(" - ")
+	// } else {
+	// 	config.tp.AddField(project.Readme)
+	// }
+	// config.tp.EndRow()
+	// // empty space
+	// config.tp.AddField("")
+	// config.tp.EndRow()
+
+	// config.tp.AddField("Field Name")
+	// config.tp.AddField("Field Type")
+	// config.tp.EndRow()
+	// for _, f := range project.Fields.Nodes {
+	// 	config.tp.AddField(f.Name())
+	// 	config.tp.AddField(f.Type())
+	// 	config.tp.EndRow()
+	// }
+
+	out, err := glamour.Render(sb.String(), "dark")
+	if err != nil {
+		return err
+	}
+	fmt.Println(out)
+
 	return config.tp.Render()
 }
