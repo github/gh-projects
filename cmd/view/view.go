@@ -186,54 +186,8 @@ func printResults(config viewConfig, project queries.Project, login string) erro
 	for _, f := range project.Fields.Nodes {
 		sb.WriteString(fmt.Sprintf("%s (%s)\n\n", f.Name(), f.Type()))
 	}
-	// config.tp.AddField("Title")
-	// config.tp.AddField("Description")
-	// config.tp.AddField("Visibility")
-	// config.tp.AddField("URL")
-	// config.tp.AddField("ID")
-	// config.tp.AddField("Item count")
-	// config.tp.EndRow()
 
-	// config.tp.AddField(project.Title)
-	// if project.ShortDescription == "" {
-	// 	config.tp.AddField(" - ")
-	// } else {
-	// 	config.tp.AddField(project.ShortDescription)
-	// }
-	// if project.Public {
-	// 	config.tp.AddField("Public")
-	// } else {
-	// 	config.tp.AddField("Private")
-	// }
-	// config.tp.AddField(project.URL)
-	// config.tp.AddField(project.ID)
-	// config.tp.AddField(fmt.Sprintf("%d", project.Items.TotalCount))
-	// config.tp.EndRow()
-	// // empty space
-	// config.tp.AddField("")
-	// config.tp.EndRow()
-
-	// config.tp.AddField("Readme")
-	// config.tp.EndRow()
-	// if project.Readme == "" {
-	// 	config.tp.AddField(" - ")
-	// } else {
-	// 	config.tp.AddField(project.Readme)
-	// }
-	// config.tp.EndRow()
-	// // empty space
-	// config.tp.AddField("")
-	// config.tp.EndRow()
-
-	// config.tp.AddField("Field Name")
-	// config.tp.AddField("Field Type")
-	// config.tp.EndRow()
-	// for _, f := range project.Fields.Nodes {
-	// 	config.tp.AddField(f.Name())
-	// 	config.tp.AddField(f.Type())
-	// 	config.tp.EndRow()
-	// }
-
+	// TODO: respect the glamour env var if set
 	out, err := glamour.Render(sb.String(), "dark")
 	if err != nil {
 		return err
