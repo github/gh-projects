@@ -166,10 +166,6 @@ func printResults(config viewConfig, project queries.Project, login string) erro
 	sb.WriteString(project.URL)
 	sb.WriteString("\n")
 
-	sb.WriteString("## ID\n")
-	sb.WriteString(project.ID)
-	sb.WriteString("\n")
-
 	sb.WriteString("## Item count\n")
 	sb.WriteString(fmt.Sprintf("%d", project.Items.TotalCount))
 	sb.WriteString("\n")
