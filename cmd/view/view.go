@@ -190,5 +190,5 @@ func printResults(config viewConfig, project queries.Project, login string) erro
 	}
 	fmt.Println(out)
 
-	return config.tp.Render()
+	return nil
 }
