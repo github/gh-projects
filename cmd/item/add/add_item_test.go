@@ -242,9 +242,9 @@ func TestRunAddItem_Me(t *testing.T) {
 	config := addItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: addItemOpts{
-			viewer:  true,
-			number:  1,
-			itemURL: "https://github.com/cli/go-gh/pull/1",
+			userOwner: "@me",
+			number:    1,
+			itemURL:   "https://github.com/cli/go-gh/pull/1",
 		},
 		client: client,
 	}
@@ -267,5 +267,5 @@ func TestRunAddItem_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runAddItem(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

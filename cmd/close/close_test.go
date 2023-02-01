@@ -192,8 +192,8 @@ func TestRunClose_Me(t *testing.T) {
 	config := closeConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: closeOpts{
-			number: 1,
-			viewer: true,
+			number:    1,
+			userOwner: "@me",
 		},
 		client: client,
 	}
@@ -283,5 +283,5 @@ func TestRunClose_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runClose(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

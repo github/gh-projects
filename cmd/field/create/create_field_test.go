@@ -184,10 +184,10 @@ func TestRunCreateField_Me(t *testing.T) {
 	config := createFieldConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createFieldOpts{
-			viewer:   true,
-			number:   1,
-			name:     "a name",
-			dataType: "TEXT",
+			userOwner: "@me",
+			number:    1,
+			name:      "a name",
+			dataType:  "TEXT",
 		},
 		client: client,
 	}
@@ -246,10 +246,10 @@ func TestRunCreateField_TEXT(t *testing.T) {
 	config := createFieldConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createFieldOpts{
-			viewer:   true,
-			number:   1,
-			name:     "a name",
-			dataType: "TEXT",
+			userOwner: "@me",
+			number:    1,
+			name:      "a name",
+			dataType:  "TEXT",
 		},
 		client: client,
 	}
@@ -308,10 +308,10 @@ func TestRunCreateField_DATE(t *testing.T) {
 	config := createFieldConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createFieldOpts{
-			viewer:   true,
-			number:   1,
-			name:     "a name",
-			dataType: "DATE",
+			userOwner: "@me",
+			number:    1,
+			name:      "a name",
+			dataType:  "DATE",
 		},
 		client: client,
 	}
@@ -370,10 +370,10 @@ func TestRunCreateField_NUMBER(t *testing.T) {
 	config := createFieldConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createFieldOpts{
-			viewer:   true,
-			number:   1,
-			name:     "a name",
-			dataType: "NUMBER",
+			userOwner: "@me",
+			number:    1,
+			name:      "a name",
+			dataType:  "NUMBER",
 		},
 		client: client,
 	}
@@ -462,7 +462,7 @@ func TestRunCreateField_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runCreateField(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }
 
 func TestRunCreateField_SingleSelectNoOptions(t *testing.T) {
@@ -470,9 +470,9 @@ func TestRunCreateField_SingleSelectNoOptions(t *testing.T) {
 	config := createFieldConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createFieldOpts{
-			name:     "a name",
-			viewer:   true,
-			dataType: "SINGLE_SELECT",
+			name:      "a name",
+			userOwner: "@me",
+			dataType:  "SINGLE_SELECT",
 		},
 	}
 

@@ -14,12 +14,9 @@ import (
 )
 
 type createOpts struct {
-	title        string
-	userOwner    string
-	orgOwner     string
-	viewer       bool
-	teamID       string
-	repositoryID string
+	title     string
+	userOwner string
+	orgOwner  string
 }
 
 type createConfig struct {
@@ -48,7 +45,7 @@ gh projects create --user monalisa --title "a new project"
 gh projects create --org github --title "a new project"
 
 # create a new project owned by the current user with title "a new project"
-gh projects create --me --title "a new project"
+gh projects create --user '@me' --title "a new project"
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -73,33 +70,31 @@ gh projects create --me --title "a new project"
 	}
 
 	createCmd.Flags().StringVar(&opts.title, "title", "", "Title of the project. Titles do not need to be unique.")
-	createCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	createCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	createCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	createCmd.Flags().StringVar(&opts.teamID, "team-id", "", "ID of the team to associate with the project.")
-	createCmd.Flags().StringVar(&opts.repositoryID, "repo-id", "", "ID of the repository to associate with the project.")
 
 	createCmd.MarkFlagRequired("title")
-	createCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	createCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return createCmd
 }
 
 func runCreate(config createConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
 
 	ownerId, err := queries.OwnerID(config.client, login, ownerType)
@@ -120,10 +115,8 @@ func runCreate(config createConfig) error {
 func createArgs(config createConfig) (*createProjectMutation, map[string]interface{}) {
 	return &createProjectMutation{}, map[string]interface{}{
 		"input": githubv4.CreateProjectV2Input{
-			OwnerID:      githubv4.ID(config.ownerId),
-			Title:        githubv4.String(config.opts.title),
-			TeamID:       githubv4.NewID(githubv4.ID(config.opts.teamID)),
-			RepositoryID: githubv4.NewID(githubv4.ID(config.opts.repositoryID)),
+			OwnerID: githubv4.ID(config.ownerId),
+			Title:   githubv4.String(config.opts.title),
 		},
 	}
 }

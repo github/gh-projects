@@ -2,6 +2,7 @@ package delete
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -16,7 +17,6 @@ import (
 type deleteOpts struct {
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	number    int
 }
 
@@ -41,17 +41,18 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(config deleteConfig) error) *cob
 	opts := deleteOpts{}
 	deleteCmd := &cobra.Command{
 		Short: "Delete a project",
-		Use:   "delete",
+		Use:   "delete number",
 		Example: `
 # delete the current user's project 1
-gh projects delete --me --number 1 --id ID
+gh projects delete 1 --user "@me" --id ID
 
 # delete the monalisa user project 1
-gh projects delete --user monalisa --number 1 --id ID
+gh projects delete 1 --user monalisa --id ID
 
 # delete the github org project 1
-gh projects delete --org github --number 1 --id ID
+gh projects delete 1 --org github --id ID
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -60,6 +61,11 @@ gh projects delete --org github --number 1 --id ID
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -74,32 +80,30 @@ gh projects delete --org github --number 1 --id ID
 		},
 	}
 
-	deleteCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	deleteCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	deleteCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	deleteCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	deleteCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 
-	deleteCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	deleteCmd.MarkFlagRequired("number")
+	deleteCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return deleteCmd
 }
 
 func runDelete(config deleteConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
 
 	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)

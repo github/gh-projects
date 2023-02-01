@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -16,7 +17,6 @@ type listOpts struct {
 	limit     int
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	number    int
 }
 
@@ -37,17 +37,18 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 	opts := listOpts{}
 	listCmd := &cobra.Command{
 		Short: "List the fields in a project",
-		Use:   "list",
+		Use:   "list number",
 		Example: `
 # list the fields in project number 1 for the current user
-gh projects field list --number 1 --me
+gh projects field list 1 --user "@me"
 
 # list the fields in project number 1 for user monalisa
-gh projects field list --number 1 --user monalisa
+gh projects field list 1 --user monalisa
 
 # list the first 30 fields in project number 1 for org github
-gh projects field list --number 1 --org github --limit 30
+gh projects field list 1 --org github --limit 30
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -60,6 +61,11 @@ gh projects field list --number 1 --org github --limit 30
 				return nil
 			}
 
+			opts.number, err = strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
 			config := listConfig{
 				tp:     t,
@@ -70,35 +76,32 @@ gh projects field list --number 1 --org github --limit 30
 		},
 	}
 
-	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	listCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 
 	// owner can be a user or an org
-	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	listCmd.MarkFlagRequired("number")
+	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return listCmd
 }
 
 func runList(config listConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		login = "me"
-		ownerType = queries.ViewerOwner
 	}
 
 	fields, err := queries.ProjectFields(config.client, login, ownerType, config.opts.number, config.opts.first())

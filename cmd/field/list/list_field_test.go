@@ -191,8 +191,8 @@ func TestRunList_Me(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			number: 1,
-			viewer: true,
+			number:    1,
+			userOwner: "@me",
 		},
 		client: client,
 	}
@@ -239,8 +239,8 @@ func TestRunList_Empty(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			number: 1,
-			viewer: true,
+			number:    1,
+			userOwner: "@me",
 		},
 		client: client,
 	}

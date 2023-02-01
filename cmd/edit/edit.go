@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -17,18 +18,17 @@ type editOpts struct {
 	number           int
 	userOwner        string
 	orgOwner         string
-	viewer           bool
 	title            string
 	readme           string
 	visibility       string
 	shortDescription string
+	projectID        string
 }
 
 type editConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      editOpts
-	projectId string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   editOpts
 }
 
 type updateProjectMutation struct {
@@ -44,17 +44,18 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(config editConfig) error) *cobra.C
 	opts := editOpts{}
 	editCmd := &cobra.Command{
 		Short: "Edit a project",
-		Use:   "edit",
+		Use:   "edit number",
 		Example: `
 # edit project 1 owned by user monalisa to have the new title "New title"
-gh projects edit --user monalisa --number 1 --title "New title"
+gh projects edit 1 --user monalisa --title "New title"
 
 # edit project 1 owned by org github to have the new title "New title"
-gh projects edit --org github --number 1 --title "New title"
+gh projects edit 1 --org github --title "New title"
 
 # edit project 1 owned by org github to have visibility public
-gh projects edit --org github --number 1 --visibility PUBLIC
+gh projects edit 1 --org github --visibility PUBLIC
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -63,6 +64,11 @@ gh projects edit --org github --number 1 --visibility PUBLIC
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -77,24 +83,21 @@ gh projects edit --org github --number 1 --visibility PUBLIC
 		},
 	}
 
-	editCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	editCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	editCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	editCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	editCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	editCmd.Flags().StringVar(&opts.visibility, "visibility", "", "Update the visibility of the project public. Must be one of PUBLIC or PRIVATE.")
 	editCmd.Flags().StringVar(&opts.title, "title", "", "The edited title of the project.")
 	editCmd.Flags().StringVar(&opts.readme, "readme", "", "The edited readme of the project.")
 	editCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The edited short description of the project.")
 
-	editCmd.MarkFlagRequired("number")
-	editCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	editCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return editCmd
 }
 
 func runEdit(config editConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	if config.opts.visibility != "" && config.opts.visibility != projectVisibilityPublic && config.opts.visibility != projectVisibilityPrivate {
@@ -107,22 +110,22 @@ func runEdit(config editConfig) error {
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		login = "me"
-		ownerType = queries.ViewerOwner
 	}
 
-	projectId, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectId = projectId
+	config.opts.projectID = projectID
 	query, variables := editArgs(config)
 
 	err = config.client.Mutate("UpdateProjectV2", query, variables)
@@ -134,7 +137,7 @@ func runEdit(config editConfig) error {
 }
 
 func editArgs(config editConfig) (*updateProjectMutation, map[string]interface{}) {
-	variables := githubv4.UpdateProjectV2Input{ProjectID: githubv4.ID(config.projectId)}
+	variables := githubv4.UpdateProjectV2Input{ProjectID: githubv4.ID(config.opts.projectID)}
 	if config.opts.title != "" {
 		variables.Title = githubv4.NewString(githubv4.String(config.opts.title))
 	}

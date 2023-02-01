@@ -2,6 +2,7 @@ package create
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -19,15 +20,14 @@ type createFieldOpts struct {
 	userOwner           string
 	singleSelectOptions []string
 	orgOwner            string
-	viewer              bool
 	number              int
+	projectID           string
 }
 
 type createFieldConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      createFieldOpts
-	projectID string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   createFieldOpts
 }
 
 type createProjectV2FieldMutation struct {
@@ -48,20 +48,21 @@ func NewCmdCreateField(f *cmdutil.Factory, runF func(config createFieldConfig) e
 	opts := createFieldOpts{}
 	createFieldCmd := &cobra.Command{
 		Short: "Create a field in a project",
-		Use:   "create",
+		Use:   "create number",
 		Example: `
 # create a field in the current user's project 1 with title "new item" and dataType "text"
-gh projects field create --me --number 1 --name "new field" --data-type "text"
+gh projects field create 1 --user "@me" --name "new field" --data-type "text"
 
 # create a field in monalisa user project 1 with title "new item" and dataType "text"
-gh projects field create --user monalisa --number 1 --name "new field" --data-type "text"
+gh projects field create 1 --user monalisa --name "new field" --data-type "text"
 
 # create a field in the github org project 1 with title "new item" and dataType "text"
-gh projects field create --me --number 1 --name "new field" --data-type "text"
+gh projects field create 1 --org github --name "new field" --data-type "text"
 
 # create a field with single select options
-gh projects field create --me --number 1 --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
+gh projects field create 1 --user monalisa --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -70,6 +71,11 @@ gh projects field create --me --number 1 --name "new field" --data-type "SINGLE_
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -84,16 +90,13 @@ gh projects field create --me --number 1 --name "new field" --data-type "SINGLE_
 		},
 	}
 
-	createFieldCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	createFieldCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	createFieldCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createFieldCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	createFieldCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	createFieldCmd.Flags().StringVar(&opts.name, "name", "", "Name of the new field.")
 	createFieldCmd.Flags().StringVar(&opts.dataType, "data-type", "", "DataType of the new field. Must be one of TEXT, SINGLE_SELECT, DATE, NUMBER.")
 	createFieldCmd.Flags().StringSliceVar(&opts.singleSelectOptions, "single-select-options", []string{}, "At least one option is required when data type is SINGLE_SELECT.")
 
-	createFieldCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	createFieldCmd.MarkFlagRequired("number")
+	createFieldCmd.MarkFlagsMutuallyExclusive("user", "org")
 	createFieldCmd.MarkFlagRequired("name")
 	createFieldCmd.MarkFlagRequired("data-type")
 
@@ -101,8 +104,8 @@ gh projects field create --me --number 1 --name "new field" --data-type "SINGLE_
 }
 
 func runCreateField(config createFieldConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	if config.opts.dataType == "SINGLE_SELECT" && len(config.opts.singleSelectOptions) == 0 {
@@ -111,21 +114,22 @@ func runCreateField(config createFieldConfig) error {
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
 
 	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectID = projectID
+	config.opts.projectID = projectID
 
 	query, variables := createFieldArgs(config)
 
@@ -139,7 +143,7 @@ func runCreateField(config createFieldConfig) error {
 
 func createFieldArgs(config createFieldConfig) (*createProjectV2FieldMutation, map[string]interface{}) {
 	input := CreateProjectV2FieldInput{
-		ProjectID: githubv4.ID(config.projectID),
+		ProjectID: githubv4.ID(config.opts.projectID),
 		DataType:  githubv4.String(config.opts.dataType),
 		Name:      githubv4.String(config.opts.name),
 	}

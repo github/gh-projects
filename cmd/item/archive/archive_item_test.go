@@ -182,9 +182,9 @@ func TestRunArchive_Me(t *testing.T) {
 	config := archiveItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: archiveItemOpts{
-			viewer: true,
-			number: 1,
-			itemID: "item ID",
+			userOwner: "@me",
+			number:    1,
+			itemID:    "item ID",
 		},
 		client: client,
 	}
@@ -370,10 +370,10 @@ func TestRunArchive_Me_Undo(t *testing.T) {
 	config := archiveItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: archiveItemOpts{
-			viewer: true,
-			number: 1,
-			itemID: "item ID",
-			undo:   true,
+			userOwner: "@me",
+			number:    1,
+			itemID:    "item ID",
+			undo:      true,
 		},
 		client: client,
 	}
@@ -394,5 +394,5 @@ func TestRunArchiveItem_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runArchiveItem(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

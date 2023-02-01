@@ -182,10 +182,10 @@ func TestRunCreateItem_Draft_Me(t *testing.T) {
 	config := createItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createItemOpts{
-			title:  "a title",
-			viewer: true,
-			number: 1,
-			body:   "a body",
+			title:     "a title",
+			userOwner: "@me",
+			number:    1,
+			body:      "a body",
 		},
 		client: client,
 	}
@@ -208,5 +208,5 @@ func TestRunCreateItem_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runCreateItem(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

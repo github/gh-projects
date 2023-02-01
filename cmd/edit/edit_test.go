@@ -201,7 +201,7 @@ func TestRunUpdate_Me(t *testing.T) {
 		tp: tableprinter.New(&buf, false, 0),
 		opts: editOpts{
 			number:           1,
-			viewer:           true,
+			userOwner:        "@me",
 			title:            "a new title",
 			shortDescription: "a new description",
 			visibility:       "PRIVATE",
@@ -309,5 +309,5 @@ func TestRunUpdate_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runEdit(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

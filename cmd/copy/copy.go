@@ -2,6 +2,7 @@ package copy
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -20,10 +21,8 @@ type copyOpts struct {
 	projectID          string
 	sourceOrgOwner     string
 	sourceUserOwner    string
-	sourceViewer       bool
 	targetOrgOwner     string
 	targetUserOwner    string
-	targetViewer       bool
 	title              string
 }
 
@@ -51,17 +50,18 @@ func NewCmdCopy(f *cmdutil.Factory, runF func(config copyConfig) error) *cobra.C
 	opts := copyOpts{}
 	copyCmd := &cobra.Command{
 		Short: "Copy a project",
-		Use:   "copy",
+		Use:   "copy number",
 		Example: `
 # copy project 1 owned by user monalisa to org github with title "a new project"
-gh projects copy --source-user monalisa --number 1 --title "a new project" --target-org github
+gh projects copy 1 --source-user monalisa --title "a new project" --target-org github
 
 # copy project 1 owned by the org github to current user with title "a new project"
-gh projects copy --source-org github --number 1 --title "a new project" --target-me
+gh projects copy 1 --source-org github --title "a new project" --target-me
 
 # copy project 1 owned by the org github to user monalisa with title "a new project" and include draft issues
-gh projects copy --source-org github --number 1 --title "a new project" --target-user monalisa --drafts
+gh projects copy 1 --source-org github --title "a new project" --target-user monalisa --drafts
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -70,6 +70,11 @@ gh projects copy --source-org github --number 1 --title "a new project" --target
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -84,44 +89,41 @@ gh projects copy --source-org github --number 1 --title "a new project" --target
 		},
 	}
 
-	copyCmd.Flags().StringVar(&opts.sourceUserOwner, "source-user", "", "Login of the source user owner.")
+	copyCmd.Flags().StringVar(&opts.sourceUserOwner, "source-user", "", "Login of the source user owner. Use \"@me\" for the current user.")
 	copyCmd.Flags().StringVar(&opts.sourceOrgOwner, "source-org", "", "Login of the source organization owner.")
-	copyCmd.Flags().BoolVar(&opts.sourceViewer, "source-me", false, "Login of the current user as the source project owner.")
-	copyCmd.Flags().StringVar(&opts.targetUserOwner, "target-user", "", "Login of the target organization owner.")
+	copyCmd.Flags().StringVar(&opts.targetUserOwner, "target-user", "", "Login of the target organization owner. Use \"@me\" for the current user.")
 	copyCmd.Flags().StringVar(&opts.targetOrgOwner, "target-org", "", "Login of the target organization owner.")
-	copyCmd.Flags().BoolVar(&opts.targetViewer, "target-me", false, "Login of the current user as the target project owner.")
-	copyCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the source project.")
 	copyCmd.Flags().StringVar(&opts.title, "title", "", "Title of the new project copy. Titles do not need to be unique.")
 	copyCmd.Flags().BoolVar(&opts.includeDraftIssues, "drafts", false, "Include draft issues in new copy.")
 
-	copyCmd.MarkFlagRequired("number")
 	copyCmd.MarkFlagRequired("title")
-	copyCmd.MarkFlagsMutuallyExclusive("source-user", "source-org", "source-me")
-	copyCmd.MarkFlagsMutuallyExclusive("target-user", "target-org", "target-me")
+	copyCmd.MarkFlagsMutuallyExclusive("source-user", "source-org")
+	copyCmd.MarkFlagsMutuallyExclusive("target-user", "target-org")
 
 	return copyCmd
 }
 
 func runCopy(config copyConfig) error {
-	if !config.opts.sourceViewer && config.opts.sourceUserOwner == "" && config.opts.sourceOrgOwner == "" {
-		return fmt.Errorf("one of --source-user, --source-org or --source-me is required")
+	if config.opts.sourceUserOwner == "" && config.opts.sourceOrgOwner == "" {
+		return fmt.Errorf("one of --source-user or --source-org is required")
 	}
 
-	if !config.opts.targetViewer && config.opts.targetUserOwner == "" && config.opts.targetOrgOwner == "" {
-		return fmt.Errorf("one of --target-user, --target-org or --target-me is required")
+	if config.opts.targetUserOwner == "" && config.opts.targetOrgOwner == "" {
+		return fmt.Errorf("one of --target-user or --target-org is required")
 	}
 
 	// source project
 	var sourceLogin string
 	var sourceOwnerType queries.OwnerType
-	if config.opts.sourceUserOwner != "" {
+	if config.opts.sourceUserOwner == "@me" {
+		sourceLogin = "me"
+		sourceOwnerType = queries.ViewerOwner
+	} else if config.opts.sourceUserOwner != "" {
 		sourceLogin = config.opts.sourceUserOwner
 		sourceOwnerType = queries.UserOwner
 	} else if config.opts.sourceOrgOwner != "" {
 		sourceLogin = config.opts.sourceOrgOwner
 		sourceOwnerType = queries.OrgOwner
-	} else {
-		sourceOwnerType = queries.ViewerOwner
 	}
 
 	projectID, err := queries.ProjectId(config.client, sourceLogin, sourceOwnerType, config.opts.number)
@@ -133,14 +135,15 @@ func runCopy(config copyConfig) error {
 	// target owner
 	var targetLogin string
 	var targetOwnerType queries.OwnerType
-	if config.opts.targetUserOwner != "" {
+	if config.opts.targetUserOwner == "@me" {
+		targetLogin = "me"
+		targetOwnerType = queries.ViewerOwner
+	} else if config.opts.targetUserOwner != "" {
 		targetLogin = config.opts.targetUserOwner
 		targetOwnerType = queries.UserOwner
 	} else if config.opts.targetOrgOwner != "" {
 		targetLogin = config.opts.targetOrgOwner
 		targetOwnerType = queries.OrgOwner
-	} else {
-		targetOwnerType = queries.ViewerOwner
 	}
 
 	ownerId, err := queries.OwnerID(config.client, targetLogin, targetOwnerType)

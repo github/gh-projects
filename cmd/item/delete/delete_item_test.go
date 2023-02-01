@@ -176,9 +176,9 @@ func TestRunDelete_Me(t *testing.T) {
 	config := deleteItemConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: deleteItemOpts{
-			viewer: true,
-			number: 1,
-			itemID: "item ID",
+			userOwner: "@me",
+			number:    1,
+			itemID:    "item ID",
 		},
 		client: client,
 	}
@@ -199,5 +199,5 @@ func TestRunDeleteItem_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runDeleteItem(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

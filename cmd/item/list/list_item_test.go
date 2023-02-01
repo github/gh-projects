@@ -38,7 +38,6 @@ func TestRunList_User(t *testing.T) {
 									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
-										"body":   "a body",
 										"number": 1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -50,7 +49,6 @@ func TestRunList_User(t *testing.T) {
 									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
-										"body":   "the body",
 										"number": 2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -62,7 +60,6 @@ func TestRunList_User(t *testing.T) {
 									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
-										"body":  "",
 									},
 								},
 							},
@@ -89,7 +86,7 @@ func TestRunList_User(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -120,7 +117,6 @@ func TestRunList_Org(t *testing.T) {
 									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
-										"body":   "a body",
 										"number": 1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -132,7 +128,6 @@ func TestRunList_Org(t *testing.T) {
 									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
-										"body":   "the body",
 										"number": 2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -144,7 +139,6 @@ func TestRunList_Org(t *testing.T) {
 									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
-										"body":  "",
 									},
 								},
 							},
@@ -171,7 +165,7 @@ func TestRunList_Org(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -201,7 +195,6 @@ func TestRunList_Me(t *testing.T) {
 									"id":   "issue ID",
 									"content": map[string]interface{}{
 										"title":  "an issue",
-										"body":   "a body",
 										"number": 1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -213,7 +206,6 @@ func TestRunList_Me(t *testing.T) {
 									"id":   "pull request ID",
 									"content": map[string]interface{}{
 										"title":  "a pull request",
-										"body":   "the body",
 										"number": 2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
@@ -225,7 +217,6 @@ func TestRunList_Me(t *testing.T) {
 									"id":   "draft issue ID",
 									"content": map[string]interface{}{
 										"title": "draft issue",
-										"body":  "",
 									},
 								},
 							},
@@ -242,8 +233,8 @@ func TestRunList_Me(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			number: 1,
-			viewer: true,
+			number:    1,
+			userOwner: "@me",
 		},
 		client: client,
 	}
@@ -252,7 +243,7 @@ func TestRunList_Me(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tBody\tNumber\tRepository\tID\nISSUE\tan issue\ta body\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\tthe body\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -290,8 +281,8 @@ func TestRunList_Empty(t *testing.T) {
 	config := listConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: listOpts{
-			number: 1,
-			viewer: true,
+			number:    1,
+			userOwner: "@me",
 		},
 		client: client,
 	}

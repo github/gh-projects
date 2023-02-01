@@ -38,7 +38,7 @@ func TestRunCreate_User(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -101,7 +101,7 @@ func TestRunCreate_Org(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).Reply(200).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title"}}}`).Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
 				"createProjectV2": map[string]interface{}{
@@ -160,7 +160,7 @@ func TestRunCreate_Me(t *testing.T) {
 	// create project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title","repositoryId":"","teamId":""}}}`).Reply(200).
+		BodyString(`{"query":"mutation CreateProjectV2.*"variables":{"input":{"ownerId":"an ID","title":"a title"}}}`).Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
 				"createProjectV2": map[string]interface{}{
@@ -182,8 +182,8 @@ func TestRunCreate_Me(t *testing.T) {
 	config := createConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: createOpts{
-			title:  "a title",
-			viewer: true,
+			title:     "a title",
+			userOwner: "@me",
 		},
 		client: client,
 	}
@@ -206,5 +206,5 @@ func TestRunCreate_NoOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runCreate(config)
-	assert.EqualError(t, err, "one of --user, --org or --me is required")
+	assert.EqualError(t, err, "one of --user or --org is required")
 }

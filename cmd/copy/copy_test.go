@@ -252,10 +252,10 @@ func TestRunCopy_Me(t *testing.T) {
 	config := copyConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: copyOpts{
-			title:        "a title",
-			sourceViewer: true,
-			targetViewer: true,
-			number:       1,
+			title:           "a title",
+			sourceUserOwner: "@me",
+			targetUserOwner: "@me",
+			number:          1,
 		},
 		client: client,
 	}
@@ -278,7 +278,7 @@ func TestRunCopy_NoSourceOrgOrUserSpecified(t *testing.T) {
 	}
 
 	err := runCopy(config)
-	assert.EqualError(t, err, "one of --source-user, --source-org or --source-me is required")
+	assert.EqualError(t, err, "one of --source-user or --source-org is required")
 }
 
 func TestRunCopy_NoTargetOrgOrUserSpecified(t *testing.T) {
@@ -286,11 +286,11 @@ func TestRunCopy_NoTargetOrgOrUserSpecified(t *testing.T) {
 	config := copyConfig{
 		tp: tableprinter.New(&buf, false, 0),
 		opts: copyOpts{
-			title:        "a title",
-			sourceViewer: true,
+			title:           "a title",
+			sourceUserOwner: "@me",
 		},
 	}
 
 	err := runCopy(config)
-	assert.EqualError(t, err, "one of --target-user, --target-org or --target-me is required")
+	assert.EqualError(t, err, "one of --target-user or --target-org is required")
 }

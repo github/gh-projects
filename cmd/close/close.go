@@ -2,6 +2,7 @@ package close
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -17,15 +18,14 @@ type closeOpts struct {
 	number    int
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	reopen    bool
+	projectID string
 }
 
 type closeConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      closeOpts
-	projectId string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   closeOpts
 }
 
 // the close command relies on the updateProjectV2 mutation
@@ -39,17 +39,18 @@ func NewCmdClose(f *cmdutil.Factory, runF func(config closeConfig) error) *cobra
 	opts := closeOpts{}
 	closeCmd := &cobra.Command{
 		Short: "Close a project",
-		Use:   "close",
+		Use:   "close number",
 		Example: `
 # close project 1 owned by user monalisa
-gh projects close --user monalisa --number 1
+gh projects close 1 --user monalisa
 
 # close project 1 owned by org github
-gh projects close --org github --number 1
+gh projects close 1 --org github
 
 # reopen closed project 1 owned by org github
-gh projects close --org github --number 1 --undo
+gh projects close 1 --org github --undo
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -58,6 +59,11 @@ gh projects close --org github --number 1 --undo
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -72,41 +78,38 @@ gh projects close --org github --number 1 --undo
 		},
 	}
 
-	closeCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	closeCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	closeCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	closeCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	closeCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "Number of the project.")
 	closeCmd.Flags().BoolVar(&opts.reopen, "undo", false, "Reopen a closed project.")
 
-	closeCmd.MarkFlagRequired("number")
-	closeCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	closeCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return closeCmd
 }
 
 func runClose(config closeConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		login = "me"
-		ownerType = queries.ViewerOwner
 	}
 
-	projectId, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectId = projectId
+	config.opts.projectID = projectID
 	query, variables := closeArgs(config)
 
 	err = config.client.Mutate("CloseProjectV2", query, variables)
@@ -121,7 +124,7 @@ func closeArgs(config closeConfig) (*updateProjectMutation, map[string]interface
 	closed := !config.opts.reopen
 	return &updateProjectMutation{}, map[string]interface{}{
 		"input": githubv4.UpdateProjectV2Input{
-			ProjectID: githubv4.ID(config.projectId),
+			ProjectID: githubv4.ID(config.opts.projectID),
 			Closed:    githubv4.NewBoolean(githubv4.Boolean(closed)),
 		},
 	}

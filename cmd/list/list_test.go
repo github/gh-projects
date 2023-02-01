@@ -31,9 +31,7 @@ func TestBuildURLViewer(t *testing.T) {
 	assert.NoError(t, err)
 
 	url, err := buildURL(listConfig{
-		opts: listOpts{
-			viewer: true,
-		},
+		opts:   listOpts{},
 		client: client,
 	})
 	assert.NoError(t, err)
@@ -141,10 +139,8 @@ func TestRunListViewer(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	config := listConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: listOpts{
-			viewer: true,
-		},
+		tp:     tableprinter.New(&buf, false, 0),
+		opts:   listOpts{},
 		client: client,
 	}
 
@@ -222,10 +218,8 @@ func TestRunListEmpty(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	config := listConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: listOpts{
-			viewer: true,
-		},
+		tp:     tableprinter.New(&buf, false, 0),
+		opts:   listOpts{},
 		client: client,
 	}
 
@@ -296,13 +290,4 @@ func TestRunListWeb(t *testing.T) {
 	err := runList(config)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://github.com/users/monalisa/projects", buf.String())
-}
-
-func TestRunListErrorNoLogin(t *testing.T) {
-	config := listConfig{
-		opts: listOpts{},
-	}
-
-	err := runList(config)
-	assert.Error(t, err, "one of --user, --org or --me is required")
 }

@@ -18,7 +18,6 @@ type listOpts struct {
 	web       bool
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	closed    bool
 }
 
@@ -43,7 +42,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		Use:   "list",
 		Example: `
 # list the projects for the current user
-gh projects list --me
+gh projects list
 
 # open projects for user "hubot" in the browser
 gh projects list --user hubot --web
@@ -77,24 +76,19 @@ gh projects list --org github --closed
 		},
 	}
 
-	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of queue entries to get. Defaults to 100.")
+	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of projects. Defaults to 100.")
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
 
 	// owner can be a user or an org
-	listCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
+	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return listCmd
 }
 
 func runList(config listConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
-	}
-
 	if config.opts.web {
 		url, err := buildURL(config)
 		if err != nil {
@@ -131,16 +125,16 @@ func runList(config listConfig) error {
 
 func buildURL(config listConfig) (string, error) {
 	var url string
-	if config.opts.viewer {
+	if config.opts.userOwner != "" {
+		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.userOwner)
+	} else if config.opts.orgOwner != "" {
+		url = fmt.Sprintf("https://github.com/orgs/%s/projects", config.opts.orgOwner)
+	} else {
 		login, err := queries.ViewerLoginName(config.client)
 		if err != nil {
 			return "", err
 		}
 		url = fmt.Sprintf("https://github.com/users/%s/projects", login)
-	} else if config.opts.userOwner != "" {
-		url = fmt.Sprintf("https://github.com/users/%s/projects", config.opts.userOwner)
-	} else if config.opts.orgOwner != "" {
-		url = fmt.Sprintf("https://github.com/orgs/%s/projects", config.opts.orgOwner)
 	}
 
 	if config.opts.closed {

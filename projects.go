@@ -1,7 +1,9 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
+	"strings"
 
 	"github.com/cli/cli/v2/pkg/cmd/factory"
 	cmdClose "github.com/github/gh-projects/cmd/close"
@@ -26,19 +28,22 @@ import (
 // analogous to cli/pkg/cmd/pr.go in cli/cli
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "projects",
-		Short: "Work with GitHub Projects.",
-		Long:  "Work with GitHub Projects. Note that the token you are using must have 'project' scope, which is not set by default. You can verify your token scope by running 'gh auth status' and add the project scope by running 'gh auth refresh -s project'.",
+		Use:           "projects",
+		Short:         "Work with GitHub Projects.",
+		Long:          "Work with GitHub Projects. Note that the token you are using must have 'project' scope, which is not set by default. You can verify your token scope by running 'gh auth status' and add the project scope by running 'gh auth refresh -s project'.",
+		SilenceErrors: true,
 	}
 
 	var itemCmd = &cobra.Command{
-		Use:   "item",
-		Short: "Commands for items",
+		Use:           "item",
+		Short:         "Commands for items",
+		SilenceErrors: true,
 	}
 
 	var fieldCmd = &cobra.Command{
-		Use:   "field",
-		Short: "Commands for fields",
+		Use:           "field",
+		Short:         "Commands for fields",
+		SilenceErrors: true,
 	}
 
 	cmdFactory := factory.New("0.1.0") // will be replaced by buildVersion := build.Version
@@ -67,6 +72,11 @@ func main() {
 	fieldCmd.AddCommand(cmdFieldDelete.NewCmdDeleteField(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		if strings.HasPrefix(err.Error(), "Message: Your token has not been granted the required scopes to execute this query") {
+			fmt.Println("Your token has not been granted the required scopes to execute this query.\nRun 'gh auth refresh -s project' to add the 'project' scope.\nRun 'gh auth status' to see your current token scopes.")
+			os.Exit(1)
+		}
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

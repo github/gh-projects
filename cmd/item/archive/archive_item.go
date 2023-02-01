@@ -2,6 +2,7 @@ package archive
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -16,17 +17,16 @@ import (
 type archiveItemOpts struct {
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	number    int
 	undo      bool
 	itemID    string
+	projectID string
 }
 
 type archiveItemConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      archiveItemOpts
-	projectID string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   archiveItemOpts
 }
 
 type archiveProjectItemMutation struct {
@@ -45,20 +45,21 @@ func NewCmdArchiveItem(f *cmdutil.Factory, runF func(config archiveItemConfig) e
 	opts := archiveItemOpts{}
 	archiveItemCmd := &cobra.Command{
 		Short: "Archive an item in a project",
-		Use:   "archive",
+		Use:   "archive number",
 		Example: `
 # archive an item in the current user's project 1
-gh projects item archive --me --number 1 --id ID
+gh projects item archive 1 --user "@me" --id ID
 
 # archive an item in the monalisa user project 1
-gh projects item archive --user monalisa --number 1 --id ID
+gh projects item archive 1 --user monalisa --id ID
 
 # archive an item in the github org project 1
-gh projects item archive --org github --number 1 --id ID
+gh projects item archive 1 --org github --id ID
 
 # unarchive an item
-gh projects item archive --me --number 1 --id ID --undo
+gh projects item archive 1 --user "@me" --id ID --undo
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -67,6 +68,11 @@ gh projects item archive --me --number 1 --id ID --undo
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -81,42 +87,40 @@ gh projects item archive --me --number 1 --id ID --undo
 		},
 	}
 
-	archiveItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	archiveItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	archiveItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	archiveItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	archiveItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	archiveItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to archive from the project.")
 	archiveItemCmd.Flags().BoolVar(&opts.undo, "undo", false, "Undo archive (unarchive) of an item.")
 
-	archiveItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	archiveItemCmd.MarkFlagRequired("number")
+	archiveItemCmd.MarkFlagsMutuallyExclusive("user", "org")
 	archiveItemCmd.MarkFlagRequired("id")
 
 	return archiveItemCmd
 }
 
 func runArchiveItem(config archiveItemConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
 
 	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectID = projectID
+	config.opts.projectID = projectID
 
 	if config.opts.undo {
 		query, variables := unarchiveItemArgs(config, config.opts.itemID)
@@ -139,7 +143,7 @@ func runArchiveItem(config archiveItemConfig) error {
 func archiveItemArgs(config archiveItemConfig, itemID string) (*archiveProjectItemMutation, map[string]interface{}) {
 	return &archiveProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.ArchiveProjectV2ItemInput{
-			ProjectID: githubv4.ID(config.projectID),
+			ProjectID: githubv4.ID(config.opts.projectID),
 			ItemID:    githubv4.ID(itemID),
 		},
 	}
@@ -148,7 +152,7 @@ func archiveItemArgs(config archiveItemConfig, itemID string) (*archiveProjectIt
 func unarchiveItemArgs(config archiveItemConfig, itemID string) (*unarchiveProjectItemMutation, map[string]interface{}) {
 	return &unarchiveProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.UnarchiveProjectV2ItemInput{
-			ProjectID: githubv4.ID(config.projectID),
+			ProjectID: githubv4.ID(config.opts.projectID),
 			ItemID:    githubv4.ID(itemID),
 		},
 	}

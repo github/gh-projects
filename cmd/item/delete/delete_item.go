@@ -2,6 +2,7 @@ package delete
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -16,16 +17,15 @@ import (
 type deleteItemOpts struct {
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	number    int
 	itemID    string
+	projectID string
 }
 
 type deleteItemConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      deleteItemOpts
-	projectID string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   deleteItemOpts
 }
 
 type deleteProjectItemMutation struct {
@@ -38,17 +38,18 @@ func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) err
 	opts := deleteItemOpts{}
 	deleteItemCmd := &cobra.Command{
 		Short: "Delete an item from a project",
-		Use:   "delete",
+		Use:   "delete number",
 		Example: `
 # delete an item in the current user's project 1
-gh projects item delete --me --number 1 --id ID
+gh projects item delete 1 --user "@me" --id ID
 
 # delete an item in the monalisa user project 1
-gh projects item delete --user monalisa --number 1 --id ID
+gh projects item delete 1 --user monalisa --id ID
 
 # delete an item in the github org project 1
-gh projects item delete --org github --number 1 --id ID
+gh projects item delete 1 --org github --id ID
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -57,6 +58,11 @@ gh projects item delete --org github --number 1 --id ID
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -71,42 +77,38 @@ gh projects item delete --org github --number 1 --id ID
 		},
 	}
 
-	deleteItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	deleteItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	deleteItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	deleteItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	deleteItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	deleteItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to delete from the project.")
 
-	deleteItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	deleteItemCmd.MarkFlagRequired("number")
+	deleteItemCmd.MarkFlagsMutuallyExclusive("user", "org")
 	deleteItemCmd.MarkFlagRequired("id")
 
 	return deleteItemCmd
 }
 
 func runDeleteItem(config deleteItemConfig) error {
-	// TODO interactive survey if no arguments are provided
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
-
 	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectID = projectID
+	config.opts.projectID = projectID
 
 	query, variables := deleteItemArgs(config, config.opts.itemID)
 	err = config.client.Mutate("DeleteProjectItem", query, variables)
@@ -121,7 +123,7 @@ func runDeleteItem(config deleteItemConfig) error {
 func deleteItemArgs(config deleteItemConfig, itemID string) (*deleteProjectItemMutation, map[string]interface{}) {
 	return &deleteProjectItemMutation{}, map[string]interface{}{
 		"input": githubv4.DeleteProjectV2ItemInput{
-			ProjectID: githubv4.ID(config.projectID),
+			ProjectID: githubv4.ID(config.opts.projectID),
 			ItemID:    githubv4.ID(itemID),
 		},
 	}

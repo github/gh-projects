@@ -2,6 +2,7 @@ package create
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -18,15 +19,14 @@ type createItemOpts struct {
 	body      string
 	userOwner string
 	orgOwner  string
-	viewer    bool
 	number    int
+	projectID string
 }
 
 type createItemConfig struct {
-	tp        tableprinter.TablePrinter
-	client    api.GQLClient
-	opts      createItemOpts
-	projectID string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   createItemOpts
 }
 
 type createProjectDraftItemMutation struct {
@@ -39,17 +39,18 @@ func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) err
 	opts := createItemOpts{}
 	createItemCmd := &cobra.Command{
 		Short: "Create a draft issue in a project",
-		Use:   "create",
+		Use:   "create number",
 		Example: `
 # create a draft issue in the current user's project 1 with title "new item" and body "new item body"
-gh projects item create --me --number 1 --title "new item" --body "new item body"
+gh projects item create 1 --user "@me" --title "new item" --body "new item body"
 
 # create a draft issue in monalisa user project 1 with title "new item" and body "new item body"
-gh projects item create --user monalisa --number 1 --title "new item" --body "new item body"
+gh projects item create 1 --user monalisa --title "new item" --body "new item body"
 
 # create a draft issue in github org project 1 with title "new item" and body "new item body"
-gh projects item create --org github --number 1 --title "new item" --body "new item body"
+gh projects item create 1 --org github --title "new item" --body "new item body"
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -58,6 +59,11 @@ gh projects item create --org github --number 1 --title "new item" --body "new i
 
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
+			if err != nil {
+				return err
+			}
+
+			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -72,42 +78,39 @@ gh projects item create --org github --number 1 --title "new item" --body "new i
 		},
 	}
 
-	createItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner.")
+	createItemCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	createItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	createItemCmd.Flags().BoolVar(&opts.viewer, "me", false, "Login of the current user as the project user owner.")
-	createItemCmd.Flags().IntVarP(&opts.number, "number", "n", 0, "The project number.")
 	createItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item.")
 	createItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item.")
 
-	createItemCmd.MarkFlagsMutuallyExclusive("user", "org", "me")
-	createItemCmd.MarkFlagRequired("number")
+	createItemCmd.MarkFlagsMutuallyExclusive("user", "org")
 	createItemCmd.MarkFlagRequired("title")
 
 	return createItemCmd
 }
 
 func runCreateItem(config createItemConfig) error {
-	if !config.opts.viewer && config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user, --org or --me is required")
+	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
+		return fmt.Errorf("one of --user or --org is required")
 	}
 
 	var login string
 	var ownerType queries.OwnerType
-	if config.opts.userOwner != "" {
+	if config.opts.userOwner == "@me" {
+		login = "me"
+		ownerType = queries.ViewerOwner
+	} else if config.opts.userOwner != "" {
 		login = config.opts.userOwner
 		ownerType = queries.UserOwner
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
-	} else {
-		ownerType = queries.ViewerOwner
 	}
-
 	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
-	config.projectID = projectID
+	config.opts.projectID = projectID
 
 	query, variables := createDraftIssueArgs(config)
 
@@ -123,7 +126,7 @@ func createDraftIssueArgs(config createItemConfig) (*createProjectDraftItemMutat
 	return &createProjectDraftItemMutation{}, map[string]interface{}{
 		"input": githubv4.AddProjectV2DraftIssueInput{
 			Body:      githubv4.NewString(githubv4.String(config.opts.body)),
-			ProjectID: githubv4.ID(config.projectID),
+			ProjectID: githubv4.ID(config.opts.projectID),
 			Title:     githubv4.String(config.opts.title),
 		},
 	}
