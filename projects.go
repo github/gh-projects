@@ -22,6 +22,7 @@ import (
 	cmdItemEdit "github.com/github/gh-projects/cmd/item/edit"
 	cmdItemList "github.com/github/gh-projects/cmd/item/list"
 	cmdList "github.com/github/gh-projects/cmd/list"
+	cmdView "github.com/github/gh-projects/cmd/view"
 	"github.com/spf13/cobra"
 )
 
@@ -54,6 +55,7 @@ func main() {
 	rootCmd.AddCommand(cmdClose.NewCmdClose(cmdFactory, nil))
 	rootCmd.AddCommand(cmdDelete.NewCmdDelete(cmdFactory, nil))
 	rootCmd.AddCommand(cmdEdit.NewCmdEdit(cmdFactory, nil))
+	rootCmd.AddCommand(cmdView.NewCmdView(cmdFactory, nil))
 
 	// item subcommand
 	rootCmd.AddCommand(itemCmd)

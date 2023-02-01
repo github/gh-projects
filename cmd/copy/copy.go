@@ -126,7 +126,7 @@ func runCopy(config copyConfig) error {
 		sourceOwnerType = queries.OrgOwner
 	}
 
-	projectID, err := queries.ProjectId(config.client, sourceLogin, sourceOwnerType, config.opts.number)
+	projectID, err := queries.ProjectID(config.client, sourceLogin, sourceOwnerType, config.opts.number)
 	if err != nil {
 		return err
 	}

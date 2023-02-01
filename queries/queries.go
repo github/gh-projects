@@ -33,10 +33,18 @@ type Project struct {
 	Number           int
 	URL              string
 	ShortDescription string
+	Public           bool
 	Closed           bool
 	Title            string
 	ID               string
-	Owner            struct {
+	Readme           string
+	Items            struct {
+		TotalCount int
+	}
+	Fields struct {
+		Nodes []ProjectField
+	} `graphql:"fields(first:100)"`
+	Owner struct {
 		User struct {
 			Login string
 		} `graphql:"... on User"`
@@ -46,8 +54,17 @@ type Project struct {
 	}
 }
 
-// ProjectId returns the ID of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectId(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
+// ProjectID returns the ID of a project. If the OwnerType is VIEWER, no login is required.
+func ProjectID(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
+	project, err := ProjectView(client, login, t, number)
+	if err != nil {
+		return "", err
+	}
+	return project.ID, nil
+}
+
+// ProjectView returns the project. If the OwnerType is VIEWER, no login is required.
+func ProjectView(client api.GQLClient, login string, t OwnerType, number int) (Project, error) {
 	variables := map[string]interface{}{
 		"login":  graphql.String(login),
 		"number": graphql.Int(number),
@@ -55,17 +72,17 @@ func ProjectId(client api.GQLClient, login string, t OwnerType, number int) (str
 	if t == UserOwner {
 		var query userOwner
 		err := client.Query("UserProject", &query, variables)
-		return query.Owner.Project.ID, err
+		return query.Owner.Project, err
 	} else if t == OrgOwner {
 		var query orgOwner
 		err := client.Query("OrgProject", &query, variables)
-		return query.Owner.Project.ID, err
+		return query.Owner.Project, err
 	} else if t == ViewerOwner {
 		var query viewerOwner
 		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
-		return query.Owner.Project.ID, err
+		return query.Owner.Project, err
 	}
-	return "", errors.New("unknown owner type")
+	return Project{}, errors.New("unknown owner type")
 }
 
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.

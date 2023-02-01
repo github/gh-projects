@@ -116,7 +116,7 @@ func runArchiveItem(config archiveItemConfig) error {
 		ownerType = queries.OrgOwner
 	}
 
-	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	projectID, err := queries.ProjectID(config.client, login, ownerType, config.opts.number)
 	if err != nil {
 		return err
 	}
