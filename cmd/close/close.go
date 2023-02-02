@@ -39,7 +39,7 @@ func NewCmdClose(f *cmdutil.Factory, runF func(config closeConfig) error) *cobra
 	opts := closeOpts{}
 	closeCmd := &cobra.Command{
 		Short: "Close a project",
-		Use:   "close number",
+		Use:   "close [number]",
 		Example: `
 # close project 1 owned by user monalisa
 gh projects close 1 --user monalisa
@@ -50,7 +50,7 @@ gh projects close 1 --org github
 # reopen closed project 1 owned by org github
 gh projects close 1 --org github --undo
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -63,9 +63,11 @@ gh projects close 1 --org github --undo
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -88,28 +90,17 @@ gh projects close 1 --org github --undo
 }
 
 func runClose(config closeConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
-	config.opts.projectID = projectID
+
+	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	if err != nil {
+		return err
+	}
+	config.opts.projectID = project.ID
+
 	query, variables := closeArgs(config)
 
 	err = config.client.Mutate("CloseProjectV2", query, variables)

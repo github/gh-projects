@@ -37,7 +37,27 @@ func TestRunCopy_User(t *testing.T) {
 			},
 		})
 
-	// get user ID
+	// get source user ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query UserLogin.*",
+			"variables": map[string]string{
+				"login": "monalisa",
+			},
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"user": map[string]interface{}{
+					"id":    "an ID",
+					"login": "monalisa",
+				},
+			},
+		})
+
+	// get target user ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		MatchType("json").
@@ -124,7 +144,27 @@ func TestRunCopy_Org(t *testing.T) {
 				},
 			},
 		})
-	// get org ID
+	// get source org ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query OrgLogin.*",
+			"variables": map[string]string{
+				"login": "github",
+			},
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"organization": map[string]interface{}{
+					"id":    "an ID",
+					"login": "github",
+				},
+			},
+		})
+
+	// get target source org ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		MatchType("json").
@@ -210,7 +250,24 @@ func TestRunCopy_Me(t *testing.T) {
 			},
 		})
 
-	// get viewer ID
+	// get source viewer ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query ViewerLogin.*",
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"viewer": map[string]interface{}{
+					"id":    "an ID",
+					"login": "me",
+				},
+			},
+		})
+
+	// get target viewer ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		MatchType("json").
@@ -266,31 +323,4 @@ func TestRunCopy_Me(t *testing.T) {
 		t,
 		"Created project copy 'a title'\nhttp://a-url.com\n",
 		buf.String())
-}
-
-func TestRunCopy_NoSourceOrgOrUserSpecified(t *testing.T) {
-	buf := bytes.Buffer{}
-	config := copyConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: copyOpts{
-			title: "a title",
-		},
-	}
-
-	err := runCopy(config)
-	assert.EqualError(t, err, "one of --source-user or --source-org is required")
-}
-
-func TestRunCopy_NoTargetOrgOrUserSpecified(t *testing.T) {
-	buf := bytes.Buffer{}
-	config := copyConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: copyOpts{
-			title:           "a title",
-			sourceUserOwner: "@me",
-		},
-	}
-
-	err := runCopy(config)
-	assert.EqualError(t, err, "one of --target-user or --target-org is required")
 }

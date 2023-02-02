@@ -195,16 +195,3 @@ func TestRunCreate_Me(t *testing.T) {
 		"Created project 'a title'\nhttp://a-url.com\n",
 		buf.String())
 }
-
-func TestRunCreate_NoOrgOrUserSpecified(t *testing.T) {
-	buf := bytes.Buffer{}
-	config := createConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: createOpts{
-			title: "a title",
-		},
-	}
-
-	err := runCreate(config)
-	assert.EqualError(t, err, "one of --user or --org is required")
-}

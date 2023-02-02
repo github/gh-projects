@@ -87,29 +87,17 @@ gh projects field list 1 --org github --limit 30
 }
 
 func runList(config listConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	fields, err := queries.ProjectFields(config.client, login, ownerType, config.opts.number, config.opts.first())
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, fields, login)
+	fields, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
+	if err != nil {
+		return err
+	}
+
+	return printResults(config, fields, owner.Login)
 }
 
 func printResults(config listConfig, fields []queries.ProjectField, login string) error {

@@ -44,7 +44,7 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(config editConfig) error) *cobra.C
 	opts := editOpts{}
 	editCmd := &cobra.Command{
 		Short: "Edit a project",
-		Use:   "edit number",
+		Use:   "edit [number]",
 		Example: `
 # edit project 1 owned by user monalisa to have the new title "New title"
 gh projects edit 1 --user monalisa --title "New title"
@@ -55,7 +55,7 @@ gh projects edit 1 --org github --title "New title"
 # edit project 1 owned by org github to have visibility public
 gh projects edit 1 --org github --visibility PUBLIC
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -68,9 +68,11 @@ gh projects edit 1 --org github --visibility PUBLIC
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -96,10 +98,6 @@ gh projects edit 1 --org github --visibility PUBLIC
 }
 
 func runEdit(config editConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
 	if config.opts.visibility != "" && config.opts.visibility != projectVisibilityPublic && config.opts.visibility != projectVisibilityPrivate {
 		return fmt.Errorf("visibility must match either PUBLIC or PRIVATE")
 	}
@@ -108,26 +106,18 @@ func runEdit(config editConfig) error {
 		return fmt.Errorf("no fields to edit")
 	}
 
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
-	config.opts.projectID = projectID
-	query, variables := editArgs(config)
 
+	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	if err != nil {
+		return err
+	}
+	config.opts.projectID = project.ID
+
+	query, variables := editArgs(config)
 	err = config.client.Mutate("UpdateProjectV2", query, variables)
 	if err != nil {
 		return err

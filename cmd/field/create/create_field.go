@@ -48,7 +48,7 @@ func NewCmdCreateField(f *cmdutil.Factory, runF func(config createFieldConfig) e
 	opts := createFieldOpts{}
 	createFieldCmd := &cobra.Command{
 		Short: "Create a field in a project",
-		Use:   "create number",
+		Use:   "create [number]",
 		Example: `
 # create a field in the current user's project 1 with title "new item" and dataType "text"
 gh projects field create 1 --user "@me" --name "new field" --data-type "text"
@@ -62,7 +62,7 @@ gh projects field create 1 --org github --name "new field" --data-type "text"
 # create a field with single select options
 gh projects field create 1 --user monalisa --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -75,9 +75,11 @@ gh projects field create 1 --user monalisa --name "new field" --data-type "SINGL
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -104,32 +106,20 @@ gh projects field create 1 --user monalisa --name "new field" --data-type "SINGL
 }
 
 func runCreateField(config createFieldConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
 	if config.opts.dataType == "SINGLE_SELECT" && len(config.opts.singleSelectOptions) == 0 {
 		return fmt.Errorf("at least one single select options is required with data type is SINGLE_SELECT")
 	}
 
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
-	config.opts.projectID = projectID
+
+	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	if err != nil {
+		return err
+	}
+	config.opts.projectID = project.ID
 
 	query, variables := createFieldArgs(config)
 

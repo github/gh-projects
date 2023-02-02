@@ -17,13 +17,13 @@ type createOpts struct {
 	title     string
 	userOwner string
 	orgOwner  string
+	ownerID   string
 }
 
 type createConfig struct {
-	tp      tableprinter.TablePrinter
-	client  api.GQLClient
-	opts    createOpts
-	ownerId string
+	tp     tableprinter.TablePrinter
+	client api.GQLClient
+	opts   createOpts
 }
 
 type createProjectMutation struct {
@@ -80,28 +80,12 @@ gh projects create --user '@me' --title "a new project"
 }
 
 func runCreate(config createConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	ownerId, err := queries.OwnerID(config.client, login, ownerType)
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
-	config.ownerId = ownerId
+
+	config.opts.ownerID = owner.ID
 	query, variables := createArgs(config)
 
 	err = config.client.Mutate("CreateProjectV2", query, variables)
@@ -115,7 +99,7 @@ func runCreate(config createConfig) error {
 func createArgs(config createConfig) (*createProjectMutation, map[string]interface{}) {
 	return &createProjectMutation{}, map[string]interface{}{
 		"input": githubv4.CreateProjectV2Input{
-			OwnerID: githubv4.ID(config.ownerId),
+			OwnerID: githubv4.ID(config.opts.ownerID),
 			Title:   githubv4.String(config.opts.title),
 		},
 	}

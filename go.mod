@@ -3,6 +3,7 @@ module github.com/github/gh-projects
 go 1.19
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/cli/browser v1.1.0
 	github.com/cli/cli/v2 v2.21.2
 	github.com/cli/go-gh v1.0.0
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect

@@ -15,6 +15,25 @@ func TestRunAddItem_User(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
+	// get user ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query UserLogin.*",
+			"variables": map[string]interface{}{
+				"login": "monalisa",
+			},
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"user": map[string]interface{}{
+					"id": "an ID",
+				},
+			},
+		})
+
 	// get project ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
@@ -97,6 +116,25 @@ func TestRunAddItem_User(t *testing.T) {
 func TestRunAddItem_Org(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
+	// get org ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query OrgLogin.*",
+			"variables": map[string]interface{}{
+				"login": "github",
+			},
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"organization": map[string]interface{}{
+					"id": "an ID",
+				},
+			},
+		})
+
 	// get project ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
@@ -179,6 +217,22 @@ func TestRunAddItem_Org(t *testing.T) {
 func TestRunAddItem_Me(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
+	// get viewer ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query ViewerLogin.*",
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"viewer": map[string]interface{}{
+					"id": "an ID",
+				},
+			},
+		})
+
 	// get project ID
 	gock.New("https://api.github.com").
 		Post("/graphql").
@@ -255,17 +309,4 @@ func TestRunAddItem_Me(t *testing.T) {
 		t,
 		"Added item\n",
 		buf.String())
-}
-
-func TestRunAddItem_NoOrgOrUserSpecified(t *testing.T) {
-	buf := bytes.Buffer{}
-	config := addItemConfig{
-		tp: tableprinter.New(&buf, false, 0),
-		opts: addItemOpts{
-			itemURL: "a URL",
-		},
-	}
-
-	err := runAddItem(config)
-	assert.EqualError(t, err, "one of --user or --org is required")
 }

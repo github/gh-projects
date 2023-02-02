@@ -1,7 +1,6 @@
 package delete
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -18,6 +17,7 @@ type deleteOpts struct {
 	userOwner string
 	orgOwner  string
 	number    int
+	projectID string
 }
 
 type deleteConfig struct {
@@ -41,7 +41,7 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(config deleteConfig) error) *cob
 	opts := deleteOpts{}
 	deleteCmd := &cobra.Command{
 		Short: "Delete a project",
-		Use:   "delete number",
+		Use:   "delete [number]",
 		Example: `
 # delete the current user's project 1
 gh projects delete 1 --user "@me" --id ID
@@ -52,7 +52,7 @@ gh projects delete 1 --user monalisa --id ID
 # delete the github org project 1
 gh projects delete 1 --org github --id ID
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -65,11 +65,12 @@ gh projects delete 1 --org github --id ID
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
-
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
 			config := deleteConfig{
 				tp:     t,
@@ -89,29 +90,18 @@ gh projects delete 1 --org github --id ID
 }
 
 func runDelete(config deleteConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	projectID, err := queries.ProjectId(config.client, login, ownerType, config.opts.number)
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
 
-	query, variables := deleteItemArgs(config, projectID)
+	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	if err != nil {
+		return err
+	}
+	config.opts.projectID = project.ID
+
+	query, variables := deleteItemArgs(config)
 	err = config.client.Mutate("DeleteProject", query, variables)
 	if err != nil {
 		return err
@@ -121,10 +111,10 @@ func runDelete(config deleteConfig) error {
 
 }
 
-func deleteItemArgs(config deleteConfig, projectID string) (*deleteProjectMutation, map[string]interface{}) {
+func deleteItemArgs(config deleteConfig) (*deleteProjectMutation, map[string]interface{}) {
 	return &deleteProjectMutation{}, map[string]interface{}{
 		"input": DeleteProjectV2Input{
-			ProjectID: githubv4.ID(projectID),
+			ProjectID: githubv4.ID(config.opts.projectID),
 		},
 	}
 }

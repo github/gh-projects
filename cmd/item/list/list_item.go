@@ -37,7 +37,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 	opts := listOpts{}
 	listCmd := &cobra.Command{
 		Short: "List the items in a project",
-		Use:   "list number",
+		Use:   "list [number]",
 		Example: `
 # list the items in project number 1 for the current user
 gh projects item list 1 --user "@me"
@@ -48,7 +48,7 @@ gh projects item list 1 --user monalisa
 # list the items in project number 1 for org github
 gh projects item list 1 --org github
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -61,9 +61,11 @@ gh projects item list 1 --org github
 				return nil
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -87,29 +89,17 @@ gh projects item list 1 --org github
 }
 
 func runList(config listConfig) error {
-	if config.opts.userOwner == "" && config.opts.orgOwner == "" {
-		return fmt.Errorf("one of --user or --org is required")
-	}
-
-	var login string
-	var ownerType queries.OwnerType
-	if config.opts.userOwner == "@me" {
-		login = "me"
-		ownerType = queries.ViewerOwner
-	} else if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
-	} else if config.opts.orgOwner != "" {
-		login = config.opts.orgOwner
-		ownerType = queries.OrgOwner
-	}
-
-	items, err := queries.ProjectItems(config.client, login, ownerType, config.opts.number, config.opts.first())
+	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, items, login)
+	items, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
+	if err != nil {
+		return err
+	}
+
+	return printResults(config, items, owner.Login)
 }
 
 func printResults(config listConfig, items []queries.ProjectItem, login string) error {

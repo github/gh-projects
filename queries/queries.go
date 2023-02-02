@@ -2,9 +2,11 @@ package queries
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/shurcooL/githubv4"
@@ -46,21 +48,21 @@ type Project struct {
 	}
 }
 
-// ProjectId returns the ID of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectId(client api.GQLClient, login string, t OwnerType, number int) (string, error) {
+// ProjectId returns the ID of a project. If OwnerType is VIEWER, no login is required.
+func ProjectId(client api.GQLClient, o *Owner, number int) (string, error) {
 	variables := map[string]interface{}{
-		"login":  graphql.String(login),
+		"login":  graphql.String(o.Login),
 		"number": graphql.Int(number),
 	}
-	if t == UserOwner {
+	if o.Type == UserOwner {
 		var query userOwner
 		err := client.Query("UserProject", &query, variables)
 		return query.Owner.Project.ID, err
-	} else if t == OrgOwner {
+	} else if o.Type == OrgOwner {
 		var query orgOwner
 		err := client.Query("OrgProject", &query, variables)
 		return query.Owner.Project.ID, err
-	} else if t == ViewerOwner {
+	} else if o.Type == ViewerOwner {
 		var query viewerOwner
 		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
 		return query.Owner.Project.ID, err
@@ -156,22 +158,22 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectItem, error) {
+func ProjectItems(client api.GQLClient, o *Owner, number int, first int) ([]ProjectItem, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 	}
-	if t == UserOwner {
-		variables["login"] = graphql.String(login)
+	if o.Type == UserOwner {
+		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithItems
 		err := client.Query("UserProjectWithItems", &query, variables)
 		return query.Owner.Project.Items.Nodes, err
-	} else if t == OrgOwner {
-		variables["login"] = graphql.String(login)
+	} else if o.Type == OrgOwner {
+		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithItems
 		err := client.Query("OrgProjectWithItems", &query, variables)
 		return query.Owner.Project.Items.Nodes, err
-	} else if t == ViewerOwner {
+	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithItems
 		err := client.Query("ViewerProjectWithItems", &query, variables)
 		return query.Owner.Project.Items.Nodes, err
@@ -229,22 +231,22 @@ func (p ProjectField) Type() string {
 }
 
 // ProjectFields returns the fields of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, login string, t OwnerType, number int, first int) ([]ProjectField, error) {
+func ProjectFields(client api.GQLClient, o *Owner, number int, first int) ([]ProjectField, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 	}
-	if t == UserOwner {
-		variables["login"] = graphql.String(login)
+	if o.Type == UserOwner {
+		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithFields
 		err := client.Query("UserProjectWithFields", &query, variables)
 		return query.Owner.Project.Fields.Nodes, err
-	} else if t == OrgOwner {
-		variables["login"] = graphql.String(login)
+	} else if o.Type == OrgOwner {
+		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithFields
 		err := client.Query("OrgProjectWithFields", &query, variables)
 		return query.Owner.Project.Fields.Nodes, err
-	} else if t == ViewerOwner {
+	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithFields
 		err := client.Query("ViewerProjectWithFields", &query, variables)
 		return query.Owner.Project.Fields.Nodes, err
@@ -274,6 +276,20 @@ type orgLogin struct {
 		Login string
 		Id    string
 	} `graphql:"organization(login: $login)"`
+}
+
+type viewerLoginOrgs struct {
+	Viewer struct {
+		Login         string
+		ID            string
+		Organizations struct {
+			Nodes []struct {
+				Login                   string
+				ViewerCanCreateProjects bool
+				ID                      string
+			}
+		} `graphql:"organizations(first: 100)"`
+	}
 }
 
 // userOwner is used to query the project of a user.
@@ -467,6 +483,179 @@ type viewerProjects struct {
 		} `graphql:"projectsV2(first: $first)"`
 		Login string
 	} `graphql:"viewer"`
+}
+
+type loginTypes struct {
+	Login string
+	Type  OwnerType
+	ID    string
+}
+
+func logins(client api.GQLClient) ([]loginTypes, error) {
+	l := []loginTypes{}
+	var v viewerLoginOrgs
+	err := client.Query("ViewerLoginAndOrgs", &v, nil)
+	if err != nil {
+		return l, err
+	}
+	l = append(l, loginTypes{
+		Login: v.Viewer.Login,
+		Type:  ViewerOwner,
+		ID:    v.Viewer.ID,
+	})
+	for _, org := range v.Viewer.Organizations.Nodes {
+		if org.ViewerCanCreateProjects {
+			l = append(l, loginTypes{
+				Login: org.Login,
+				Type:  OrgOwner,
+				ID:    org.ID,
+			})
+		}
+	}
+	return l, nil
+}
+
+type Owner struct {
+	Login string
+	Type  OwnerType
+	ID    string
+}
+
+// NewOwner creates a project Owner
+// When userLogin == "@me", userLogin becomes the current viewer
+// If userLogin is not empty, it is used to lookup the user owner
+// If orgLogin is not empty, it is used to lookup the org owner
+// If both userLogin and orgLogin are empty, interative mode is used to select an owner
+// from the current viewer and their organizations
+func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) {
+	if userLogin == "@me" {
+		id, err := OwnerID(client, userLogin, ViewerOwner)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Owner{
+			Login: userLogin,
+			Type:  ViewerOwner,
+			ID:    id,
+		}, nil
+	} else if userLogin != "" {
+		id, err := OwnerID(client, userLogin, UserOwner)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Owner{
+			Login: userLogin,
+			Type:  UserOwner,
+			ID:    id,
+		}, nil
+	} else if orgLogin != "" {
+		id, err := OwnerID(client, orgLogin, OrgOwner)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Owner{
+			Login: orgLogin,
+			Type:  OrgOwner,
+			ID:    id,
+		}, nil
+	}
+
+	logins, err := logins(client)
+	if err != nil {
+		return nil, err
+	}
+
+	options := make([]string, 0, len(logins))
+	for _, l := range logins {
+		options = append(options, l.Login)
+	}
+
+	var q = []*survey.Question{
+		{
+			Name: "owner",
+			Prompt: &survey.Select{
+				Message: "Which owner would you like to use?",
+				Options: options,
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answerIndex := 0
+	err = survey.Ask(q, &answerIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	l := logins[answerIndex]
+	return &Owner{
+		Login: l.Login,
+		Type:  l.Type,
+		ID:    l.ID,
+	}, nil
+}
+
+// NewProject creates a project based on the owner and project number
+// if number is 0 it will prompt the user to select a project interactively
+// otherwise it will make a request to get the project by number
+func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
+	if number != 0 {
+		variables := map[string]interface{}{
+			"login":  graphql.String(o.Login),
+			"number": graphql.Int(number),
+		}
+		if o.Type == UserOwner {
+			var query userOwner
+			err := client.Query("UserProject", &query, variables)
+			return &query.Owner.Project, err
+		} else if o.Type == OrgOwner {
+			var query orgOwner
+			err := client.Query("OrgProject", &query, variables)
+			return &query.Owner.Project, err
+		} else if o.Type == ViewerOwner {
+			var query viewerOwner
+			err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
+			return &query.Owner.Project, err
+		}
+		return nil, errors.New("unknown owner type")
+	}
+	// TODO: pagination
+	projects, err := Projects(client, o.Login, o.Type, 100)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(projects) == 0 {
+		return nil, fmt.Errorf("no projects found for %s", o.Login)
+	}
+
+	options := make([]string, 0, len(projects))
+	for _, p := range projects {
+		title := fmt.Sprintf("%s (#%d)", p.Title, p.Number)
+		options = append(options, title)
+	}
+
+	var q = []*survey.Question{
+		{
+			Name: "project",
+			Prompt: &survey.Select{
+				Message: "Which project would you like to use?",
+				Options: options,
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answerIndex := 0
+	err = survey.Ask(q, &answerIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	return &projects[answerIndex], nil
 }
 
 // Projects returns the projects for an Owner. If the OwnerType is VIEWER, no login is required.

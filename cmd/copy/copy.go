@@ -50,7 +50,7 @@ func NewCmdCopy(f *cmdutil.Factory, runF func(config copyConfig) error) *cobra.C
 	opts := copyOpts{}
 	copyCmd := &cobra.Command{
 		Short: "Copy a project",
-		Use:   "copy number",
+		Use:   "copy [number]",
 		Example: `
 # copy project 1 owned by user monalisa to org github with title "a new project"
 gh projects copy 1 --source-user monalisa --title "a new project" --target-org github
@@ -61,7 +61,7 @@ gh projects copy 1 --source-org github --title "a new project" --target-me
 # copy project 1 owned by the org github to user monalisa with title "a new project" and include draft issues
 gh projects copy 1 --source-org github --title "a new project" --target-user monalisa --drafts
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -74,9 +74,11 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -104,53 +106,23 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 }
 
 func runCopy(config copyConfig) error {
-	if config.opts.sourceUserOwner == "" && config.opts.sourceOrgOwner == "" {
-		return fmt.Errorf("one of --source-user or --source-org is required")
-	}
-
-	if config.opts.targetUserOwner == "" && config.opts.targetOrgOwner == "" {
-		return fmt.Errorf("one of --target-user or --target-org is required")
-	}
-
-	// source project
-	var sourceLogin string
-	var sourceOwnerType queries.OwnerType
-	if config.opts.sourceUserOwner == "@me" {
-		sourceLogin = "me"
-		sourceOwnerType = queries.ViewerOwner
-	} else if config.opts.sourceUserOwner != "" {
-		sourceLogin = config.opts.sourceUserOwner
-		sourceOwnerType = queries.UserOwner
-	} else if config.opts.sourceOrgOwner != "" {
-		sourceLogin = config.opts.sourceOrgOwner
-		sourceOwnerType = queries.OrgOwner
-	}
-
-	projectID, err := queries.ProjectId(config.client, sourceLogin, sourceOwnerType, config.opts.number)
+	sourceOwner, err := queries.NewOwner(config.client, config.opts.sourceUserOwner, config.opts.sourceOrgOwner)
 	if err != nil {
 		return err
 	}
-	config.opts.projectID = projectID
 
-	// target owner
-	var targetLogin string
-	var targetOwnerType queries.OwnerType
-	if config.opts.targetUserOwner == "@me" {
-		targetLogin = "me"
-		targetOwnerType = queries.ViewerOwner
-	} else if config.opts.targetUserOwner != "" {
-		targetLogin = config.opts.targetUserOwner
-		targetOwnerType = queries.UserOwner
-	} else if config.opts.targetOrgOwner != "" {
-		targetLogin = config.opts.targetOrgOwner
-		targetOwnerType = queries.OrgOwner
-	}
-
-	ownerId, err := queries.OwnerID(config.client, targetLogin, targetOwnerType)
+	targetOwner, err := queries.NewOwner(config.client, config.opts.targetUserOwner, config.opts.targetOrgOwner)
 	if err != nil {
 		return err
 	}
-	config.opts.ownerID = ownerId
+
+	project, err := queries.NewProject(config.client, sourceOwner, config.opts.number)
+	if err != nil {
+		return err
+	}
+
+	config.opts.projectID = project.ID
+	config.opts.ownerID = targetOwner.ID
 
 	query, variables := copyArgs(config)
 
