@@ -35,10 +35,18 @@ type Project struct {
 	Number           int
 	URL              string
 	ShortDescription string
+	Public           bool
 	Closed           bool
 	Title            string
 	ID               string
-	Owner            struct {
+	Readme           string
+	Items            struct {
+		TotalCount int
+	}
+	Fields struct {
+		Nodes []ProjectField
+	} `graphql:"fields(first:100)"`
+	Owner struct {
 		User struct {
 			Login string
 		} `graphql:"... on User"`
