@@ -454,7 +454,7 @@ type userProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first)"`
+		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"user(login: $login)"`
 }
@@ -465,7 +465,7 @@ type orgProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first)"`
+		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"organization(login: $login)"`
 }
@@ -476,7 +476,7 @@ type viewerProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first)"`
+		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"viewer"`
 }
@@ -703,6 +703,7 @@ func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) (
 	variables := map[string]interface{}{
 		"login": graphql.String(login),
 		"first": graphql.Int(limit),
+		"after": (*graphql.String)(nil),
 	}
 
 	if t == UserOwner {
@@ -714,8 +715,10 @@ func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) (
 		err := client.Query("OrgProjects", &query, variables)
 		return query.Owner.Projects.Nodes, err
 	} else if t == ViewerOwner {
+		delete(variables, "login")
+		// remove the login from viewer query
 		var query viewerProjects
-		err := client.Query("ViewerProjects", &query, map[string]interface{}{"first": graphql.Int(limit)})
+		err := client.Query("ViewerProjects", &query, variables)
 		return query.Owner.Projects.Nodes, err
 	}
 	return []Project{}, errors.New("unknown owner type")
@@ -736,6 +739,7 @@ func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error
 			var query userProjects
 			variables := map[string]interface{}{
 				"login": graphql.String(login),
+				"first": graphql.Int(100),
 				"after": cursor,
 			}
 			if err := client.Query("UserProjects", &query, variables); err != nil {
@@ -748,6 +752,7 @@ func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error
 			var query orgProjects
 			variables := map[string]interface{}{
 				"login": graphql.String(login),
+				"first": graphql.Int(100),
 				"after": cursor,
 			}
 			if err := client.Query("OrgProjects", &query, variables); err != nil {
@@ -759,6 +764,7 @@ func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error
 		} else if t == ViewerOwner {
 			var query viewerProjects
 			variables := map[string]interface{}{
+				"first": graphql.Int(100),
 				"after": cursor,
 			}
 			if err := client.Query("ViewerProjects", &query, variables); err != nil {
