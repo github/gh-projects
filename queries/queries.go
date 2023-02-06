@@ -30,6 +30,12 @@ func NewClient() (api.GQLClient, error) {
 	return gh.GQLClient(&apiOpts)
 }
 
+// PageInfo is a PageInfo GraphQL object https://docs.github.com/en/graphql/reference/objects#pageinfo.
+type PageInfo struct {
+	EndCursor   githubv4.String
+	HasNextPage bool
+}
+
 // Project is a ProjectV2 GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2.
 type Project struct {
 	Number           int
@@ -291,12 +297,13 @@ type viewerLoginOrgs struct {
 		Login         string
 		ID            string
 		Organizations struct {
-			Nodes []struct {
+			PageInfo PageInfo
+			Nodes    []struct {
 				Login                   string
 				ViewerCanCreateProjects bool
 				ID                      string
 			}
-		} `graphql:"organizations(first: 100)"`
+		} `graphql:"organizations(first: 100, after: $after)"`
 	}
 }
 
@@ -467,7 +474,8 @@ func IssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
 type userProjects struct {
 	Owner struct {
 		Projects struct {
-			Nodes []Project
+			PageInfo PageInfo
+			Nodes    []Project
 		} `graphql:"projectsV2(first: $first)"`
 		Login string
 	} `graphql:"user(login: $login)"`
@@ -477,7 +485,8 @@ type userProjects struct {
 type orgProjects struct {
 	Owner struct {
 		Projects struct {
-			Nodes []Project
+			PageInfo PageInfo
+			Nodes    []Project
 		} `graphql:"projectsV2(first: $first)"`
 		Login string
 	} `graphql:"organization(login: $login)"`
@@ -487,7 +496,8 @@ type orgProjects struct {
 type viewerProjects struct {
 	Owner struct {
 		Projects struct {
-			Nodes []Project
+			PageInfo PageInfo
+			Nodes    []Project
 		} `graphql:"projectsV2(first: $first)"`
 		Login string
 	} `graphql:"viewer"`
@@ -499,18 +509,27 @@ type loginTypes struct {
 	ID    string
 }
 
-func logins(client api.GQLClient) ([]loginTypes, error) {
-	l := []loginTypes{}
+// userOrgLogins gets all the logins of the viewer and the organizations the viewer is a member of.
+func userOrgLogins(client api.GQLClient) ([]loginTypes, error) {
+	l := make([]loginTypes, 0)
 	var v viewerLoginOrgs
-	err := client.Query("ViewerLoginAndOrgs", &v, nil)
+	variables := map[string]interface{}{
+		"after": (*githubv4.String)(nil),
+	}
+
+	err := client.Query("ViewerLoginAndOrgs", &v, variables)
 	if err != nil {
 		return l, err
 	}
+
+	// add the user
 	l = append(l, loginTypes{
 		Login: v.Viewer.Login,
 		Type:  ViewerOwner,
 		ID:    v.Viewer.ID,
 	})
+
+	// add orgs where the user can create projects
 	for _, org := range v.Viewer.Organizations.Nodes {
 		if org.ViewerCanCreateProjects {
 			l = append(l, loginTypes{
@@ -520,6 +539,41 @@ func logins(client api.GQLClient) ([]loginTypes, error) {
 			})
 		}
 	}
+
+	// this seem unlikely, but if there are more org logins, paginate the rest
+	if v.Viewer.Organizations.PageInfo.HasNextPage {
+		return paginateOrgLogins(client, l, string(v.Viewer.Organizations.PageInfo.EndCursor))
+	}
+
+	return l, nil
+}
+
+// paginateOrgLogins after cursor and append them to the list of logins.
+func paginateOrgLogins(client api.GQLClient, l []loginTypes, cursor string) ([]loginTypes, error) {
+	var v viewerLoginOrgs
+	variables := map[string]interface{}{
+		"after": (graphql.String)(cursor),
+	}
+
+	err := client.Query("ViewerLoginAndOrgs", &v, variables)
+	if err != nil {
+		return l, err
+	}
+
+	for _, org := range v.Viewer.Organizations.Nodes {
+		if org.ViewerCanCreateProjects {
+			l = append(l, loginTypes{
+				Login: org.Login,
+				Type:  OrgOwner,
+				ID:    org.ID,
+			})
+		}
+	}
+
+	if v.Viewer.Organizations.PageInfo.HasNextPage {
+		return paginateOrgLogins(client, l, string(v.Viewer.Organizations.PageInfo.EndCursor))
+	}
+
 	return l, nil
 }
 
@@ -571,7 +625,7 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 		}, nil
 	}
 
-	logins, err := logins(client)
+	logins, err := userOrgLogins(client)
 	if err != nil {
 		return nil, err
 	}
@@ -630,8 +684,8 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 		}
 		return nil, errors.New("unknown owner type")
 	}
-	// TODO: pagination
-	projects, err := Projects(client, o.Login, o.Type, 100)
+
+	projects, err := Projects(client, o.Login, o.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -666,12 +720,13 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 	return &projects[answerIndex], nil
 }
 
-// Projects returns the projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func Projects(client api.GQLClient, login string, t OwnerType, first int) ([]Project, error) {
+// ProjectsLimit returns up to limit projects for an Owner. If the OwnerType is VIEWER, no login is required.
+func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, error) {
 	variables := map[string]interface{}{
 		"login": graphql.String(login),
-		"first": graphql.Int(first),
+		"first": graphql.Int(limit),
 	}
+
 	if t == UserOwner {
 		var query userProjects
 		err := client.Query("UserProjects", &query, variables)
@@ -682,8 +737,62 @@ func Projects(client api.GQLClient, login string, t OwnerType, first int) ([]Pro
 		return query.Owner.Projects.Nodes, err
 	} else if t == ViewerOwner {
 		var query viewerProjects
-		err := client.Query("ViewerProjects", &query, map[string]interface{}{"first": graphql.Int(first)})
+		err := client.Query("ViewerProjects", &query, map[string]interface{}{"first": graphql.Int(limit)})
 		return query.Owner.Projects.Nodes, err
 	}
 	return []Project{}, errors.New("unknown owner type")
+}
+
+// Projects returns all the projects for an Owner. If the OwnerType is VIEWER, no login is required.
+func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error) {
+	projects := make([]Project, 0)
+	cursor := (*githubv4.String)(nil)
+	hasNextPage := false
+
+	// loop until we get all the projects
+	for {
+		// the code below is very repetitive, the only real difference being the type of the query
+		// and the query variables. I couldn't figure out a way to make this cleaner that was worth
+		// the cost.
+		if t == UserOwner {
+			var query userProjects
+			variables := map[string]interface{}{
+				"login": graphql.String(login),
+				"after": cursor,
+			}
+			if err := client.Query("UserProjects", &query, variables); err != nil {
+				return projects, err
+			}
+			projects = append(projects, query.Owner.Projects.Nodes...)
+			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
+			cursor = &query.Owner.Projects.PageInfo.EndCursor
+		} else if t == OrgOwner {
+			var query orgProjects
+			variables := map[string]interface{}{
+				"login": graphql.String(login),
+				"after": cursor,
+			}
+			if err := client.Query("OrgProjects", &query, variables); err != nil {
+				return projects, err
+			}
+			projects = append(projects, query.Owner.Projects.Nodes...)
+			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
+			cursor = &query.Owner.Projects.PageInfo.EndCursor
+		} else if t == ViewerOwner {
+			var query viewerProjects
+			variables := map[string]interface{}{
+				"after": cursor,
+			}
+			if err := client.Query("ViewerProjects", &query, variables); err != nil {
+				return projects, err
+			}
+			projects = append(projects, query.Owner.Projects.Nodes...)
+			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
+			cursor = &query.Owner.Projects.PageInfo.EndCursor
+		}
+
+		if !hasNextPage {
+			return projects, nil
+		}
+	}
 }

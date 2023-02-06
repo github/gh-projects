@@ -114,7 +114,7 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projects, err := queries.Projects(config.client, login, ownerType, config.opts.first())
+	projects, err := queries.ProjectsLimit(config.client, login, ownerType, config.opts.first())
 	if err != nil {
 		return err
 	}
