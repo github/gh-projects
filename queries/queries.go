@@ -62,28 +62,6 @@ type Project struct {
 	}
 }
 
-// ProjectId returns the ID of a project. If OwnerType is VIEWER, no login is required.
-func ProjectId(client api.GQLClient, o *Owner, number int) (string, error) {
-	variables := map[string]interface{}{
-		"login":  graphql.String(o.Login),
-		"number": graphql.Int(number),
-	}
-	if o.Type == UserOwner {
-		var query userOwner
-		err := client.Query("UserProject", &query, variables)
-		return query.Owner.Project.ID, err
-	} else if o.Type == OrgOwner {
-		var query orgOwner
-		err := client.Query("OrgProject", &query, variables)
-		return query.Owner.Project.ID, err
-	} else if o.Type == ViewerOwner {
-		var query viewerOwner
-		err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
-		return query.Owner.Project.ID, err
-	}
-	return "", errors.New("unknown owner type")
-}
-
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
 	Id       string
