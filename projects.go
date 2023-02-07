@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -24,6 +25,7 @@ import (
 	cmdList "github.com/github/gh-projects/cmd/list"
 	cmdView "github.com/github/gh-projects/cmd/view"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
 // analogous to cli/pkg/cmd/pr.go in cli/cli
@@ -48,7 +50,6 @@ func main() {
 	}
 
 	cmdFactory := factory.New("0.1.0") // will be replaced by buildVersion := build.Version
-
 	rootCmd.AddCommand(cmdList.NewCmdList(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCreate.NewCmdCreate(cmdFactory, nil))
 	rootCmd.AddCommand(cmdCopy.NewCmdCopy(cmdFactory, nil))
@@ -72,6 +73,11 @@ func main() {
 	fieldCmd.AddCommand(cmdFieldCreate.NewCmdCreateField(cmdFactory, nil))
 	fieldCmd.AddCommand(cmdFieldEdit.NewCmdEditField(cmdFactory, nil))
 	fieldCmd.AddCommand(cmdFieldDelete.NewCmdDeleteField(cmdFactory, nil))
+
+	err := doc.GenMarkdownTree(rootCmd, "./docs")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "Message: Your token has not been granted the required scopes to execute this query") {
