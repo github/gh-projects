@@ -18,12 +18,12 @@ type ClientOptions struct {
 }
 
 func NewClient() (api.GQLClient, error) {
-	timeout := 5 * time.Second
+	timeout := 15 * time.Second
 
 	apiOpts := api.ClientOptions{
 		Timeout: timeout,
 		Headers: map[string]string{
-			"GraphQL-Features": "memex_copy_project,memex_project_fields_api,memex_project_delete_api",
+			"GraphQL-Features": "memex_project_fields_api,memex_project_delete_api",
 		},
 	}
 
