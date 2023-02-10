@@ -1,4 +1,4 @@
-package delete
+package itemdelete
 
 import (
 	"bytes"

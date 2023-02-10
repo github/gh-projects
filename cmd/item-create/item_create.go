@@ -1,4 +1,4 @@
-package create
+package itemcreate
 
 import (
 	"strconv"
@@ -37,17 +37,17 @@ type createProjectDraftItemMutation struct {
 func NewCmdCreateItem(f *cmdutil.Factory, runF func(config createItemConfig) error) *cobra.Command {
 	opts := createItemOpts{}
 	createItemCmd := &cobra.Command{
-		Short: "Create a draft issue in a project",
-		Use:   "create [number]",
+		Short: "Create a draft issue item in a project",
+		Use:   "item-create [number]",
 		Example: `
 # create a draft issue in the current user's project 1 with title "new item" and body "new item body"
-gh projects item create 1 --user "@me" --title "new item" --body "new item body"
+gh projects item-create 1 --user "@me" --title "new item" --body "new item body"
 
 # create a draft issue in monalisa user project 1 with title "new item" and body "new item body"
-gh projects item create 1 --user monalisa --title "new item" --body "new item body"
+gh projects item-create 1 --user monalisa --title "new item" --body "new item body"
 
 # create a draft issue in github org project 1 with title "new item" and body "new item body"
-gh projects item create 1 --org github --title "new item" --body "new item body"
+gh projects item-create 1 --org github --title "new item" --body "new item body"
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

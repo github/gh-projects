@@ -1,4 +1,4 @@
-package archive
+package itemarchive
 
 import (
 	"strconv"
@@ -44,19 +44,19 @@ func NewCmdArchiveItem(f *cmdutil.Factory, runF func(config archiveItemConfig) e
 	opts := archiveItemOpts{}
 	archiveItemCmd := &cobra.Command{
 		Short: "Archive an item in a project",
-		Use:   "archive [number]",
+		Use:   "item-archive [number]",
 		Example: `
 # archive an item in the current user's project 1
-gh projects item archive 1 --user "@me" --id ID
+gh projects item-archive 1 --user "@me" --id ID
 
 # archive an item in the monalisa user project 1
-gh projects item archive 1 --user monalisa --id ID
+gh projects item-archive 1 --user monalisa --id ID
 
 # archive an item in the github org project 1
-gh projects item archive 1 --org github --id ID
+gh projects item-archive 1 --org github --id ID
 
 # unarchive an item
-gh projects item archive 1 --user "@me" --id ID --undo
+gh projects item-archive 1 --user "@me" --id ID --undo
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

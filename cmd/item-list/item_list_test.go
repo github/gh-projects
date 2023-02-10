@@ -1,4 +1,4 @@
-package list
+package itemlist
 
 import (
 	"bytes"

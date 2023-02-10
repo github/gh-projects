@@ -1,4 +1,4 @@
-package list
+package fieldlist
 
 import (
 	"bytes"

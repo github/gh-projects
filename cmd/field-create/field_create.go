@@ -1,4 +1,4 @@
-package create
+package fieldcreate
 
 import (
 	"fmt"
@@ -48,19 +48,19 @@ func NewCmdCreateField(f *cmdutil.Factory, runF func(config createFieldConfig) e
 	opts := createFieldOpts{}
 	createFieldCmd := &cobra.Command{
 		Short: "Create a field in a project",
-		Use:   "create [number]",
+		Use:   "field-create [number]",
 		Example: `
 # create a field in the current user's project 1 with title "new item" and dataType "text"
-gh projects field create 1 --user "@me" --name "new field" --data-type "text"
+gh projects field-create 1 --user "@me" --name "new field" --data-type "text"
 
 # create a field in monalisa user project 1 with title "new item" and dataType "text"
-gh projects field create 1 --user monalisa --name "new field" --data-type "text"
+gh projects field-create 1 --user monalisa --name "new field" --data-type "text"
 
 # create a field in the github org project 1 with title "new item" and dataType "text"
-gh projects field create 1 --org github --name "new field" --data-type "text"
+gh projects field-create 1 --org github --name "new field" --data-type "text"
 
 # create a field with single select options
-gh projects field create 1 --user monalisa --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
+gh projects field-create 1 --user monalisa --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

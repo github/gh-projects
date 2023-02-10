@@ -1,4 +1,4 @@
-package delete
+package fielddelete
 
 import (
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -36,10 +36,10 @@ func NewCmdDeleteField(f *cmdutil.Factory, runF func(config deleteFieldConfig) e
 	opts := deleteFieldOpts{}
 	deleteFieldCmd := &cobra.Command{
 		Short: "Delete a field in a project",
-		Use:   "delete",
+		Use:   "field-delete",
 		Example: `
 # delete a field by ID
-gh projects field delete --id ID
+gh projects field-delete --id ID
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

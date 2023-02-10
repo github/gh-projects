@@ -1,4 +1,4 @@
-package delete
+package itemdelete
 
 import (
 	"strconv"
@@ -37,16 +37,16 @@ func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) err
 	opts := deleteItemOpts{}
 	deleteItemCmd := &cobra.Command{
 		Short: "Delete an item from a project",
-		Use:   "delete [number]",
+		Use:   "item-delete [number]",
 		Example: `
 # delete an item in the current user's project 1
-gh projects item delete 1 --user "@me" --id ID
+gh projects item-delete 1 --user "@me" --id ID
 
 # delete an item in the monalisa user project 1
-gh projects item delete 1 --user monalisa --id ID
+gh projects item-delete 1 --user monalisa --id ID
 
 # delete an item in the github org project 1
-gh projects item delete 1 --org github --id ID
+gh projects item-delete 1 --org github --id ID
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

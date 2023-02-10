@@ -1,4 +1,4 @@
-package list
+package fieldlist
 
 import (
 	"fmt"
@@ -36,19 +36,19 @@ func (opts *listOpts) first() int {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "List the items in a project",
-		Use:   "list [number]",
+		Short: "List the fields in a project",
+		Use:   "field-list number",
 		Example: `
-# list the items in project number 1 for the current user
-gh projects item list 1 --user "@me"
+# list the fields in project number 1 for the current user
+gh projects field-list 1 --user "@me"
 
-# list the items in project number 1 for user monalisa
-gh projects item list 1 --user monalisa
+# list the fields in project number 1 for user monalisa
+gh projects field-list 1 --user monalisa
 
-# list the items in project number 1 for org github
-gh projects item list 1 --org github
+# list the first 30 fields in project number 1 for org github
+gh projects field-list 1 --org github --limit 30
 `,
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
@@ -61,11 +61,9 @@ gh projects item list 1 --org github
 				return nil
 			}
 
-			if len(args) == 1 {
-				opts.number, err = strconv.Atoi(args[0])
-				if err != nil {
-					return err
-				}
+			opts.number, err = strconv.Atoi(args[0])
+			if err != nil {
+				return err
 			}
 
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
@@ -80,7 +78,7 @@ gh projects item list 1 --org github
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
+	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -94,43 +92,31 @@ func runList(config listConfig) error {
 		return err
 	}
 
-	items, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
+	fields, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, items, owner.Login)
+	return printResults(config, fields, owner.Login)
 }
 
-func printResults(config listConfig, items []queries.ProjectItem, login string) error {
-	if len(items) == 0 {
-		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no items", config.opts.number, login))
+func printResults(config listConfig, fields []queries.ProjectField, login string) error {
+	if len(fields) == 0 {
+		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields", config.opts.number, login))
 		config.tp.EndRow()
 		config.tp.Render()
 		return nil
 	}
 
-	config.tp.AddField("Type")
-	config.tp.AddField("Title")
-	config.tp.AddField("Number")
-	config.tp.AddField("Repository")
+	config.tp.AddField("Name")
+	config.tp.AddField("DataType")
 	config.tp.AddField("ID")
 	config.tp.EndRow()
 
-	for _, i := range items {
-		config.tp.AddField(i.Type())
-		config.tp.AddField(i.Title())
-		if i.Number() == 0 {
-			config.tp.AddField(" - ")
-		} else {
-			config.tp.AddField(fmt.Sprintf("%d", i.Number()))
-		}
-		if i.Repo() == "" {
-			config.tp.AddField(" - ")
-		} else {
-			config.tp.AddField(i.Repo())
-		}
-		config.tp.AddField(i.ID())
+	for _, f := range fields {
+		config.tp.AddField(f.Name())
+		config.tp.AddField(f.Type())
+		config.tp.AddField(f.ID())
 		config.tp.EndRow()
 	}
 

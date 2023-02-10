@@ -1,4 +1,4 @@
-package add
+package itemadd
 
 import (
 	"strconv"
@@ -38,16 +38,16 @@ func NewCmdAddItem(f *cmdutil.Factory, runF func(config addItemConfig) error) *c
 	opts := addItemOpts{}
 	addItemCmd := &cobra.Command{
 		Short: "Add a pull request or an issue to a project",
-		Use:   "add [number]",
+		Use:   "item-add [number]",
 		Example: `
 # add an item to the current user's project 1
-gh projects item add 1 --user "@me" --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --user "@me" --url https://github.com/cli/go-gh/issues/1
 
 # add an item to user monalisa project 1
-gh projects item add 1 --user monalisa --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --user monalisa --url https://github.com/cli/go-gh/issues/1
 
 # add an item to the github org project 1
-gh projects item add 1 --org github --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

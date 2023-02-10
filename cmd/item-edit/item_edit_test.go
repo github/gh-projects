@@ -1,4 +1,4 @@
-package edit
+package itemedit
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package edit
+package fieldedit
 
 import (
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -40,13 +40,13 @@ func NewCmdEditField(f *cmdutil.Factory, runF func(config editFieldConfig) error
 	opts := editFieldOpts{}
 	editFieldCmd := &cobra.Command{
 		Short: "Edit a field in a project",
-		Use:   "edit",
+		Use:   "field-edit",
 		Example: `
 # edit a field to have the title "new name"
-gh projects field edit --id ID --name "new name"
+gh projects field-edit --id ID --name "new name"
 
 # edit a single select field to have new options
-gh projects field edit --id ID --single-select-options "one,two,three"
+gh projects field-edit --id ID --single-select-options "one,two,three"
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

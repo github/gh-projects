@@ -1,4 +1,4 @@
-package edit
+package itemedit
 
 import (
 	"errors"
@@ -37,10 +37,10 @@ func NewCmdEditItem(f *cmdutil.Factory, runF func(config editItemConfig) error) 
 	opts := editItemOpts{}
 	editItemCmd := &cobra.Command{
 		Short: "Edit a draft issue in a project",
-		Use:   "edit",
+		Use:   "item-edit",
 		Example: `
 # edit a draft issue
-gh projects item edit --id ID --title "a new title" --body "a new body"
+gh projects item-edit --id ID --title "a new title" --body "a new body"
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
