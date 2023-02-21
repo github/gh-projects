@@ -22,9 +22,7 @@ func NewClient() (api.GQLClient, error) {
 
 	apiOpts := api.ClientOptions{
 		Timeout: timeout,
-		Headers: map[string]string{
-			"GraphQL-Features": "memex_project_fields_api",
-		},
+		Headers: map[string]string{},
 	}
 
 	return gh.GQLClient(&apiOpts)
