@@ -539,6 +539,63 @@ func (p ProjectField) Name() string {
 	return ""
 }
 
+// ProjectFieldWithValue is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration with values.
+type ProjectFieldWithValue struct {
+	ProjectField
+	IterationField ProjectIterationFieldValues `graphql:"... on ProjectV2IterationField"`
+}
+
+// ProjectIterationFieldValues is a ProjectV2IterationField GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2iterationfield.
+type ProjectIterationFieldValues struct {
+	ID            string
+	Name          string
+	DataType      string
+	Configuration struct {
+		StartDay            int
+		Duration            int
+		CompletedIterations []Iteration
+		Iterations          []Iteration
+	}
+}
+
+// Iteration is a ProjectV2IterationFieldIteration GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2iterationfielditeration
+type Iteration struct {
+	Duration  int
+	Id        string
+	StartDate IterationDate
+	Title     string
+}
+
+// ProjectSingleSelectFieldValues is a ProjectV2SingleSelectField GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2singleselectfield.
+type ProjectSingleSelectFieldValues struct {
+	ID       string
+	Name     string
+	DataType string
+	Options  []SelectOption
+}
+
+// SelectOption is a ProjectV2SingleSelectFieldOption GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2singleselectfieldoption.
+type SelectOption struct {
+	ID   string
+	Name string
+}
+
+type IterationDate struct {
+	time.Time
+}
+
+func (t *IterationDate) UnmarshalJSON(b []byte) (err error) {
+	date, err := time.Parse(`"2006-01-02"`, string(b))
+	if err != nil {
+		return err
+	}
+	t.Time = date
+	return
+}
+func (t IterationDate) String() string {
+	return t.Time.Format("2006-01-02")
+}
+
 // Type is the typename of the project field.
 func (p ProjectField) Type() string {
 	return p.TypeName
@@ -590,6 +647,31 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (*Proj
 
 	project.Fields.Nodes = fields
 	return project, nil
+}
+
+// ProjectIterationFieldValues returns the values of a project iteration field. If the OwnerType is VIEWER, no login is required.
+func ProjectFieldWithValues(client api.GQLClient, o *Owner, number int, first int) ([]ProjectFieldWithValue, error) {
+	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
+		"number": graphql.Int(number),
+	}
+	//if o.Type == UserOwner {
+	//	variables["login"] = graphql.String(o.Login)
+	//var query userOwnerWithFields
+	//	err := client.Query("UserProjectWithFields", &query, variables)
+	//	return query.Owner.Project.Fields.Nodes, err
+	//} else
+	if o.Type == OrgOwner {
+		variables["login"] = graphql.String(o.Login)
+		var query orgOwnerWithFieldsWithValues
+		err := client.Query("OrgProjectWithFields", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+		//} else if o.Type == ViewerOwner {
+		//	var query viewerOwnerWithFields
+		//	err := client.Query("ViewerProjectWithFields", &query, variables)
+		//	return query.Owner.Project.Fields.Nodes, err
+	}
+	return []ProjectFieldWithValue{}, errors.New("unknown owner type")
 }
 
 // viewerLogin is used to query the Login of the viewer.
@@ -672,6 +754,17 @@ type orgOwnerWithItems struct {
 type orgOwnerWithFields struct {
 	Owner struct {
 		Project Project `graphql:"projectV2(number: $number)"`
+	} `graphql:"organization(login: $login)"`
+}
+
+// orgOwnerWithFieldsWithValues is used to query the project of an organization with its fields.
+type orgOwnerWithFieldsWithValues struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectFieldWithValue
+			} `graphql:"fields(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 

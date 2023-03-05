@@ -14,6 +14,7 @@ import (
 	cmdFieldCreate "github.com/github/gh-projects/cmd/field-create"
 	cmdFieldDelete "github.com/github/gh-projects/cmd/field-delete"
 	cmdFieldList "github.com/github/gh-projects/cmd/field-list"
+	cmdFieldListValues "github.com/github/gh-projects/cmd/field-list-values"
 	cmdItemAdd "github.com/github/gh-projects/cmd/item-add"
 	cmdItemArchive "github.com/github/gh-projects/cmd/item-archive"
 	cmdItemCreate "github.com/github/gh-projects/cmd/item-create"
@@ -56,6 +57,7 @@ func main() {
 	rootCmd.AddCommand(cmdFieldList.NewCmdList(cmdFactory, nil))
 	rootCmd.AddCommand(cmdFieldCreate.NewCmdCreateField(cmdFactory, nil))
 	rootCmd.AddCommand(cmdFieldDelete.NewCmdDeleteField(cmdFactory, nil))
+	rootCmd.AddCommand(cmdFieldListValues.NewCmdListValues(cmdFactory, nil))
 
 	if err := rootCmd.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "Message: Your token has not been granted the required scopes to execute this query") {
