@@ -2,16 +2,16 @@ package fieldlistvalues
 
 import (
 	"bytes"
-	"testing"
-
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/stretchr/testify/assert"
+	"testing"
+
 	"gopkg.in/h2non/gock.v1"
 )
 
-func TestRunList_User(t *testing.T) {
+func TestRunList_User_(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
@@ -66,6 +66,24 @@ func TestRunList_User(t *testing.T) {
 									"__typename": "ProjectV2IterationField",
 									"name":       "Iterations",
 									"id":         "iteration ID",
+									"configuration": map[string]interface{}{
+										"iterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 2",
+												"title":     "current",
+												"duration":  1,
+											},
+										},
+										"completedIterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 1",
+												"title":     "past",
+												"duration":  1,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -83,6 +101,7 @@ func TestRunList_User(t *testing.T) {
 		opts: listOpts{
 			number:    1,
 			userOwner: "monalisa",
+			itemID:    "iteration ID",
 		},
 		client: client,
 	}
@@ -91,7 +110,7 @@ func TestRunList_User(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Name\tDataType\tID\nFieldTitle\tProjectV2Field\tfield ID\nStatus\tProjectV2SingleSelectField\tstatus ID\nIterations\tProjectV2IterationField\titeration ID\n",
+		"ID\tTitle\tStart Date\tDuration\tCompleted\niteration ID 1\tpast\t2022-05-29\t1\ttrue\niteration ID 2\tcurrent\t2022-05-29\t1\n",
 		buf.String())
 }
 
@@ -149,6 +168,24 @@ func TestRunList_Org(t *testing.T) {
 									"__typename": "ProjectV2IterationField",
 									"name":       "Iterations",
 									"id":         "iteration ID",
+									"configuration": map[string]interface{}{
+										"iterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 2",
+												"title":     "current",
+												"duration":  1,
+											},
+										},
+										"completedIterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 1",
+												"title":     "past",
+												"duration":  1,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -166,6 +203,7 @@ func TestRunList_Org(t *testing.T) {
 		opts: listOpts{
 			number:   1,
 			orgOwner: "github",
+			itemID:   "iteration ID",
 		},
 		client: client,
 	}
@@ -174,7 +212,7 @@ func TestRunList_Org(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Name\tDataType\tID\nFieldTitle\tProjectV2Field\tfield ID\nStatus\tProjectV2SingleSelectField\tstatus ID\nIterations\tProjectV2IterationField\titeration ID\n",
+		"ID\tTitle\tStart Date\tDuration\tCompleted\niteration ID 1\tpast\t2022-05-29\t1\ttrue\niteration ID 2\tcurrent\t2022-05-29\t1\n",
 		buf.String())
 }
 
@@ -229,6 +267,24 @@ func TestRunList_Me(t *testing.T) {
 									"__typename": "ProjectV2IterationField",
 									"name":       "Iterations",
 									"id":         "iteration ID",
+									"configuration": map[string]interface{}{
+										"iterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 2",
+												"title":     "current",
+												"duration":  1,
+											},
+										},
+										"completedIterations": []map[string]interface{}{
+											{
+												"startDate": "2022-05-29",
+												"id":        "iteration ID 1",
+												"title":     "past",
+												"duration":  1,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -246,6 +302,7 @@ func TestRunList_Me(t *testing.T) {
 		opts: listOpts{
 			number:    1,
 			userOwner: "@me",
+			itemID:    "iteration ID",
 		},
 		client: client,
 	}
@@ -254,7 +311,7 @@ func TestRunList_Me(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Name\tDataType\tID\nFieldTitle\tProjectV2Field\tfield ID\nStatus\tProjectV2SingleSelectField\tstatus ID\nIterations\tProjectV2IterationField\titeration ID\n",
+		"ID\tTitle\tStart Date\tDuration\tCompleted\niteration ID 1\tpast\t2022-05-29\t1\ttrue\niteration ID 2\tcurrent\t2022-05-29\t1\n",
 		buf.String())
 }
 
@@ -310,6 +367,7 @@ func TestRunList_Empty(t *testing.T) {
 		opts: listOpts{
 			number:    1,
 			userOwner: "@me",
+			itemID:    "itemID",
 		},
 		client: client,
 	}
@@ -318,6 +376,6 @@ func TestRunList_Empty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Project 1 for login @me has no fields\n",
+		"Project 1 for login @me has no fields with given ID.\n",
 		buf.String())
 }

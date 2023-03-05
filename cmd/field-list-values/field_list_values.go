@@ -14,12 +14,11 @@ import (
 )
 
 type listOpts struct {
-	limit     int // TODO
+	limit     int
 	userOwner string
 	orgOwner  string
 	number    int
 	itemID    string
-	projectID string
 }
 
 type listConfig struct {
@@ -111,7 +110,7 @@ func runList(config listConfig) error {
 
 func printResults(config listConfig, field queries.ProjectFieldWithValue, login string) error {
 	if field.ID() == "" {
-		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields with given ID", config.opts.number, login))
+		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields with given ID.", config.opts.number, login))
 		config.tp.EndRow()
 		return config.tp.Render()
 	}

@@ -655,21 +655,20 @@ func ProjectFieldWithValues(client api.GQLClient, o *Owner, number int, first in
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 	}
-	//if o.Type == UserOwner {
-	//	variables["login"] = graphql.String(o.Login)
-	//var query userOwnerWithFields
-	//	err := client.Query("UserProjectWithFields", &query, variables)
-	//	return query.Owner.Project.Fields.Nodes, err
-	//} else
-	if o.Type == OrgOwner {
+	if o.Type == UserOwner {
+		variables["login"] = graphql.String(o.Login)
+		var query userOwnerWithFieldsWithValues
+		err := client.Query("UserProjectWithFieldsWithValues", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
+	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithFieldsWithValues
-		err := client.Query("OrgProjectWithFields", &query, variables)
+		err := client.Query("OrgProjectWithFieldsWithValues", &query, variables)
 		return query.Owner.Project.Fields.Nodes, err
-		//} else if o.Type == ViewerOwner {
-		//	var query viewerOwnerWithFields
-		//	err := client.Query("ViewerProjectWithFields", &query, variables)
-		//	return query.Owner.Project.Fields.Nodes, err
+	} else if o.Type == ViewerOwner {
+		var query viewerOwnerWithFieldsWithValues
+		err := client.Query("ViewerProjectWithFieldsWithValues", &query, variables)
+		return query.Owner.Project.Fields.Nodes, err
 	}
 	return []ProjectFieldWithValue{}, errors.New("unknown owner type")
 }
@@ -735,6 +734,17 @@ type userOwnerWithFields struct {
 	} `graphql:"user(login: $login)"`
 }
 
+// userOwnerWithFieldsWithValues is used to query the project of a user with it's fields and theirs values.
+type userOwnerWithFieldsWithValues struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectFieldWithValue
+			} `graphql:"fields(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
+	} `graphql:"user(login: $login)"`
+}
+
 // orgOwner is used to query the project of an organization.
 type orgOwner struct {
 	Owner struct {
@@ -757,7 +767,7 @@ type orgOwnerWithFields struct {
 	} `graphql:"organization(login: $login)"`
 }
 
-// orgOwnerWithFieldsWithValues is used to query the project of an organization with its fields.
+// orgOwnerWithFieldsWithValues is used to query the project of an organization with it's fields and theirs values.
 type orgOwnerWithFieldsWithValues struct {
 	Owner struct {
 		Project struct {
@@ -787,6 +797,17 @@ type viewerOwnerWithItems struct {
 type viewerOwnerWithFields struct {
 	Owner struct {
 		Project Project `graphql:"projectV2(number: $number)"`
+	} `graphql:"viewer"`
+}
+
+// viewerOwnerWithFieldsWithValues is used to query the project of the viewer with its fields and theirs values.
+type viewerOwnerWithFieldsWithValues struct {
+	Owner struct {
+		Project struct {
+			Fields struct {
+				Nodes []ProjectFieldWithValue
+			} `graphql:"fields(first: $first)"`
+		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
