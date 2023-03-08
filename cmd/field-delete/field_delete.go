@@ -50,10 +50,11 @@ gh projects field-delete --id ID
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
 			if err != nil {
-				return err
+				// set a static width in case of error
+				termWidth = 80
 			}
-
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := deleteFieldConfig{
 				tp:     t,
 				client: client,

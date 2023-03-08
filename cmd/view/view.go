@@ -55,11 +55,6 @@ gh projects view 1 --org github --closed
 			URLOpener := func(url string) error {
 				return browser.OpenURL(url)
 			}
-			terminal := term.FromEnv()
-			termWidth, _, err := terminal.Size()
-			if err != nil {
-				return nil
-			}
 
 			if len(args) == 1 {
 				opts.number, err = strconv.Atoi(args[0])
@@ -68,7 +63,14 @@ gh projects view 1 --org github --closed
 				}
 			}
 
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				// set a static width in case of error
+				termWidth = 80
+			}
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := viewConfig{
 				tp:        t,
 				client:    client,
