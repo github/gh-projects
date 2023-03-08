@@ -56,12 +56,6 @@ gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
 				return err
 			}
 
-			terminal := term.FromEnv()
-			termWidth, _, err := terminal.Size()
-			if err != nil {
-				return err
-			}
-
 			if len(args) == 1 {
 				opts.number, err = strconv.Atoi(args[0])
 				if err != nil {
@@ -69,7 +63,14 @@ gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
 				}
 			}
 
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				// set a static width in case of error
+				termWidth = 80
+			}
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := addItemConfig{
 				tp:     t,
 				client: client,

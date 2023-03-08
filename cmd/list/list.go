@@ -62,10 +62,11 @@ gh projects list --org github --closed
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
 			if err != nil {
-				return nil
+				// set a static width in case of error
+				termWidth = 80
 			}
-
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := listConfig{
 				tp:        t,
 				client:    client,

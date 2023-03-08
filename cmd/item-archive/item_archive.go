@@ -65,12 +65,6 @@ gh projects item-archive 1 --user "@me" --id ID --undo
 				return err
 			}
 
-			terminal := term.FromEnv()
-			termWidth, _, err := terminal.Size()
-			if err != nil {
-				return err
-			}
-
 			if len(args) == 1 {
 				opts.number, err = strconv.Atoi(args[0])
 				if err != nil {
@@ -78,7 +72,14 @@ gh projects item-archive 1 --user "@me" --id ID --undo
 				}
 			}
 
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				// set a static width in case of error
+				termWidth = 80
+			}
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := archiveItemConfig{
 				tp:     t,
 				client: client,

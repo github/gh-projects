@@ -54,19 +54,21 @@ gh projects delete 1 --org github
 				return err
 			}
 
-			terminal := term.FromEnv()
-			termWidth, _, err := terminal.Size()
-			if err != nil {
-				return err
-			}
-
 			if len(args) == 1 {
 				opts.number, err = strconv.Atoi(args[0])
 				if err != nil {
 					return err
 				}
 			}
+
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				// set a static width in case of error
+				termWidth = 80
+			}
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := deleteConfig{
 				tp:     t,
 				client: client,
