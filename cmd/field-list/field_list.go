@@ -55,18 +55,19 @@ gh projects field-list 1 --org github --limit 30
 				return err
 			}
 
-			terminal := term.FromEnv()
-			termWidth, _, err := terminal.Size()
-			if err != nil {
-				return nil
-			}
-
 			opts.number, err = strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
 
+			terminal := term.FromEnv()
+			termWidth, _, err := terminal.Size()
+			if err != nil {
+				// set a static width in case of error
+				termWidth = 80
+			}
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := listConfig{
 				tp:     t,
 				client: client,

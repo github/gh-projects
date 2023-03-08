@@ -56,9 +56,9 @@ gh projects create --user '@me' --title "a new project"
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
 			if err != nil {
-				return err
+				// set a static width in case of error
+				termWidth = 80
 			}
-
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
 			config := createConfig{
 				tp:     t,

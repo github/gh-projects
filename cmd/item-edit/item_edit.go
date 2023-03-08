@@ -50,10 +50,11 @@ gh projects item-edit --id ID --title "a new title" --body "a new body"
 			terminal := term.FromEnv()
 			termWidth, _, err := terminal.Size()
 			if err != nil {
-				return err
+				// set a static width in case of error
+				termWidth = 80
 			}
-
 			t := tableprinter.New(terminal.Out(), terminal.IsTerminalOutput(), termWidth)
+
 			config := editItemConfig{
 				tp:     t,
 				client: client,
