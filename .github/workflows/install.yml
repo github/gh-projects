@@ -7,12 +7,10 @@ jobs:
    steps:
    - uses: actions/checkout@v3
 
-   - name: Install the extension
+   - name: Install and run the extension from source
      env:
       GH_TOKEN: ${{ github.token }}
-     run: go build projects.go && gh extension install .
-
-   - name: List Projects
-     env:
-      GH_TOKEN: ${{ github.token }}
-     run: gh projects list --org microsoft
+     run: |
+      go build projects.go
+      gh extension install .
+      gh projects list --org microsoft
