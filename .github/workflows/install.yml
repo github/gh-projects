@@ -1,0 +1,14 @@
+name: Install the extension
+on: [pull_request]
+
+jobs:
+  install:
+   runs-on: ubuntu-latest
+   steps:
+   - uses: actions/checkout@v3
+
+   - name: install the extension
+     run: gh extension install .
+
+   - name: List CLI Projects
+     run: gh projects list --org cli
