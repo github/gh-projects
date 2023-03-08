@@ -11,6 +11,6 @@ jobs:
      env:
       GH_TOKEN: ${{ github.token }}
      run: |
-      go build projects.go
+      go build -o gh-projects projects.go
       gh extension install .
       gh projects list --org microsoft
