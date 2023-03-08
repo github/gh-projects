@@ -13,8 +13,8 @@ jobs:
      run: |
       go build -o gh-projects projects.go
       gh extension install .
-   - name: List projects
+   - name: View a project
      env:
       GH_TOKEN: ${{ github.token }}
      run: |
-      gh projects list --org microsoft
+       gh projects view 4247 --org github
