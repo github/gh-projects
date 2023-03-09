@@ -47,7 +47,8 @@ type Project struct {
 	Readme           string
 	Items            struct {
 		TotalCount int
-	}
+		Nodes      []ProjectItem
+	} `graphql:"items(first: $first)"`
 	Fields struct {
 		Nodes []ProjectField
 	} `graphql:"fields(first:100)"`
@@ -63,13 +64,90 @@ type Project struct {
 
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
-	Id       string
-	TypeName string `graphql:"type"`
-	Content  struct {
+	Content struct {
 		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
 		PullRequest PullRequest `graphql:"... on PullRequest"`
 		Issue       Issue       `graphql:"... on Issue"`
 	}
+	Id          string
+	TypeName    string `graphql:"type"`
+	FieldValues struct {
+		Nodes []struct {
+			Type                        string `graphql:"__typename"`
+			ProjectV2ItemFieldDateValue struct {
+				Date  string
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldDateValue"`
+			ProjectV2ItemFieldIterationValue struct {
+				StartDate string
+				Duration  int
+				Field     ProjectField
+			} `graphql:"... on ProjectV2ItemFieldIterationValue"`
+			ProjectV2ItemFieldLabelValue struct {
+				Labels struct {
+					Nodes []struct {
+						Name string
+					}
+				} `graphql:"labels(first: 10)"`
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldLabelValue"`
+			ProjectV2ItemFieldNumberValue struct {
+				Number float32
+				Field  ProjectField
+			} `graphql:"... on ProjectV2ItemFieldNumberValue"`
+			ProjectV2ItemFieldSingleSelectValue struct {
+				Name  string
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
+			ProjectV2ItemFieldTextValue struct {
+				Text  string
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldTextValue"`
+			ProjectV2ItemFieldMilestoneValue struct {
+				Milestone struct {
+					Description string
+					DueOn       string
+				}
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldMilestoneValue"`
+			ProjectV2ItemFieldPullRequestValue struct {
+				PullRequests struct {
+					Nodes []struct {
+						Url string
+					}
+				} `graphql:"pullRequests(first:10)"`
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldPullRequestValue"`
+			ProjectV2ItemFieldRepositoryValue struct {
+				Repository struct {
+					Url string
+				}
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldRepositoryValue"`
+			ProjectV2ItemFieldUserValue struct {
+				Users struct {
+					Nodes []struct {
+						Login string
+					}
+				} `graphql:"users(first: 10)"`
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldUserValue"`
+			ProjectV2ItemFieldReviewerValue struct {
+				Reviewers struct {
+					Nodes []struct {
+						Type string `graphql:"__typename"`
+						Team struct {
+							Name string
+						} `graphql:"... on Team"`
+						User struct {
+							Login string
+						} `graphql:"... on User"`
+					}
+				}
+				Field ProjectField
+			} `graphql:"... on ProjectV2ItemFieldReviewerValue"`
+		}
+	} `graphql:"fieldValues(first: 100)"`
 }
 
 type DraftIssue struct {
@@ -149,7 +227,7 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, first int) ([]ProjectItem, error) {
+func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Project, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
@@ -158,18 +236,18 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) ([]Proj
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithItems
 		err := client.Query("UserProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		return query.Owner.Project, err
 	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithItems
 		err := client.Query("OrgProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		return query.Owner.Project, err
 	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithItems
 		err := client.Query("ViewerProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		return query.Owner.Project, err
 	}
-	return []ProjectItem{}, errors.New("unknown owner type")
+	return Project{}, errors.New("unknown owner type")
 }
 
 // ProjectField is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration.
@@ -295,11 +373,7 @@ type userOwner struct {
 // userOwnerWithItems is used to query the project of a user with its items.
 type userOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
@@ -309,7 +383,7 @@ type userOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
@@ -325,11 +399,7 @@ type orgOwner struct {
 // orgOwnerWithItems is used to query the project of an organization with its items.
 type orgOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
@@ -339,7 +409,7 @@ type orgOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
@@ -355,11 +425,7 @@ type viewerOwner struct {
 // viewerOwnerWithItems is used to query the project of the viewer with its items.
 type viewerOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
@@ -369,7 +435,7 @@ type viewerOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }

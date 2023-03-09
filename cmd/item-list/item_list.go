@@ -1,6 +1,7 @@
 package itemlist
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -18,6 +19,7 @@ type listOpts struct {
 	userOwner string
 	orgOwner  string
 	number    int
+	format    string
 }
 
 type listConfig struct {
@@ -81,6 +83,7 @@ gh projects item-list 1 --org github
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be one of 'json' or 'csv'.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
 
 	// owner can be a user or an org
@@ -90,17 +93,25 @@ gh projects item-list 1 --org github
 }
 
 func runList(config listConfig) error {
+	if config.opts.format != "" && config.opts.format != "csv" && config.opts.format != "json" {
+		return fmt.Errorf("format must be one of 'json' or 'csv'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
 
-	items, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
+	project, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, items, owner.Login)
+	if config.opts.format == "json" {
+		return jsonPrint(config, project)
+	}
+
+	return printResults(config, project.Items.Nodes, owner.Login)
 }
 
 func printResults(config listConfig, items []queries.ProjectItem, login string) error {
@@ -135,4 +146,85 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	}
 
 	return config.tp.Render()
+}
+
+func serialize(project queries.Project) []map[string]any {
+	fields := make(map[string]string)
+
+	for _, f := range project.Fields.Nodes {
+		fields[f.ID()] = f.Name()
+	}
+	itemsSlice := make([]map[string]any, 0)
+	for _, i := range project.Items.Nodes {
+		o := make(map[string]any)
+		for _, v := range i.FieldValues.Nodes {
+			// name and value based on type
+			switch v.Type {
+			case "ProjectV2ItemFieldDateValue":
+				o[fields[v.ProjectV2ItemFieldDateValue.Field.ID()]] = v.ProjectV2ItemFieldDateValue.Date
+			case "ProjectV2ItemFieldIterationValue":
+				o[fields[v.ProjectV2ItemFieldIterationValue.Field.ID()]] = v.ProjectV2ItemFieldIterationValue.StartDate // what about duration
+			case "ProjectV2ItemFieldNumberValue":
+				o[fields[v.ProjectV2ItemFieldNumberValue.Field.ID()]] = fmt.Sprintf("%f", v.ProjectV2ItemFieldNumberValue.Number)
+			case "ProjectV2ItemFieldSingleSelectValue":
+				o[fields[v.ProjectV2ItemFieldSingleSelectValue.Field.ID()]] = v.ProjectV2ItemFieldSingleSelectValue.Name
+			case "ProjectV2ItemFieldTextValue":
+				o[fields[v.ProjectV2ItemFieldTextValue.Field.ID()]] = v.ProjectV2ItemFieldTextValue.Text
+			case "ProjectV2ItemFieldMilestoneValue":
+				o[fields[v.ProjectV2ItemFieldMilestoneValue.Field.ID()]] = struct {
+					Description string
+					DueOn       string
+				}{
+					Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
+					DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
+				}
+			case "ProjectV2ItemFieldLabelValue":
+				name := make([]string, 0)
+				for _, p := range v.ProjectV2ItemFieldLabelValue.Labels.Nodes {
+					name = append(name, p.Name)
+				}
+				o[fields[v.ProjectV2ItemFieldLabelValue.Field.ID()]] = name
+
+			case "ProjectV2ItemFieldPullRequestValue":
+				urls := make([]string, 0)
+				for _, p := range v.ProjectV2ItemFieldPullRequestValue.PullRequests.Nodes {
+					urls = append(urls, p.Url)
+				}
+				o[fields[v.ProjectV2ItemFieldPullRequestValue.Field.ID()]] = urls
+			case "ProjectV2ItemFieldRepositoryValue":
+				o[fields[v.ProjectV2ItemFieldRepositoryValue.Field.ID()]] = v.ProjectV2ItemFieldRepositoryValue.Repository.Url
+			case "ProjectV2ItemFieldUserValue":
+				logins := make([]string, 0)
+				for _, p := range v.ProjectV2ItemFieldUserValue.Users.Nodes {
+					logins = append(logins, p.Login)
+				}
+				o[fields[v.ProjectV2ItemFieldUserValue.Field.ID()]] = logins
+			case "ProjectV2ItemFieldReviewerValue":
+				names := make([]string, 0)
+				for _, p := range v.ProjectV2ItemFieldReviewerValue.Reviewers.Nodes {
+					if p.Type == "Team" {
+						names = append(names, p.Team.Name)
+					} else if p.Type == "User" {
+						names = append(names, p.User.Login)
+					}
+				}
+				o[fields[v.ProjectV2ItemFieldReviewerValue.Field.ID()]] = names
+
+			}
+		}
+		itemsSlice = append(itemsSlice, o)
+	}
+	return itemsSlice
+}
+
+func jsonPrint(config listConfig, project queries.Project) error {
+	items := serialize(project)
+	b, err := json.Marshal(items)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	config.tp.EndRow()
+	return config.tp.Render()
+
 }
