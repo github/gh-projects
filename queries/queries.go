@@ -72,82 +72,175 @@ type ProjectItem struct {
 	Id          string
 	TypeName    string `graphql:"type"`
 	FieldValues struct {
-		Nodes []struct {
-			Type                        string `graphql:"__typename"`
-			ProjectV2ItemFieldDateValue struct {
-				Date  string
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldDateValue"`
-			ProjectV2ItemFieldIterationValue struct {
-				StartDate string
-				Duration  int
-				Field     ProjectField
-			} `graphql:"... on ProjectV2ItemFieldIterationValue"`
-			ProjectV2ItemFieldLabelValue struct {
-				Labels struct {
-					Nodes []struct {
-						Name string
-					}
-				} `graphql:"labels(first: 10)"`
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldLabelValue"`
-			ProjectV2ItemFieldNumberValue struct {
-				Number float32
-				Field  ProjectField
-			} `graphql:"... on ProjectV2ItemFieldNumberValue"`
-			ProjectV2ItemFieldSingleSelectValue struct {
-				Name  string
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
-			ProjectV2ItemFieldTextValue struct {
-				Text  string
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldTextValue"`
-			ProjectV2ItemFieldMilestoneValue struct {
-				Milestone struct {
-					Description string
-					DueOn       string
-				}
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldMilestoneValue"`
-			ProjectV2ItemFieldPullRequestValue struct {
-				PullRequests struct {
-					Nodes []struct {
-						Url string
-					}
-				} `graphql:"pullRequests(first:10)"`
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldPullRequestValue"`
-			ProjectV2ItemFieldRepositoryValue struct {
-				Repository struct {
-					Url string
-				}
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldRepositoryValue"`
-			ProjectV2ItemFieldUserValue struct {
-				Users struct {
-					Nodes []struct {
-						Login string
-					}
-				} `graphql:"users(first: 10)"`
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldUserValue"`
-			ProjectV2ItemFieldReviewerValue struct {
-				Reviewers struct {
-					Nodes []struct {
-						Type string `graphql:"__typename"`
-						Team struct {
-							Name string
-						} `graphql:"... on Team"`
-						User struct {
-							Login string
-						} `graphql:"... on User"`
-					}
-				}
-				Field ProjectField
-			} `graphql:"... on ProjectV2ItemFieldReviewerValue"`
-		}
+		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"`
+}
+
+type FieldValueNodes struct {
+	Type                        string `graphql:"__typename"`
+	ProjectV2ItemFieldDateValue struct {
+		Date  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldDateValue"`
+	ProjectV2ItemFieldIterationValue struct {
+		StartDate string
+		Duration  int
+		Field     ProjectField
+	} `graphql:"... on ProjectV2ItemFieldIterationValue"`
+	ProjectV2ItemFieldLabelValue struct {
+		Labels struct {
+			Nodes []struct {
+				Name string
+			}
+		} `graphql:"labels(first: 10)"`
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldLabelValue"`
+	ProjectV2ItemFieldNumberValue struct {
+		Number float32
+		Field  ProjectField
+	} `graphql:"... on ProjectV2ItemFieldNumberValue"`
+	ProjectV2ItemFieldSingleSelectValue struct {
+		Name  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
+	ProjectV2ItemFieldTextValue struct {
+		Text  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldTextValue"`
+	ProjectV2ItemFieldMilestoneValue struct {
+		Milestone struct {
+			Description string
+			DueOn       string
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldMilestoneValue"`
+	ProjectV2ItemFieldPullRequestValue struct {
+		PullRequests struct {
+			Nodes []struct {
+				Url string
+			}
+		} `graphql:"pullRequests(first:10)"`
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldPullRequestValue"`
+	ProjectV2ItemFieldRepositoryValue struct {
+		Repository struct {
+			Url string
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldRepositoryValue"`
+	ProjectV2ItemFieldUserValue struct {
+		Users struct {
+			Nodes []struct {
+				Login string
+			}
+		} `graphql:"users(first: 10)"`
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldUserValue"`
+	ProjectV2ItemFieldReviewerValue struct {
+		Reviewers struct {
+			Nodes []struct {
+				Type string `graphql:"__typename"`
+				Team struct {
+					Name string
+				} `graphql:"... on Team"`
+				User struct {
+					Login string
+				} `graphql:"... on User"`
+			}
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldReviewerValue"`
+}
+
+func (v FieldValueNodes) ID() string {
+	switch v.Type {
+	case "ProjectV2ItemFieldDateValue":
+		return v.ProjectV2ItemFieldDateValue.Field.ID()
+	case "ProjectV2ItemFieldIterationValue":
+		return v.ProjectV2ItemFieldIterationValue.Field.ID()
+	case "ProjectV2ItemFieldNumberValue":
+		return v.ProjectV2ItemFieldNumberValue.Field.ID()
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return v.ProjectV2ItemFieldSingleSelectValue.Field.ID()
+	case "ProjectV2ItemFieldTextValue":
+		return v.ProjectV2ItemFieldTextValue.Field.ID()
+	case "ProjectV2ItemFieldMilestoneValue":
+		return v.ProjectV2ItemFieldMilestoneValue.Field.ID()
+	case "ProjectV2ItemFieldLabelValue":
+		return v.ProjectV2ItemFieldLabelValue.Field.ID()
+	case "ProjectV2ItemFieldPullRequestValue":
+		return v.ProjectV2ItemFieldPullRequestValue.Field.ID()
+	case "ProjectV2ItemFieldRepositoryValue":
+		return v.ProjectV2ItemFieldRepositoryValue.Field.ID()
+	case "ProjectV2ItemFieldUserValue":
+		return v.ProjectV2ItemFieldUserValue.Field.ID()
+	case "ProjectV2ItemFieldReviewerValue":
+		return v.ProjectV2ItemFieldReviewerValue.Field.ID()
+	}
+
+	return ""
+}
+
+func (v FieldValueNodes) Value() any {
+	switch v.Type {
+	case "ProjectV2ItemFieldDateValue":
+		return v.ProjectV2ItemFieldDateValue.Date
+	case "ProjectV2ItemFieldIterationValue":
+		return struct {
+			StartDate string
+			Duration  int
+		}{
+			StartDate: v.ProjectV2ItemFieldIterationValue.StartDate,
+			Duration:  v.ProjectV2ItemFieldIterationValue.Duration,
+		}
+	case "ProjectV2ItemFieldNumberValue":
+		return v.ProjectV2ItemFieldNumberValue.Number
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return v.ProjectV2ItemFieldSingleSelectValue.Name
+	case "ProjectV2ItemFieldTextValue":
+		return v.ProjectV2ItemFieldTextValue.Text
+	case "ProjectV2ItemFieldMilestoneValue":
+		return struct {
+			Description string
+			DueOn       string
+		}{
+			Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
+			DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
+		}
+	case "ProjectV2ItemFieldLabelValue":
+		names := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldLabelValue.Labels.Nodes {
+			names = append(names, p.Name)
+		}
+		return names
+	case "ProjectV2ItemFieldPullRequestValue":
+		urls := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldPullRequestValue.PullRequests.Nodes {
+			urls = append(urls, p.Url)
+		}
+		return urls
+	case "ProjectV2ItemFieldRepositoryValue":
+		return v.ProjectV2ItemFieldRepositoryValue.Repository.Url
+	case "ProjectV2ItemFieldUserValue":
+		logins := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldUserValue.Users.Nodes {
+			logins = append(logins, p.Login)
+		}
+		return logins
+	case "ProjectV2ItemFieldReviewerValue":
+		names := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldReviewerValue.Reviewers.Nodes {
+			if p.Type == "Team" {
+				names = append(names, p.Team.Name)
+			} else if p.Type == "User" {
+				names = append(names, p.User.Login)
+			}
+		}
+		return names
+
+	}
+
+	return nil
 }
 
 type DraftIssue struct {

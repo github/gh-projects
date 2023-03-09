@@ -148,69 +148,25 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	return config.tp.Render()
 }
 
+// serialize creates a map from field to field values
 func serialize(project queries.Project) []map[string]any {
 	fields := make(map[string]string)
 
+	// make a map of fields by ID
 	for _, f := range project.Fields.Nodes {
 		fields[f.ID()] = f.Name()
 	}
 	itemsSlice := make([]map[string]any, 0)
+
+	// for each value, look up the name by ID
+	// and set the value to the field value
 	for _, i := range project.Items.Nodes {
 		o := make(map[string]any)
 		for _, v := range i.FieldValues.Nodes {
-			// name and value based on type
-			switch v.Type {
-			case "ProjectV2ItemFieldDateValue":
-				o[fields[v.ProjectV2ItemFieldDateValue.Field.ID()]] = v.ProjectV2ItemFieldDateValue.Date
-			case "ProjectV2ItemFieldIterationValue":
-				o[fields[v.ProjectV2ItemFieldIterationValue.Field.ID()]] = v.ProjectV2ItemFieldIterationValue.StartDate // what about duration
-			case "ProjectV2ItemFieldNumberValue":
-				o[fields[v.ProjectV2ItemFieldNumberValue.Field.ID()]] = fmt.Sprintf("%f", v.ProjectV2ItemFieldNumberValue.Number)
-			case "ProjectV2ItemFieldSingleSelectValue":
-				o[fields[v.ProjectV2ItemFieldSingleSelectValue.Field.ID()]] = v.ProjectV2ItemFieldSingleSelectValue.Name
-			case "ProjectV2ItemFieldTextValue":
-				o[fields[v.ProjectV2ItemFieldTextValue.Field.ID()]] = v.ProjectV2ItemFieldTextValue.Text
-			case "ProjectV2ItemFieldMilestoneValue":
-				o[fields[v.ProjectV2ItemFieldMilestoneValue.Field.ID()]] = struct {
-					Description string
-					DueOn       string
-				}{
-					Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
-					DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
-				}
-			case "ProjectV2ItemFieldLabelValue":
-				name := make([]string, 0)
-				for _, p := range v.ProjectV2ItemFieldLabelValue.Labels.Nodes {
-					name = append(name, p.Name)
-				}
-				o[fields[v.ProjectV2ItemFieldLabelValue.Field.ID()]] = name
+			id := v.ID()
+			value := v.Value()
 
-			case "ProjectV2ItemFieldPullRequestValue":
-				urls := make([]string, 0)
-				for _, p := range v.ProjectV2ItemFieldPullRequestValue.PullRequests.Nodes {
-					urls = append(urls, p.Url)
-				}
-				o[fields[v.ProjectV2ItemFieldPullRequestValue.Field.ID()]] = urls
-			case "ProjectV2ItemFieldRepositoryValue":
-				o[fields[v.ProjectV2ItemFieldRepositoryValue.Field.ID()]] = v.ProjectV2ItemFieldRepositoryValue.Repository.Url
-			case "ProjectV2ItemFieldUserValue":
-				logins := make([]string, 0)
-				for _, p := range v.ProjectV2ItemFieldUserValue.Users.Nodes {
-					logins = append(logins, p.Login)
-				}
-				o[fields[v.ProjectV2ItemFieldUserValue.Field.ID()]] = logins
-			case "ProjectV2ItemFieldReviewerValue":
-				names := make([]string, 0)
-				for _, p := range v.ProjectV2ItemFieldReviewerValue.Reviewers.Nodes {
-					if p.Type == "Team" {
-						names = append(names, p.Team.Name)
-					} else if p.Type == "User" {
-						names = append(names, p.User.Login)
-					}
-				}
-				o[fields[v.ProjectV2ItemFieldReviewerValue.Field.ID()]] = names
-
-			}
+			o[fields[id]] = value
 		}
 		itemsSlice = append(itemsSlice, o)
 	}
