@@ -65,6 +65,7 @@ type Project struct {
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
 	Content struct {
+		TypeName    string      `graphql:"__typename"`
 		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
 		PullRequest PullRequest `graphql:"... on PullRequest"`
 		Issue       Issue       `graphql:"... on Issue"`
@@ -74,6 +75,51 @@ type ProjectItem struct {
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"`
+}
+
+func (p ProjectItem) Data() any {
+	switch p.Content.TypeName {
+	case "DraftIssue":
+		return struct {
+			TypeName string
+			Body     string
+			Title    string
+		}{
+			TypeName: p.Content.TypeName,
+			Body:     p.Content.DraftIssue.Body,
+			Title:    p.Content.DraftIssue.Title,
+		}
+	case "Issue":
+		return struct {
+			TypeName   string
+			Body       string
+			Title      string
+			Number     int
+			Repository string
+		}{
+			TypeName:   p.Content.TypeName,
+			Body:       p.Content.Issue.Body,
+			Title:      p.Content.Issue.Title,
+			Number:     p.Content.Issue.Number,
+			Repository: p.Content.Issue.Repository.NameWithOwner,
+		}
+	case "PullRequest":
+		return struct {
+			TypeName   string
+			Body       string
+			Title      string
+			Number     int
+			Repository string
+		}{
+			TypeName:   p.Content.TypeName,
+			Body:       p.Content.PullRequest.Body,
+			Title:      p.Content.PullRequest.Title,
+			Number:     p.Content.PullRequest.Number,
+			Repository: p.Content.PullRequest.Repository.NameWithOwner,
+		}
+	}
+
+	return nil
 }
 
 type FieldValueNodes struct {
