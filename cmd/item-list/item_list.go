@@ -166,7 +166,7 @@ func serialize(project queries.Project) []map[string]any {
 		o["content"] = i.Data()
 		for _, v := range i.FieldValues.Nodes {
 			id := v.ID()
-			value := v.Value()
+			value := v.Data()
 
 			o[fields[id]] = value
 		}

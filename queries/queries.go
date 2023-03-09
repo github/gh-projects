@@ -227,7 +227,7 @@ func (v FieldValueNodes) ID() string {
 	return ""
 }
 
-func (v FieldValueNodes) Value() any {
+func (v FieldValueNodes) Data() any {
 	switch v.Type {
 	case "ProjectV2ItemFieldDateValue":
 		return v.ProjectV2ItemFieldDateValue.Date
