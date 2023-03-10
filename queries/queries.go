@@ -908,23 +908,20 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 	if number != 0 {
 		variables := map[string]interface{}{
+			"login":  graphql.String(o.Login),
 			"number": graphql.Int(number),
-			"first":  graphql.Int(100),
-			"after":  (*githubv4.String)(nil),
 		}
 		if o.Type == UserOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query userOwner
 			err := client.Query("UserProject", &query, variables)
 			return &query.Owner.Project, err
 		} else if o.Type == OrgOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query orgOwner
 			err := client.Query("OrgProject", &query, variables)
 			return &query.Owner.Project, err
 		} else if o.Type == ViewerOwner {
 			var query viewerOwner
-			err := client.Query("ViewerProject", &query, variables)
+			err := client.Query("ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
 			return &query.Owner.Project, err
 		}
 		return nil, errors.New("unknown owner type")

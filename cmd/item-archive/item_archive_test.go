@@ -43,8 +43,6 @@ func TestRunArchive_User(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":  "monalisa",
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -126,8 +124,6 @@ func TestRunArchive_Org(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":  "github",
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -205,8 +201,6 @@ func TestRunArchive_Me(t *testing.T) {
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -288,8 +282,6 @@ func TestRunArchive_User_Undo(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":  "monalisa",
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -372,8 +364,6 @@ func TestRunArchive_Org_Undo(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":  "github",
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -452,8 +442,6 @@ func TestRunArchive_Me_Undo(t *testing.T) {
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
 				"number": 1,
-				"first":  100,
-				"after":  nil,
 			},
 		}).
 		Reply(200).
