@@ -83,7 +83,7 @@ gh projects item-list 1 --org github
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be one of 'json' or 'csv'.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
 
 	// owner can be a user or an org
@@ -93,8 +93,8 @@ gh projects item-list 1 --org github
 }
 
 func runList(config listConfig) error {
-	if config.opts.format != "" && config.opts.format != "csv" && config.opts.format != "json" {
-		return fmt.Errorf("format must be one of 'json' or 'csv'")
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
 	}
 
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
