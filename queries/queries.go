@@ -75,7 +75,7 @@ type ProjectItem struct {
 	TypeName    string `graphql:"type"`
 	FieldValues struct {
 		Nodes []FieldValueNodes
-	} `graphql:"fieldValues(first: 100)"`
+	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
 }
 
 func (p ProjectItem) Data() any {
@@ -139,7 +139,7 @@ type FieldValueNodes struct {
 			Nodes []struct {
 				Name string
 			}
-		} `graphql:"labels(first: 10)"`
+		} `graphql:"labels(first: 10)"` // experienced issues with larger limits, 10 seems like enough for now
 		Field ProjectField
 	} `graphql:"... on ProjectV2ItemFieldLabelValue"`
 	ProjectV2ItemFieldNumberValue struct {
@@ -166,7 +166,7 @@ type FieldValueNodes struct {
 			Nodes []struct {
 				Url string
 			}
-		} `graphql:"pullRequests(first:10)"`
+		} `graphql:"pullRequests(first:10)"` // experienced issues with larger limits, 10 seems like enough for now
 		Field ProjectField
 	} `graphql:"... on ProjectV2ItemFieldPullRequestValue"`
 	ProjectV2ItemFieldRepositoryValue struct {
@@ -180,7 +180,7 @@ type FieldValueNodes struct {
 			Nodes []struct {
 				Login string
 			}
-		} `graphql:"users(first: 10)"`
+		} `graphql:"users(first: 10)"` // experienced issues with larger limits, 10 seems like enough for now
 		Field ProjectField
 	} `graphql:"... on ProjectV2ItemFieldUserValue"`
 	ProjectV2ItemFieldReviewerValue struct {
@@ -411,7 +411,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 		if !hasNext {
 			break
 		}
-
+		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
 			variables["login"] = graphql.String(o.Login)
