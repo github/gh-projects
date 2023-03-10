@@ -38,9 +38,12 @@ func (opts *listOpts) first() int {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "List the items in a project",
+		Short: "List all of the items in a project",
 		Use:   "item-list [number]",
 		Example: `
+The default output is a column format with a subset of system defined fields.
+To list all of the fields, use the --format flag.
+
 # list the items in the current users's project number 1
 gh projects item-list 1 --user "@me"
 
@@ -49,6 +52,9 @@ gh projects item-list 1 --user monalisa
 
 # list the items in org github's project number 1
 gh projects item-list 1 --org github
+
+# list the items in org github's project number 1 in JSON format
+gh projects item-list 1 --org github --format json
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,7 +90,6 @@ gh projects item-list 1 --org github
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
