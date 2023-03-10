@@ -344,8 +344,10 @@ func TestRunList_JSON(t *testing.T) {
 									"type": "ISSUE",
 									"id":   "issue ID",
 									"content": map[string]interface{}{
-										"title":  "an issue",
-										"number": 1,
+										"__typename": "Issue",
+										"title":      "an issue",
+										"body":       "an issue body",
+										"number":     1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
@@ -355,8 +357,10 @@ func TestRunList_JSON(t *testing.T) {
 									"type": "PULL_REQUEST",
 									"id":   "pull request ID",
 									"content": map[string]interface{}{
-										"title":  "a pull request",
-										"number": 2,
+										"__typename": "PullRequest",
+										"title":      "a pull request",
+										"body":       "a pull request body",
+										"number":     2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
@@ -366,7 +370,9 @@ func TestRunList_JSON(t *testing.T) {
 									"type": "DRAFT_ISSUE",
 									"id":   "draft issue ID",
 									"content": map[string]interface{}{
-										"title": "draft issue",
+										"__typename": "Issue",
+										"title":      "draft issue",
+										"body":       "draft issue body",
 									},
 								},
 							},
@@ -394,7 +400,7 @@ func TestRunList_JSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"[{\"content\":null,\"id\":\"issue ID\"},{\"content\":null,\"id\":\"pull request ID\"},{\"content\":null,\"id\":\"draft issue ID\"}]\n",
+		"[{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"an issue body\",\"Title\":\"an issue\",\"Number\":1,\"Repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"TypeName\":\"PullRequest\",\"Body\":\"a pull request body\",\"Title\":\"a pull request\",\"Number\":2,\"Repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"draft issue body\",\"Title\":\"draft issue\",\"Number\":0,\"Repository\":\"\"},\"id\":\"draft issue ID\"}]\n",
 		buf.String())
 }
 
