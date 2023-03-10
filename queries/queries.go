@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -693,10 +692,6 @@ type issueOrPullRequest struct {
 
 // IssueOrPullRequestID returns the ID of the issue or pull request from a URL.
 func IssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
-	// https://docs.github.com/en/graphql/reference/queries#resource
-	// will not find the resource if the case isn't all lower, for example
-	// GitHub vs github.
-	rawURL = strings.ToLower(rawURL)
 	uri, err := url.Parse(rawURL)
 	if err != nil {
 		return "", err
