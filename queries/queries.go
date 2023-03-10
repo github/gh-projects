@@ -46,9 +46,10 @@ type Project struct {
 	ID               string
 	Readme           string
 	Items            struct {
+		PageInfo   PageInfo
 		TotalCount int
 		Nodes      []ProjectItem
-	} `graphql:"items(first: $first)"`
+	} `graphql:"items(first: $first, after: $after)"`
 	Fields struct {
 		Nodes []ProjectField
 	} `graphql:"fields(first:100)"`
@@ -370,23 +371,83 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
+		"after":  (*githubv4.String)(nil),
 	}
+
+	project := Project{}
+
+	// get the project by type
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithItems
 		err := client.Query("UserProjectWithItems", &query, variables)
-		return query.Owner.Project, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
 	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithItems
 		err := client.Query("OrgProjectWithItems", &query, variables)
-		return query.Owner.Project, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
 	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithItems
 		err := client.Query("ViewerProjectWithItems", &query, variables)
-		return query.Owner.Project, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
+	} else {
+		return project, errors.New("unknown owner type")
 	}
-	return Project{}, errors.New("unknown owner type")
+	// get the remaining items if there are any
+	// and append them to the project items
+	hasNext := project.Items.PageInfo.HasNextPage
+	cursor := project.Items.PageInfo.EndCursor
+	for {
+		if !hasNext {
+			break
+		}
+
+		variables["after"] = (*githubv4.String)(&cursor)
+		if o.Type == UserOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query userOwnerWithItems
+			err := client.Query("UserProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		} else if o.Type == OrgOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query orgOwnerWithItems
+			err := client.Query("OrgProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		} else if o.Type == ViewerOwner {
+			var query viewerOwnerWithItems
+			err := client.Query("ViewerProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		}
+	}
+	return project, nil
 }
 
 // ProjectField is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration.
