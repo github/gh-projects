@@ -220,7 +220,7 @@ type FieldValueNodes struct {
 					Login string
 				} `graphql:"... on User"`
 			}
-		}
+		} `graphql:"reviewers(first: 10)"` // experienced issues with larger limits, 10 seems like enough for now
 		Field ProjectField
 	} `graphql:"... on ProjectV2ItemFieldReviewerValue"`
 }
