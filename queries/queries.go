@@ -709,7 +709,7 @@ func IssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
 	} else if query.Resource.Typename == "PullRequest" {
 		return query.Resource.PullRequest.ID, nil
 	}
-	return "", errors.New("unknown resource type")
+	return "", errors.New("resource not found, please check the URL")
 }
 
 // userProjects queries the $first projects of a user.
