@@ -42,7 +42,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		Use:   "item-list [number]",
 		Example: `
 The default output is a column format with a subset of system defined fields.
-To list all of the fields, use the --format flag.
+To list all of the fields, use the --format directive.
 
 # list the items in the current users's project number 1
 gh projects item-list 1 --user "@me"
