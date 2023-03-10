@@ -1,6 +1,7 @@
 package itemlist
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -18,6 +19,7 @@ type listOpts struct {
 	userOwner string
 	orgOwner  string
 	number    int
+	format    string
 }
 
 type listConfig struct {
@@ -81,6 +83,7 @@ gh projects item-list 1 --org github
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of items to get. Defaults to 100.")
 
 	// owner can be a user or an org
@@ -90,17 +93,25 @@ gh projects item-list 1 --org github
 }
 
 func runList(config listConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
 	}
 
-	items, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
+	project, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, items, owner.Login)
+	if config.opts.format == "json" {
+		return jsonPrint(config, project)
+	}
+
+	return printResults(config, project.Items.Nodes, owner.Login)
 }
 
 func printResults(config listConfig, items []queries.ProjectItem, login string) error {
@@ -135,4 +146,43 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	}
 
 	return config.tp.Render()
+}
+
+// serialize creates a map from field to field values
+func serialize(project queries.Project) []map[string]any {
+	fields := make(map[string]string)
+
+	// make a map of fields by ID
+	for _, f := range project.Fields.Nodes {
+		fields[f.ID()] = f.Name()
+	}
+	itemsSlice := make([]map[string]any, 0)
+
+	// for each value, look up the name by ID
+	// and set the value to the field value
+	for _, i := range project.Items.Nodes {
+		o := make(map[string]any)
+		o["id"] = i.Id
+		o["content"] = i.Data()
+		for _, v := range i.FieldValues.Nodes {
+			id := v.ID()
+			value := v.Data()
+
+			o[fields[id]] = value
+		}
+		itemsSlice = append(itemsSlice, o)
+	}
+	return itemsSlice
+}
+
+func jsonPrint(config listConfig, project queries.Project) error {
+	items := serialize(project)
+	b, err := json.Marshal(items)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	config.tp.EndRow()
+	return config.tp.Render()
+
 }

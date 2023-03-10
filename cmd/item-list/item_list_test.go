@@ -42,6 +42,7 @@ func TestRunList_User(t *testing.T) {
 				"first":  100,
 				"login":  "monalisa",
 				"number": 1,
+				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -139,6 +140,7 @@ func TestRunList_Org(t *testing.T) {
 				"first":  100,
 				"login":  "github",
 				"number": 1,
+				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -233,6 +235,7 @@ func TestRunList_Me(t *testing.T) {
 			"variables": map[string]interface{}{
 				"first":  100,
 				"number": 1,
+				"after":  nil,
 			},
 		}).
 		Reply(200).
@@ -299,6 +302,108 @@ func TestRunList_Me(t *testing.T) {
 		buf.String())
 }
 
+func TestRunList_JSON(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// get viewer ID
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		MatchType("json").
+		JSON(map[string]interface{}{
+			"query": "query ViewerLogin.*",
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"viewer": map[string]interface{}{
+					"id": "an ID",
+				},
+			},
+		})
+
+	// list project items
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		JSON(map[string]interface{}{
+			"query": "query ViewerProjectWithItems.*",
+			"variables": map[string]interface{}{
+				"first":  100,
+				"number": 1,
+				"after":  nil,
+			},
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"viewer": map[string]interface{}{
+					"projectV2": map[string]interface{}{
+						"items": map[string]interface{}{
+							"nodes": []map[string]interface{}{
+								{
+									"type": "ISSUE",
+									"id":   "issue ID",
+									"content": map[string]interface{}{
+										"__typename": "Issue",
+										"title":      "an issue",
+										"body":       "an issue body",
+										"number":     1,
+										"repository": map[string]string{
+											"nameWithOwner": "cli/go-gh",
+										},
+									},
+								},
+								{
+									"type": "PULL_REQUEST",
+									"id":   "pull request ID",
+									"content": map[string]interface{}{
+										"__typename": "PullRequest",
+										"title":      "a pull request",
+										"body":       "a pull request body",
+										"number":     2,
+										"repository": map[string]string{
+											"nameWithOwner": "cli/go-gh",
+										},
+									},
+								},
+								{
+									"type": "DRAFT_ISSUE",
+									"id":   "draft issue ID",
+									"content": map[string]interface{}{
+										"__typename": "Issue",
+										"title":      "draft issue",
+										"body":       "draft issue body",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			number:    1,
+			userOwner: "@me",
+			format:    "json",
+		},
+		client: client,
+	}
+
+	err = runList(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"[{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"an issue body\",\"Title\":\"an issue\",\"Number\":1,\"Repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"TypeName\":\"PullRequest\",\"Body\":\"a pull request body\",\"Title\":\"a pull request\",\"Number\":2,\"Repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"draft issue body\",\"Title\":\"draft issue\",\"Number\":0,\"Repository\":\"\"},\"id\":\"draft issue ID\"}]\n",
+		buf.String())
+}
+
 func TestRunList_Empty(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
@@ -326,6 +431,7 @@ func TestRunList_Empty(t *testing.T) {
 			"variables": map[string]interface{}{
 				"first":  100,
 				"number": 1,
+				"after":  nil,
 			},
 		}).
 		Reply(200).

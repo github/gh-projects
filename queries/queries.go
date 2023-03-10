@@ -46,8 +46,10 @@ type Project struct {
 	ID               string
 	Readme           string
 	Items            struct {
+		PageInfo   PageInfo
 		TotalCount int
-	}
+		Nodes      []ProjectItem
+	} `graphql:"items(first: $first, after: $after)"`
 	Fields struct {
 		Nodes []ProjectField
 	} `graphql:"fields(first:100)"`
@@ -63,13 +65,229 @@ type Project struct {
 
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
-	Id       string
-	TypeName string `graphql:"type"`
-	Content  struct {
+	Content struct {
+		TypeName    string      `graphql:"__typename"`
 		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
 		PullRequest PullRequest `graphql:"... on PullRequest"`
 		Issue       Issue       `graphql:"... on Issue"`
 	}
+	Id          string
+	TypeName    string `graphql:"type"`
+	FieldValues struct {
+		Nodes []FieldValueNodes
+	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
+}
+
+func (p ProjectItem) Data() any {
+	switch p.Content.TypeName {
+	case "DraftIssue":
+		return struct {
+			TypeName string
+			Body     string
+			Title    string
+		}{
+			TypeName: p.Content.TypeName,
+			Body:     p.Content.DraftIssue.Body,
+			Title:    p.Content.DraftIssue.Title,
+		}
+	case "Issue":
+		return struct {
+			TypeName   string
+			Body       string
+			Title      string
+			Number     int
+			Repository string
+		}{
+			TypeName:   p.Content.TypeName,
+			Body:       p.Content.Issue.Body,
+			Title:      p.Content.Issue.Title,
+			Number:     p.Content.Issue.Number,
+			Repository: p.Content.Issue.Repository.NameWithOwner,
+		}
+	case "PullRequest":
+		return struct {
+			TypeName   string
+			Body       string
+			Title      string
+			Number     int
+			Repository string
+		}{
+			TypeName:   p.Content.TypeName,
+			Body:       p.Content.PullRequest.Body,
+			Title:      p.Content.PullRequest.Title,
+			Number:     p.Content.PullRequest.Number,
+			Repository: p.Content.PullRequest.Repository.NameWithOwner,
+		}
+	}
+
+	return nil
+}
+
+type FieldValueNodes struct {
+	Type                        string `graphql:"__typename"`
+	ProjectV2ItemFieldDateValue struct {
+		Date  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldDateValue"`
+	ProjectV2ItemFieldIterationValue struct {
+		StartDate string
+		Duration  int
+		Field     ProjectField
+	} `graphql:"... on ProjectV2ItemFieldIterationValue"`
+	ProjectV2ItemFieldLabelValue struct {
+		Labels struct {
+			Nodes []struct {
+				Name string
+			}
+		} `graphql:"labels(first: 10)"` // experienced issues with larger limits, 10 seems like enough for now
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldLabelValue"`
+	ProjectV2ItemFieldNumberValue struct {
+		Number float32
+		Field  ProjectField
+	} `graphql:"... on ProjectV2ItemFieldNumberValue"`
+	ProjectV2ItemFieldSingleSelectValue struct {
+		Name  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldSingleSelectValue"`
+	ProjectV2ItemFieldTextValue struct {
+		Text  string
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldTextValue"`
+	ProjectV2ItemFieldMilestoneValue struct {
+		Milestone struct {
+			Description string
+			DueOn       string
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldMilestoneValue"`
+	ProjectV2ItemFieldPullRequestValue struct {
+		PullRequests struct {
+			Nodes []struct {
+				Url string
+			}
+		} `graphql:"pullRequests(first:10)"` // experienced issues with larger limits, 10 seems like enough for now
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldPullRequestValue"`
+	ProjectV2ItemFieldRepositoryValue struct {
+		Repository struct {
+			Url string
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldRepositoryValue"`
+	ProjectV2ItemFieldUserValue struct {
+		Users struct {
+			Nodes []struct {
+				Login string
+			}
+		} `graphql:"users(first: 10)"` // experienced issues with larger limits, 10 seems like enough for now
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldUserValue"`
+	ProjectV2ItemFieldReviewerValue struct {
+		Reviewers struct {
+			Nodes []struct {
+				Type string `graphql:"__typename"`
+				Team struct {
+					Name string
+				} `graphql:"... on Team"`
+				User struct {
+					Login string
+				} `graphql:"... on User"`
+			}
+		}
+		Field ProjectField
+	} `graphql:"... on ProjectV2ItemFieldReviewerValue"`
+}
+
+func (v FieldValueNodes) ID() string {
+	switch v.Type {
+	case "ProjectV2ItemFieldDateValue":
+		return v.ProjectV2ItemFieldDateValue.Field.ID()
+	case "ProjectV2ItemFieldIterationValue":
+		return v.ProjectV2ItemFieldIterationValue.Field.ID()
+	case "ProjectV2ItemFieldNumberValue":
+		return v.ProjectV2ItemFieldNumberValue.Field.ID()
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return v.ProjectV2ItemFieldSingleSelectValue.Field.ID()
+	case "ProjectV2ItemFieldTextValue":
+		return v.ProjectV2ItemFieldTextValue.Field.ID()
+	case "ProjectV2ItemFieldMilestoneValue":
+		return v.ProjectV2ItemFieldMilestoneValue.Field.ID()
+	case "ProjectV2ItemFieldLabelValue":
+		return v.ProjectV2ItemFieldLabelValue.Field.ID()
+	case "ProjectV2ItemFieldPullRequestValue":
+		return v.ProjectV2ItemFieldPullRequestValue.Field.ID()
+	case "ProjectV2ItemFieldRepositoryValue":
+		return v.ProjectV2ItemFieldRepositoryValue.Field.ID()
+	case "ProjectV2ItemFieldUserValue":
+		return v.ProjectV2ItemFieldUserValue.Field.ID()
+	case "ProjectV2ItemFieldReviewerValue":
+		return v.ProjectV2ItemFieldReviewerValue.Field.ID()
+	}
+
+	return ""
+}
+
+func (v FieldValueNodes) Data() any {
+	switch v.Type {
+	case "ProjectV2ItemFieldDateValue":
+		return v.ProjectV2ItemFieldDateValue.Date
+	case "ProjectV2ItemFieldIterationValue":
+		return struct {
+			StartDate string
+			Duration  int
+		}{
+			StartDate: v.ProjectV2ItemFieldIterationValue.StartDate,
+			Duration:  v.ProjectV2ItemFieldIterationValue.Duration,
+		}
+	case "ProjectV2ItemFieldNumberValue":
+		return v.ProjectV2ItemFieldNumberValue.Number
+	case "ProjectV2ItemFieldSingleSelectValue":
+		return v.ProjectV2ItemFieldSingleSelectValue.Name
+	case "ProjectV2ItemFieldTextValue":
+		return v.ProjectV2ItemFieldTextValue.Text
+	case "ProjectV2ItemFieldMilestoneValue":
+		return struct {
+			Description string
+			DueOn       string
+		}{
+			Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
+			DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
+		}
+	case "ProjectV2ItemFieldLabelValue":
+		names := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldLabelValue.Labels.Nodes {
+			names = append(names, p.Name)
+		}
+		return names
+	case "ProjectV2ItemFieldPullRequestValue":
+		urls := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldPullRequestValue.PullRequests.Nodes {
+			urls = append(urls, p.Url)
+		}
+		return urls
+	case "ProjectV2ItemFieldRepositoryValue":
+		return v.ProjectV2ItemFieldRepositoryValue.Repository.Url
+	case "ProjectV2ItemFieldUserValue":
+		logins := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldUserValue.Users.Nodes {
+			logins = append(logins, p.Login)
+		}
+		return logins
+	case "ProjectV2ItemFieldReviewerValue":
+		names := make([]string, 0)
+		for _, p := range v.ProjectV2ItemFieldReviewerValue.Reviewers.Nodes {
+			if p.Type == "Team" {
+				names = append(names, p.Team.Name)
+			} else if p.Type == "User" {
+				names = append(names, p.User.Login)
+			}
+		}
+		return names
+
+	}
+
+	return nil
 }
 
 type DraftIssue struct {
@@ -149,27 +367,87 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, first int) ([]ProjectItem, error) {
+func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Project, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
+		"after":  (*githubv4.String)(nil),
 	}
+
+	project := Project{}
+
+	// get the project by type
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithItems
 		err := client.Query("UserProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
 	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithItems
 		err := client.Query("OrgProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
 	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithItems
 		err := client.Query("ViewerProjectWithItems", &query, variables)
-		return query.Owner.Project.Items.Nodes, err
+		if err != nil {
+			return project, err
+		}
+		project = query.Owner.Project
+	} else {
+		return project, errors.New("unknown owner type")
 	}
-	return []ProjectItem{}, errors.New("unknown owner type")
+	// get the remaining items if there are any
+	// and append them to the project items
+	hasNext := project.Items.PageInfo.HasNextPage
+	cursor := project.Items.PageInfo.EndCursor
+	for {
+		if !hasNext {
+			break
+		}
+		// set the cursor to the end of the last page
+		variables["after"] = (*githubv4.String)(&cursor)
+		if o.Type == UserOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query userOwnerWithItems
+			err := client.Query("UserProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		} else if o.Type == OrgOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query orgOwnerWithItems
+			err := client.Query("OrgProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		} else if o.Type == ViewerOwner {
+			var query viewerOwnerWithItems
+			err := client.Query("ViewerProjectWithItems", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
+			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		}
+	}
+	return project, nil
 }
 
 // ProjectField is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration.
@@ -295,11 +573,7 @@ type userOwner struct {
 // userOwnerWithItems is used to query the project of a user with its items.
 type userOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
@@ -309,7 +583,7 @@ type userOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
@@ -325,11 +599,7 @@ type orgOwner struct {
 // orgOwnerWithItems is used to query the project of an organization with its items.
 type orgOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
@@ -339,7 +609,7 @@ type orgOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
@@ -355,11 +625,7 @@ type viewerOwner struct {
 // viewerOwnerWithItems is used to query the project of the viewer with its items.
 type viewerOwnerWithItems struct {
 	Owner struct {
-		Project struct {
-			Items struct {
-				Nodes []ProjectItem
-			} `graphql:"items(first: $first)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
@@ -369,7 +635,7 @@ type viewerOwnerWithFields struct {
 		Project struct {
 			Fields struct {
 				Nodes []ProjectField
-			} `graphql:"fields(first: $first)"`
+			} `graphql:"fields(first: 100)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
