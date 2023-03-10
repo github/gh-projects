@@ -149,7 +149,7 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 }
 
 // serialize creates a map from field to field values
-func serialize(project queries.Project) []map[string]any {
+func serialize(project queries.ProjectWithItems) []map[string]any {
 	fields := make(map[string]string)
 
 	// make a map of fields by ID
@@ -175,7 +175,7 @@ func serialize(project queries.Project) []map[string]any {
 	return itemsSlice
 }
 
-func jsonPrint(config listConfig, project queries.Project) error {
+func jsonPrint(config listConfig, project queries.ProjectWithItems) error {
 	items := serialize(project)
 	b, err := json.Marshal(items)
 	if err != nil {

@@ -45,6 +45,33 @@ type Project struct {
 	ID               string
 	Readme           string
 	Items            struct {
+		TotalCount int
+	} `graphql:"items(first: 100)"`
+	Fields struct {
+		Nodes []ProjectField
+	} `graphql:"fields(first:100)"`
+	Owner struct {
+		User struct {
+			Login string
+		} `graphql:"... on User"`
+		Organization struct {
+			Login string
+		} `graphql:"... on Organization"`
+	}
+}
+
+// ProjectWithItems is for fetching all of the items in a single project with pagination
+// it fetches a lot of data, be careful with it!
+type ProjectWithItems struct {
+	Number           int
+	URL              string
+	ShortDescription string
+	Public           bool
+	Closed           bool
+	Title            string
+	ID               string
+	Readme           string
+	Items            struct {
 		PageInfo   PageInfo
 		TotalCount int
 		Nodes      []ProjectItem
@@ -366,14 +393,14 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Project, error) {
+func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (ProjectWithItems, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 		"after":  (*githubv4.String)(nil),
 	}
 
-	project := Project{}
+	project := ProjectWithItems{}
 
 	// get the project by type
 	if o.Type == UserOwner {
@@ -572,7 +599,7 @@ type userOwner struct {
 // userOwnerWithItems is used to query the project of a user with its items.
 type userOwnerWithItems struct {
 	Owner struct {
-		Project Project `graphql:"projectV2(number: $number)"`
+		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
@@ -598,7 +625,7 @@ type orgOwner struct {
 // orgOwnerWithItems is used to query the project of an organization with its items.
 type orgOwnerWithItems struct {
 	Owner struct {
-		Project Project `graphql:"projectV2(number: $number)"`
+		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
@@ -624,7 +651,7 @@ type viewerOwner struct {
 // viewerOwnerWithItems is used to query the project of the viewer with its items.
 type viewerOwnerWithItems struct {
 	Owner struct {
-		Project Project `graphql:"projectV2(number: $number)"`
+		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
