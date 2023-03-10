@@ -528,7 +528,6 @@ func (p ProjectField) Type() string {
 // ProjectFields returns the fields of a project. If the OwnerType is VIEWER, no login is required.
 func ProjectFields(client api.GQLClient, o *Owner, number int, first int) ([]ProjectField, error) {
 	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 	}
 	if o.Type == UserOwner {
