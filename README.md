@@ -2,12 +2,6 @@
 
 ## Installation
 
-Install `go version 1.19+`
-
-```bash
-brew install go
-```
-
 Install the CLI
 
 ```bash
