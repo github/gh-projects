@@ -29,18 +29,15 @@ func NewClient() (api.GQLClient, error) {
 	return gh.GQLClient(&apiOpts)
 }
 
-// doQuery wraps a call to query with a spinner
+// doQuery wraps calls to client.Query with a spinner
 func doQuery(client api.GQLClient, name string, query interface{}, variables map[string]interface{}) error {
 	// https://github.com/briandowns/spinner#available-character-sets
 	dotStyle := spinner.CharSets[11]
 	sp := spinner.New(dotStyle, 120*time.Millisecond, spinner.WithColor("fgCyan"))
 	sp.Start()
 	err := client.Query(name, query, variables)
-	if err != nil {
-		return err
-	}
 	sp.Stop()
-	return nil
+	return err
 }
 
 // PageInfo is a PageInfo GraphQL object https://docs.github.com/en/graphql/reference/objects#pageinfo.
