@@ -78,6 +78,7 @@ PROJECT_NUMBER=$(./gh-projects create --user "@me" --title clitest --format=json
 ./gh-projects view $PROJECT_NUMBER --user "@me" --format=json  | jq .
 
 ./gh-projects list --format=json  | jq .
+./gh-projects list --user="@me" --format=json  | jq .
 
 COPY_PROJECT_NUMBER=$(./gh-projects copy $PROJECT_NUMBER --source-user "@me" --target-user "@me" --title new-copy --format=json | jq '.number')
 ./gh-projects delete $COPY_PROJECT_NUMBER --user "@me" --format=json  | jq .

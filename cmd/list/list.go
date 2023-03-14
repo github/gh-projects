@@ -114,8 +114,13 @@ func runList(config listConfig) error {
 	var login string
 	var ownerType queries.OwnerType
 	if config.opts.userOwner != "" {
-		login = config.opts.userOwner
-		ownerType = queries.UserOwner
+		if config.opts.userOwner == "@me" {
+			login = "me"
+			ownerType = queries.ViewerOwner
+		} else {
+			login = config.opts.userOwner
+			ownerType = queries.UserOwner
+		}
 	} else if config.opts.orgOwner != "" {
 		login = config.opts.orgOwner
 		ownerType = queries.OrgOwner
