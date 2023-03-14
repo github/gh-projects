@@ -63,6 +63,8 @@ gh projects field-create 1 --org github --name "new field" --data-type "text"
 
 # create a field with single select options
 gh projects field-create 1 --user monalisa --name "new field" --data-type "SINGLE_SELECT" --single-select-options "one,two,three"
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

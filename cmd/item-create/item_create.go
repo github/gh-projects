@@ -51,6 +51,8 @@ gh projects item-create 1 --user monalisa --title "new item" --body "new item bo
 
 # create a draft issue in org github's project 1 with title "new item" and body "new item body"
 gh projects item-create 1 --org github --title "new item" --body "new item body"
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

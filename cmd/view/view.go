@@ -46,6 +46,8 @@ gh projects view 1 --user monalisa --web
 
 # view org github's project 1 including closed projects
 gh projects view 1 --org github --closed
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

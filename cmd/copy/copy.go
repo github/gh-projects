@@ -54,6 +54,8 @@ gh projects copy 1 --source-org github --title "a new project" --target-me
 
 # copy project 1 owned by the org github to user monalisa with title "a new project" and include draft issues
 gh projects copy 1 --source-org github --title "a new project" --target-user monalisa --drafts
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

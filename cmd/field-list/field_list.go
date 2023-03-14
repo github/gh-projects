@@ -49,6 +49,8 @@ gh projects field-list 1 --user monalisa
 
 # list the first 30 fields in org github's project number 1
 gh projects field-list 1 --org github --limit 30
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

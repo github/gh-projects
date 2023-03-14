@@ -49,6 +49,8 @@ gh projects delete 1 --user monalisa
 
 # delete org github's project 1
 gh projects delete 1 --org github
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

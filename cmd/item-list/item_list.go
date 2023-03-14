@@ -53,8 +53,7 @@ gh projects item-list 1 --user monalisa
 # list the items in org github's project number 1
 gh projects item-list 1 --org github
 
-# list the items in org github's project number 1 in JSON format
-gh projects item-list 1 --org github --format json
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

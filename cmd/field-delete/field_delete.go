@@ -44,6 +44,8 @@ func NewCmdDeleteField(f *cmdutil.Factory, runF func(config deleteFieldConfig) e
 		Example: `
 # delete a field by ID
 gh projects field-delete --id ID
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

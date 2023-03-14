@@ -43,6 +43,8 @@ func NewCmdEditItem(f *cmdutil.Factory, runF func(config editItemConfig) error) 
 		Example: `
 # edit a draft issue
 gh projects item-edit --id ID --title "a new title" --body "a new body"
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

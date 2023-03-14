@@ -48,6 +48,8 @@ gh projects create --org github --title "a new project"
 
 # create a new project owned by the current user with title "a new project"
 gh projects create --user '@me' --title "a new project"
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

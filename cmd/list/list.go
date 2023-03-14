@@ -51,6 +51,8 @@ gh projects list --user monalisa --web
 
 # list the projects for org github including closed projects
 gh projects list --org github --closed
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()

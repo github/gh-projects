@@ -51,6 +51,8 @@ gh projects item-add 1 --user monalisa --url https://github.com/cli/go-gh/issues
 
 # add an item to the org github's project 1
 gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

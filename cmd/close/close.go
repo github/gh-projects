@@ -51,6 +51,8 @@ gh projects close 1 --org github
 
 # reopen closed project 1 owned by org github
 gh projects close 1 --org github --undo
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

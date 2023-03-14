@@ -49,6 +49,8 @@ gh projects item-delete 1 --user monalisa --id ID
 
 # delete an item in the github org project 1
 gh projects item-delete 1 --org github --id ID
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

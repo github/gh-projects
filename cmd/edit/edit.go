@@ -56,6 +56,8 @@ gh projects edit 1 --org github --title "New title"
 
 # edit org github's project 1 to have visibility public
 gh projects edit 1 --org github --visibility PUBLIC
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -60,6 +60,8 @@ gh projects item-archive 1 --org github --id ID
 
 # unarchive an item
 gh projects item-archive 1 --user "@me" --id ID --undo
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
