@@ -6,6 +6,10 @@ import (
 	"github.com/github/gh-projects/queries"
 )
 
+func JSONProject(project queries.Project) ([]byte, error) {
+	return json.Marshal(project)
+}
+
 // JSONProjectField serializes a ProjectField to JSON.
 func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 	type t struct {

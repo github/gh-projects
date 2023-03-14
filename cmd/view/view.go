@@ -1,7 +1,6 @@
 package view
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -122,7 +122,7 @@ func runView(config viewConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return printJSON(config, project)
+		return printJSON(config, *project)
 	}
 
 	return printResults(config, project)
@@ -199,8 +199,8 @@ func printResults(config viewConfig, project *queries.Project) error {
 	return nil
 }
 
-func printJSON(config viewConfig, project *queries.Project) error {
-	b, err := json.Marshal(project)
+func printJSON(config viewConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
 	if err != nil {
 		return err
 	}

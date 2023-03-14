@@ -1,7 +1,6 @@
 package delete
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -113,7 +113,7 @@ func runDelete(config deleteConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return printJSON(config, project)
+		return printJSON(config, *project)
 	}
 
 	return printResults(config)
@@ -135,8 +135,8 @@ func printResults(config deleteConfig) error {
 	return config.tp.Render()
 }
 
-func printJSON(config deleteConfig, project *queries.Project) error {
-	b, err := json.Marshal(project)
+func printJSON(config deleteConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
 	if err != nil {
 		return err
 	}

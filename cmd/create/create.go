@@ -1,7 +1,6 @@
 package create
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -9,6 +8,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -101,7 +101,7 @@ func runCreate(config createConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return printJSON(config, &query.CreateProjectV2.ProjectV2)
+		return printJSON(config, query.CreateProjectV2.ProjectV2)
 	}
 
 	return printResults(config, query.CreateProjectV2.ProjectV2)
@@ -125,8 +125,8 @@ func printResults(config createConfig, project queries.Project) error {
 	return config.tp.Render()
 }
 
-func printJSON(config createConfig, project *queries.Project) error {
-	b, err := json.Marshal(project)
+func printJSON(config createConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
 	if err != nil {
 		return err
 	}

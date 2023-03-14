@@ -1,7 +1,6 @@
 package copy
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -132,7 +132,7 @@ func runCopy(config copyConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return printJSON(config, &query.CopyProjectV2.ProjectV2)
+		return printJSON(config, query.CopyProjectV2.ProjectV2)
 	}
 
 	return printResults(config, query.CopyProjectV2.ProjectV2)
@@ -158,8 +158,8 @@ func printResults(config copyConfig, project queries.Project) error {
 	return config.tp.Render()
 }
 
-func printJSON(config copyConfig, project *queries.Project) error {
-	b, err := json.Marshal(project)
+func printJSON(config copyConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
 	if err != nil {
 		return err
 	}
