@@ -81,3 +81,51 @@ func TestJSONProjects(t *testing.T) {
 
 	assert.Equal(t, `[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"Organization","login":"github"}}]`, string(b))
 }
+
+func TestJSONProjectField_FieldType(t *testing.T) {
+	field := queries.ProjectField{}
+	field.TypeName = "ProjectV2Field"
+	field.Field.ID = "123"
+	field.Field.Name = "name"
+
+	b, err := JSONProjectField(field)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2Field"}`, string(b))
+}
+
+func TestJSONProjectField_SingleSelectType(t *testing.T) {
+	field := queries.ProjectField{}
+	field.TypeName = "ProjectV2SingleSelectField"
+	field.SingleSelectField.ID = "123"
+	field.SingleSelectField.Name = "name"
+
+	b, err := JSONProjectField(field)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2SingleSelectField"}`, string(b))
+}
+
+func TestJSONProjectField_ProjectV2IterationField(t *testing.T) {
+	field := queries.ProjectField{}
+	field.TypeName = "ProjectV2IterationField"
+	field.IterationField.ID = "123"
+	field.IterationField.Name = "name"
+
+	b, err := JSONProjectField(field)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2IterationField"}`, string(b))
+}
+
+func TestJSONProjectFields(t *testing.T) {
+	field := queries.ProjectField{}
+	field.TypeName = "ProjectV2Field"
+	field.Field.ID = "123"
+	field.Field.Name = "name"
+
+	b, err := JSONProjectFields([]queries.ProjectField{field})
+	assert.NoError(t, err)
+
+	assert.Equal(t, `[{"id":"123","name":"name","type":"ProjectV2Field"}]`, string(b))
+}
