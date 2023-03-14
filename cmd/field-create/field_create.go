@@ -9,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ type createFieldOpts struct {
 	orgOwner            string
 	number              int
 	projectID           string
+	format              string
 }
 
 type createFieldConfig struct {
@@ -98,6 +100,7 @@ gh projects field-create 1 --user monalisa --name "new field" --data-type "SINGL
 	createFieldCmd.Flags().StringVar(&opts.name, "name", "", "Name of the new field.")
 	createFieldCmd.Flags().StringVar(&opts.dataType, "data-type", "", "DataType of the new field. Must be one of TEXT, SINGLE_SELECT, DATE, NUMBER.")
 	createFieldCmd.Flags().StringSliceVar(&opts.singleSelectOptions, "single-select-options", []string{}, "At least one option is required when data type is SINGLE_SELECT.")
+	createFieldCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	createFieldCmd.MarkFlagsMutuallyExclusive("user", "org")
 	_ = createFieldCmd.MarkFlagRequired("name")
@@ -109,6 +112,10 @@ gh projects field-create 1 --user monalisa --name "new field" --data-type "SINGL
 func runCreateField(config createFieldConfig) error {
 	if config.opts.dataType == "SINGLE_SELECT" && len(config.opts.singleSelectOptions) == 0 {
 		return fmt.Errorf("at least one single select options is required with data type is SINGLE_SELECT")
+	}
+
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
 	}
 
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
@@ -127,6 +134,10 @@ func runCreateField(config createFieldConfig) error {
 	err = config.client.Mutate("CreateField", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.CreateProjectV2Field.Field)
 	}
 
 	return printResults(config, query.CreateProjectV2Field.Field)
@@ -152,5 +163,14 @@ func printResults(config createFieldConfig, field queries.ProjectField) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Created field")
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config createFieldConfig, field queries.ProjectField) error {
+	b, err := format.JSONProjectField(field)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }
