@@ -12,6 +12,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +22,7 @@ type viewOpts struct {
 	userOwner string
 	orgOwner  string
 	number    int
+	format    string
 }
 
 type viewConfig struct {
@@ -44,6 +46,8 @@ gh projects view 1 --user monalisa --web
 
 # view org github's project 1 including closed projects
 gh projects view 1 --org github --closed
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,6 +88,7 @@ gh projects view 1 --org github --closed
 	viewCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	viewCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	viewCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open project in the browser.")
+	viewCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	// owner can be a user or an org
 	viewCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -104,6 +109,10 @@ func runView(config viewConfig) error {
 		return nil
 	}
 
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -112,6 +121,10 @@ func runView(config viewConfig) error {
 	project, err := queries.NewProject(config.client, owner, config.opts.number)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, *project)
 	}
 
 	return printResults(config, project)
@@ -186,4 +199,13 @@ func printResults(config viewConfig, project *queries.Project) error {
 	fmt.Println(out)
 
 	return nil
+}
+
+func printJSON(config viewConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	return config.tp.Render()
 }

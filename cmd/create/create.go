@@ -8,6 +8,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ type createOpts struct {
 	userOwner string
 	orgOwner  string
 	ownerID   string
+	format    string
 }
 
 type createConfig struct {
@@ -46,6 +48,8 @@ gh projects create --org github --title "a new project"
 
 # create a new project owned by the current user with title "a new project"
 gh projects create --user '@me' --title "a new project"
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -72,6 +76,7 @@ gh projects create --user '@me' --title "a new project"
 	createCmd.Flags().StringVar(&opts.title, "title", "", "Title of the project. Titles do not need to be unique.")
 	createCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	createCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	createCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = createCmd.MarkFlagRequired("title")
 	createCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -80,6 +85,10 @@ gh projects create --user '@me' --title "a new project"
 }
 
 func runCreate(config createConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -91,6 +100,10 @@ func runCreate(config createConfig) error {
 	err = config.client.Mutate("CreateProjectV2", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.CreateProjectV2.ProjectV2)
 	}
 
 	return printResults(config, query.CreateProjectV2.ProjectV2)
@@ -111,5 +124,14 @@ func printResults(config createConfig, project queries.Project) error {
 	config.tp.EndRow()
 	config.tp.AddField(project.URL)
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config createConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

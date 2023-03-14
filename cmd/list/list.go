@@ -9,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -19,6 +20,7 @@ type listOpts struct {
 	userOwner string
 	orgOwner  string
 	closed    bool
+	format    string
 }
 
 type listConfig struct {
@@ -49,6 +51,8 @@ gh projects list --user monalisa --web
 
 # list the projects for org github including closed projects
 gh projects list --org github --closed
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -82,6 +86,7 @@ gh projects list --org github --closed
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of projects. Defaults to 100.")
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -102,6 +107,10 @@ func runList(config listConfig) error {
 		return nil
 	}
 
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	var login string
 	var ownerType queries.OwnerType
 	if config.opts.userOwner != "" {
@@ -120,6 +129,10 @@ func runList(config listConfig) error {
 		return err
 	}
 	projects = filterProjects(projects, config)
+
+	if config.opts.format == "json" {
+		return printJSON(config, projects)
+	}
 
 	return printResults(config, projects, login)
 }
@@ -193,5 +206,14 @@ func printResults(config listConfig, projects []queries.Project, login string) e
 		config.tp.EndRow()
 	}
 
+	return config.tp.Render()
+}
+
+func printJSON(config listConfig, projects []queries.Project) error {
+	b, err := format.JSONProjects(projects)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

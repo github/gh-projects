@@ -9,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,7 @@ type listOpts struct {
 	userOwner string
 	orgOwner  string
 	number    int
+	format    string
 }
 
 type listConfig struct {
@@ -47,6 +49,8 @@ gh projects field-list 1 --user monalisa
 
 # list the first 30 fields in org github's project number 1
 gh projects field-list 1 --org github --limit 30
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -79,6 +83,7 @@ gh projects field-list 1 --org github --limit 30
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -87,6 +92,10 @@ gh projects field-list 1 --org github --limit 30
 }
 
 func runList(config listConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -95,6 +104,10 @@ func runList(config listConfig) error {
 	project, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, project.Fields.Nodes)
 	}
 
 	return printResults(config, project.Fields.Nodes, owner.Login)
@@ -118,6 +131,16 @@ func printResults(config listConfig, fields []queries.ProjectField, login string
 		config.tp.AddField(f.ID())
 		config.tp.EndRow()
 	}
+
+	return config.tp.Render()
+}
+
+func printJSON(config listConfig, fields []queries.ProjectField) error {
+	b, err := format.JSONProjectFields(fields)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 
 	return config.tp.Render()
 }

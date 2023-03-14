@@ -1,11 +1,14 @@
 package fielddelete
 
 import (
+	"fmt"
+
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -13,6 +16,7 @@ import (
 
 type deleteFieldOpts struct {
 	fieldID string
+	format  string
 }
 
 type deleteFieldConfig struct {
@@ -40,6 +44,8 @@ func NewCmdDeleteField(f *cmdutil.Factory, runF func(config deleteFieldConfig) e
 		Example: `
 # delete a field by ID
 gh projects field-delete --id ID
+
+# add --format=json to output in JSON format
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
@@ -65,6 +71,7 @@ gh projects field-delete --id ID
 	}
 
 	deleteFieldCmd.Flags().StringVar(&opts.fieldID, "id", "", "ID of the field to delete.")
+	deleteFieldCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = deleteFieldCmd.MarkFlagRequired("id")
 
@@ -72,11 +79,19 @@ gh projects field-delete --id ID
 }
 
 func runDeleteField(config deleteFieldConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	query, variables := deleteFieldArgs(config)
 
 	err := config.client.Mutate("DeleteField", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.DeleteProjectV2Field.Field)
 	}
 
 	return printResults(config, query.DeleteProjectV2Field.Field)
@@ -94,5 +109,14 @@ func printResults(config deleteFieldConfig, field queries.ProjectField) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Deleted field")
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config deleteFieldConfig, field queries.ProjectField) error {
+	b, err := format.JSONProjectField(field)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

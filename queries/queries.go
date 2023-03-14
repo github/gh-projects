@@ -60,17 +60,30 @@ type Project struct {
 		TotalCount int
 	} `graphql:"items(first: 100)"`
 	Fields struct {
-		Nodes    []ProjectField
-		PageInfo PageInfo
+		TotalCount int
+		Nodes      []ProjectField
+		PageInfo   PageInfo
 	} `graphql:"fields(first:100)"`
 	Owner struct {
-		User struct {
+		TypeName string `graphql:"__typename"`
+		User     struct {
 			Login string
 		} `graphql:"... on User"`
 		Organization struct {
 			Login string
 		} `graphql:"... on Organization"`
 	}
+}
+
+func (p Project) OwnerType() string {
+	return p.Owner.TypeName
+}
+
+func (p Project) OwnerLogin() string {
+	if p.OwnerType() == "User" {
+		return p.Owner.User.Login
+	}
+	return p.Owner.Organization.Login
 }
 
 // ProjectWithItems is for fetching all of the items in a single project with pagination
@@ -111,7 +124,6 @@ type ProjectItem struct {
 		Issue       Issue       `graphql:"... on Issue"`
 	}
 	Id          string
-	TypeName    string `graphql:"type"`
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
@@ -121,23 +133,23 @@ func (p ProjectItem) Data() any {
 	switch p.Content.TypeName {
 	case "DraftIssue":
 		return struct {
-			TypeName string
-			Body     string
-			Title    string
+			Type  string `json:"type"`
+			Body  string `json:"body"`
+			Title string `json:"title"`
 		}{
-			TypeName: p.Content.TypeName,
-			Body:     p.Content.DraftIssue.Body,
-			Title:    p.Content.DraftIssue.Title,
+			Type:  p.Content.TypeName,
+			Body:  p.Content.DraftIssue.Body,
+			Title: p.Content.DraftIssue.Title,
 		}
 	case "Issue":
 		return struct {
-			TypeName   string
-			Body       string
-			Title      string
-			Number     int
-			Repository string
+			Type       string `json:"type"`
+			Body       string `json:"body"`
+			Title      string `json:"title"`
+			Number     int    `json:"number"`
+			Repository string `json:"repository"`
 		}{
-			TypeName:   p.Content.TypeName,
+			Type:       p.Content.TypeName,
 			Body:       p.Content.Issue.Body,
 			Title:      p.Content.Issue.Title,
 			Number:     p.Content.Issue.Number,
@@ -145,13 +157,13 @@ func (p ProjectItem) Data() any {
 		}
 	case "PullRequest":
 		return struct {
-			TypeName   string
-			Body       string
-			Title      string
-			Number     int
-			Repository string
+			Type       string `json:"type"`
+			Body       string `json:"body"`
+			Title      string `json:"title"`
+			Number     int    `json:"number"`
+			Repository string `json:"repository"`
 		}{
-			TypeName:   p.Content.TypeName,
+			Type:       p.Content.TypeName,
 			Body:       p.Content.PullRequest.Body,
 			Title:      p.Content.PullRequest.Title,
 			Number:     p.Content.PullRequest.Number,
@@ -280,8 +292,8 @@ func (v FieldValueNodes) Data() any {
 		return v.ProjectV2ItemFieldDateValue.Date
 	case "ProjectV2ItemFieldIterationValue":
 		return struct {
-			StartDate string
-			Duration  int
+			StartDate string `json:"startDate"`
+			Duration  int    `json:"duration"`
 		}{
 			StartDate: v.ProjectV2ItemFieldIterationValue.StartDate,
 			Duration:  v.ProjectV2ItemFieldIterationValue.Duration,
@@ -294,8 +306,8 @@ func (v FieldValueNodes) Data() any {
 		return v.ProjectV2ItemFieldTextValue.Text
 	case "ProjectV2ItemFieldMilestoneValue":
 		return struct {
-			Description string
-			DueOn       string
+			Description string `json:"description"`
+			DueOn       string `json:"dueOn"`
 		}{
 			Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
 			DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
@@ -337,6 +349,7 @@ func (v FieldValueNodes) Data() any {
 }
 
 type DraftIssue struct {
+	ID    string
 	Body  string
 	Title string
 }
@@ -361,16 +374,17 @@ type Issue struct {
 
 // Type is the underlying type of the project item.
 func (p ProjectItem) Type() string {
-	return p.TypeName
+	return p.Content.TypeName
 }
 
 // Title is the title of the project item.
 func (p ProjectItem) Title() string {
-	if p.TypeName == "ISSUE" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Title
-	} else if p.TypeName == "PULL_REQUEST" {
+	case "PullRequest":
 		return p.Content.PullRequest.Title
-	} else if p.TypeName == "DRAFT_ISSUE" {
+	case "DraftIssue":
 		return p.Content.DraftIssue.Title
 	}
 	return ""
@@ -378,11 +392,12 @@ func (p ProjectItem) Title() string {
 
 // Body is the body of the project item.
 func (p ProjectItem) Body() string {
-	if p.TypeName == "ISSUE" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Body
-	} else if p.TypeName == "PULL_REQUEST" {
+	case "PullRequest":
 		return p.Content.PullRequest.Body
-	} else if p.TypeName == "DRAFT_ISSUE" {
+	case "DraftIssue":
 		return p.Content.DraftIssue.Body
 	}
 	return ""
@@ -390,11 +405,13 @@ func (p ProjectItem) Body() string {
 
 // Number is the number of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Number() int {
-	if p.TypeName == "ISSUE" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Number
-	} else if p.TypeName == "PULL_REQUEST" {
+	case "PullRequest":
 		return p.Content.PullRequest.Number
 	}
+
 	return 0
 }
 
@@ -404,9 +421,10 @@ func (p ProjectItem) ID() string {
 
 // Repo is the repository of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Repo() string {
-	if p.TypeName == "ISSUE" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Repository.NameWithOwner
-	} else if p.TypeName == "PULL_REQUEST" {
+	case "PullRequest":
 		return p.Content.PullRequest.Repository.NameWithOwner
 	}
 	return ""

@@ -1,6 +1,7 @@
 package itemarchive
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -8,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -20,6 +22,7 @@ type archiveItemOpts struct {
 	undo      bool
 	itemID    string
 	projectID string
+	format    string
 }
 
 type archiveItemConfig struct {
@@ -57,6 +60,8 @@ gh projects item-archive 1 --org github --id ID
 
 # unarchive an item
 gh projects item-archive 1 --user "@me" --id ID --undo
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,6 +98,7 @@ gh projects item-archive 1 --user "@me" --id ID --undo
 	archiveItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	archiveItemCmd.Flags().StringVar(&opts.itemID, "id", "", "Global ID of the item to archive from the project.")
 	archiveItemCmd.Flags().BoolVar(&opts.undo, "undo", false, "Undo archive (unarchive) of an item.")
+	archiveItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	archiveItemCmd.MarkFlagsMutuallyExclusive("user", "org")
 	_ = archiveItemCmd.MarkFlagRequired("id")
@@ -101,6 +107,10 @@ gh projects item-archive 1 --user "@me" --id ID --undo
 }
 
 func runArchiveItem(config archiveItemConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -119,12 +129,20 @@ func runArchiveItem(config archiveItemConfig) error {
 			return err
 		}
 
+		if config.opts.format == "json" {
+			return printJSON(config, query.UnarchiveProjectItem.ProjectV2Item)
+		}
+
 		return printResults(config, query.UnarchiveProjectItem.ProjectV2Item)
 	}
 	query, variables := archiveItemArgs(config)
 	err = config.client.Mutate("ArchiveProjectItem", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.ArchiveProjectItem.ProjectV2Item)
 	}
 
 	return printResults(config, query.ArchiveProjectItem.ProjectV2Item)
@@ -156,5 +174,14 @@ func printResults(config archiveItemConfig, item queries.ProjectItem) error {
 		config.tp.AddField("Archived item")
 	}
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config archiveItemConfig, item queries.ProjectItem) error {
+	b, err := format.JSONProjectItem(item)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }
