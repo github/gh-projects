@@ -6,10 +6,12 @@ import (
 	"github.com/github/gh-projects/queries"
 )
 
+// JSONProject serializes a Project to JSON.
 func JSONProject(project queries.Project) ([]byte, error) {
 	return json.Marshal(project)
 }
 
+// JSONProjects serializes a slice of Projects to JSON.
 func JSONProjects(projects []queries.Project) ([]byte, error) {
 	return json.Marshal(projects)
 }
