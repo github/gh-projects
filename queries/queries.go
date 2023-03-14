@@ -133,23 +133,23 @@ func (p ProjectItem) Data() any {
 	switch p.Content.TypeName {
 	case "DraftIssue":
 		return struct {
-			TypeName string
-			Body     string
-			Title    string
+			Type  string `json:"type"`
+			Body  string `json:"body"`
+			Title string `json:"title"`
 		}{
-			TypeName: p.Content.TypeName,
-			Body:     p.Content.DraftIssue.Body,
-			Title:    p.Content.DraftIssue.Title,
+			Type:  p.Content.TypeName,
+			Body:  p.Content.DraftIssue.Body,
+			Title: p.Content.DraftIssue.Title,
 		}
 	case "Issue":
 		return struct {
-			TypeName   string
-			Body       string
-			Title      string
-			Number     int
-			Repository string
+			Type       string `json:"type"`
+			Body       string `json:"body"`
+			Title      string `json:"title"`
+			Number     int    `json:"number"`
+			Repository string `json:"repository"`
 		}{
-			TypeName:   p.Content.TypeName,
+			Type:       p.Content.TypeName,
 			Body:       p.Content.Issue.Body,
 			Title:      p.Content.Issue.Title,
 			Number:     p.Content.Issue.Number,
@@ -157,13 +157,13 @@ func (p ProjectItem) Data() any {
 		}
 	case "PullRequest":
 		return struct {
-			TypeName   string
-			Body       string
-			Title      string
-			Number     int
-			Repository string
+			Type       string `json:"type"`
+			Body       string `json:"body"`
+			Title      string `json:"title"`
+			Number     int    `json:"number"`
+			Repository string `json:"repository"`
 		}{
-			TypeName:   p.Content.TypeName,
+			Type:       p.Content.TypeName,
 			Body:       p.Content.PullRequest.Body,
 			Title:      p.Content.PullRequest.Title,
 			Number:     p.Content.PullRequest.Number,
@@ -292,8 +292,8 @@ func (v FieldValueNodes) Data() any {
 		return v.ProjectV2ItemFieldDateValue.Date
 	case "ProjectV2ItemFieldIterationValue":
 		return struct {
-			StartDate string
-			Duration  int
+			StartDate string `json:"startDate"`
+			Duration  int    `json:"duration"`
 		}{
 			StartDate: v.ProjectV2ItemFieldIterationValue.StartDate,
 			Duration:  v.ProjectV2ItemFieldIterationValue.Duration,
@@ -306,8 +306,8 @@ func (v FieldValueNodes) Data() any {
 		return v.ProjectV2ItemFieldTextValue.Text
 	case "ProjectV2ItemFieldMilestoneValue":
 		return struct {
-			Description string
-			DueOn       string
+			Description string `json:"description"`
+			DueOn       string `json:"dueOn"`
 		}{
 			Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
 			DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,

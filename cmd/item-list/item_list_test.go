@@ -397,7 +397,7 @@ func TestRunList_JSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"[{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"an issue body\",\"Title\":\"an issue\",\"Number\":1,\"Repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"TypeName\":\"PullRequest\",\"Body\":\"a pull request body\",\"Title\":\"a pull request\",\"Number\":2,\"Repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"TypeName\":\"DraftIssue\",\"Body\":\"draft issue body\",\"Title\":\"draft issue\"},\"id\":\"draft issue ID\"}]\n",
+		"[{\"content\":{\"type\":\"Issue\",\"body\":\"an issue body\",\"title\":\"an issue\",\"number\":1,\"repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"type\":\"PullRequest\",\"body\":\"a pull request body\",\"title\":\"a pull request\",\"number\":2,\"repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"type\":\"DraftIssue\",\"body\":\"draft issue body\",\"title\":\"draft issue\"},\"id\":\"draft issue ID\"}]\n",
 		buf.String())
 }
 
