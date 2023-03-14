@@ -132,7 +132,7 @@ func TestJSONProjectFields(t *testing.T) {
 
 func TestJSONProjectItem_DraftIssue(t *testing.T) {
 	item := queries.ProjectItem{}
-	item.TypeName = "DraftIssue"
+	item.Content.TypeName = "DraftIssue"
 	item.Id = "123"
 	item.Content.DraftIssue.Title = "title"
 	item.Content.DraftIssue.Body = "a body"
@@ -145,7 +145,7 @@ func TestJSONProjectItem_DraftIssue(t *testing.T) {
 
 func TestJSONProjectItem_Issue(t *testing.T) {
 	item := queries.ProjectItem{}
-	item.TypeName = "Issue"
+	item.Content.TypeName = "Issue"
 	item.Id = "123"
 	item.Content.Issue.Title = "title"
 	item.Content.Issue.Body = "a body"
@@ -158,7 +158,7 @@ func TestJSONProjectItem_Issue(t *testing.T) {
 
 func TestJSONProjectItem_PullRequest(t *testing.T) {
 	item := queries.ProjectItem{}
-	item.TypeName = "PullRequest"
+	item.Content.TypeName = "PullRequest"
 	item.Id = "123"
 	item.Content.PullRequest.Title = "title"
 	item.Content.PullRequest.Body = "a body"

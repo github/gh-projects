@@ -53,32 +53,32 @@ func TestRunList_User(t *testing.T) {
 						"items": map[string]interface{}{
 							"nodes": []map[string]interface{}{
 								{
-									"type": "ISSUE",
-									"id":   "issue ID",
+									"id": "issue ID",
 									"content": map[string]interface{}{
-										"title":  "an issue",
-										"number": 1,
+										"__typename": "Issue",
+										"title":      "an issue",
+										"number":     1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "PULL_REQUEST",
-									"id":   "pull request ID",
+									"id": "pull request ID",
 									"content": map[string]interface{}{
-										"title":  "a pull request",
-										"number": 2,
+										"__typename": "PullRequest",
+										"title":      "a pull request",
+										"number":     2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "DRAFT_ISSUE",
-									"id":   "draft issue ID",
+									"id": "draft issue ID",
 									"content": map[string]interface{}{
-										"title": "draft issue",
+										"title":      "draft issue",
+										"__typename": "DraftIssue",
 									},
 								},
 							},
@@ -105,7 +105,7 @@ func TestRunList_User(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\tan issue\t1\tcli/go-gh\tissue ID\nPullRequest\ta pull request\t2\tcli/go-gh\tpull request ID\nDraftIssue\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -151,32 +151,32 @@ func TestRunList_Org(t *testing.T) {
 						"items": map[string]interface{}{
 							"nodes": []map[string]interface{}{
 								{
-									"type": "ISSUE",
-									"id":   "issue ID",
+									"id": "issue ID",
 									"content": map[string]interface{}{
-										"title":  "an issue",
-										"number": 1,
+										"__typename": "Issue",
+										"title":      "an issue",
+										"number":     1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "PULL_REQUEST",
-									"id":   "pull request ID",
+									"id": "pull request ID",
 									"content": map[string]interface{}{
-										"title":  "a pull request",
-										"number": 2,
+										"__typename": "PullRequest",
+										"title":      "a pull request",
+										"number":     2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "DRAFT_ISSUE",
-									"id":   "draft issue ID",
+									"id": "draft issue ID",
 									"content": map[string]interface{}{
-										"title": "draft issue",
+										"title":      "draft issue",
+										"__typename": "DraftIssue",
 									},
 								},
 							},
@@ -203,7 +203,7 @@ func TestRunList_Org(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\tan issue\t1\tcli/go-gh\tissue ID\nPullRequest\ta pull request\t2\tcli/go-gh\tpull request ID\nDraftIssue\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -246,32 +246,32 @@ func TestRunList_Me(t *testing.T) {
 						"items": map[string]interface{}{
 							"nodes": []map[string]interface{}{
 								{
-									"type": "ISSUE",
-									"id":   "issue ID",
+									"id": "issue ID",
 									"content": map[string]interface{}{
-										"title":  "an issue",
-										"number": 1,
+										"__typename": "Issue",
+										"title":      "an issue",
+										"number":     1,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "PULL_REQUEST",
-									"id":   "pull request ID",
+									"id": "pull request ID",
 									"content": map[string]interface{}{
-										"title":  "a pull request",
-										"number": 2,
+										"__typename": "PullRequest",
+										"title":      "a pull request",
+										"number":     2,
 										"repository": map[string]string{
 											"nameWithOwner": "cli/go-gh",
 										},
 									},
 								},
 								{
-									"type": "DRAFT_ISSUE",
-									"id":   "draft issue ID",
+									"id": "draft issue ID",
 									"content": map[string]interface{}{
-										"title": "draft issue",
+										"title":      "draft issue",
+										"__typename": "DraftIssue",
 									},
 								},
 							},
@@ -298,7 +298,7 @@ func TestRunList_Me(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"Type\tTitle\tNumber\tRepository\tID\nISSUE\tan issue\t1\tcli/go-gh\tissue ID\nPULL_REQUEST\ta pull request\t2\tcli/go-gh\tpull request ID\nDRAFT_ISSUE\tdraft issue\t - \t - \tdraft issue ID\n",
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\tan issue\t1\tcli/go-gh\tissue ID\nPullRequest\ta pull request\t2\tcli/go-gh\tpull request ID\nDraftIssue\tdraft issue\t - \t - \tdraft issue ID\n",
 		buf.String())
 }
 
@@ -341,8 +341,7 @@ func TestRunList_JSON(t *testing.T) {
 						"items": map[string]interface{}{
 							"nodes": []map[string]interface{}{
 								{
-									"type": "ISSUE",
-									"id":   "issue ID",
+									"id": "issue ID",
 									"content": map[string]interface{}{
 										"__typename": "Issue",
 										"title":      "an issue",
@@ -354,8 +353,7 @@ func TestRunList_JSON(t *testing.T) {
 									},
 								},
 								{
-									"type": "PULL_REQUEST",
-									"id":   "pull request ID",
+									"id": "pull request ID",
 									"content": map[string]interface{}{
 										"__typename": "PullRequest",
 										"title":      "a pull request",
@@ -367,10 +365,9 @@ func TestRunList_JSON(t *testing.T) {
 									},
 								},
 								{
-									"type": "DRAFT_ISSUE",
-									"id":   "draft issue ID",
+									"id": "draft issue ID",
 									"content": map[string]interface{}{
-										"__typename": "Issue",
+										"__typename": "DraftIssue",
 										"title":      "draft issue",
 										"body":       "draft issue body",
 									},
@@ -400,7 +397,7 @@ func TestRunList_JSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"[{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"an issue body\",\"Title\":\"an issue\",\"Number\":1,\"Repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"TypeName\":\"PullRequest\",\"Body\":\"a pull request body\",\"Title\":\"a pull request\",\"Number\":2,\"Repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"draft issue body\",\"Title\":\"draft issue\",\"Number\":0,\"Repository\":\"\"},\"id\":\"draft issue ID\"}]\n",
+		"[{\"content\":{\"TypeName\":\"Issue\",\"Body\":\"an issue body\",\"Title\":\"an issue\",\"Number\":1,\"Repository\":\"cli/go-gh\"},\"id\":\"issue ID\"},{\"content\":{\"TypeName\":\"PullRequest\",\"Body\":\"a pull request body\",\"Title\":\"a pull request\",\"Number\":2,\"Repository\":\"cli/go-gh\"},\"id\":\"pull request ID\"},{\"content\":{\"TypeName\":\"DraftIssue\",\"Body\":\"draft issue body\",\"Title\":\"draft issue\"},\"id\":\"draft issue ID\"}]\n",
 		buf.String())
 }
 

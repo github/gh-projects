@@ -124,7 +124,6 @@ type ProjectItem struct {
 		Issue       Issue       `graphql:"... on Issue"`
 	}
 	Id          string
-	TypeName    string `graphql:"__typename"`
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
@@ -375,16 +374,17 @@ type Issue struct {
 
 // Type is the underlying type of the project item.
 func (p ProjectItem) Type() string {
-	return p.TypeName
+	return p.Content.TypeName
 }
 
 // Title is the title of the project item.
 func (p ProjectItem) Title() string {
-	if p.TypeName == "Issue" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Title
-	} else if p.TypeName == "PullRequest" {
+	case "PullRequest":
 		return p.Content.PullRequest.Title
-	} else if p.TypeName == "DraftIssue" {
+	case "DraftIssue":
 		return p.Content.DraftIssue.Title
 	}
 	return ""
@@ -392,11 +392,12 @@ func (p ProjectItem) Title() string {
 
 // Body is the body of the project item.
 func (p ProjectItem) Body() string {
-	if p.TypeName == "Issue" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Body
-	} else if p.TypeName == "PullRequest" {
+	case "PullRequest":
 		return p.Content.PullRequest.Body
-	} else if p.TypeName == "DraftIssue" {
+	case "DraftIssue":
 		return p.Content.DraftIssue.Body
 	}
 	return ""
@@ -404,11 +405,13 @@ func (p ProjectItem) Body() string {
 
 // Number is the number of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Number() int {
-	if p.TypeName == "Issue" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Number
-	} else if p.TypeName == "PullRequest" {
+	case "PullRequest":
 		return p.Content.PullRequest.Number
 	}
+
 	return 0
 }
 
@@ -418,9 +421,10 @@ func (p ProjectItem) ID() string {
 
 // Repo is the repository of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Repo() string {
-	if p.TypeName == "ISSUE" {
+	switch p.Content.TypeName {
+	case "Issue":
 		return p.Content.Issue.Repository.NameWithOwner
-	} else if p.TypeName == "PullRequest" {
+	case "PullRequest":
 		return p.Content.PullRequest.Repository.NameWithOwner
 	}
 	return ""
