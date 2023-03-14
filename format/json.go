@@ -10,6 +10,10 @@ func JSONProject(project queries.Project) ([]byte, error) {
 	return json.Marshal(project)
 }
 
+func JSONProjects(projects []queries.Project) ([]byte, error) {
+	return json.Marshal(projects)
+}
+
 // JSONProjectField serializes a ProjectField to JSON.
 func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 	type t struct {
