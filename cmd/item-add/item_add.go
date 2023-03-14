@@ -1,6 +1,7 @@
 package itemadd
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -8,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -20,6 +22,7 @@ type addItemOpts struct {
 	itemURL   string
 	projectID string
 	itemID    string
+	format    string
 }
 
 type addItemConfig struct {
@@ -48,6 +51,8 @@ gh projects item-add 1 --user monalisa --url https://github.com/cli/go-gh/issues
 
 # add an item to the org github's project 1
 gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,6 +89,7 @@ gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
 	addItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	addItemCmd.Flags().StringVar(&opts.itemURL, "url", "", "URL of the issue or pull request to add to the project. Note that the name of the owner is case sensitive, and will fail to find the item if it does not match. Must be of form https://github.com/OWNER/REPO/issues/NUMBER or https://github.com/OWNER/REPO/pull/NUMBER")
 	addItemCmd.MarkFlagsMutuallyExclusive("user", "org")
+	addItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = addItemCmd.MarkFlagRequired("url")
 
@@ -91,6 +97,10 @@ gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
 }
 
 func runAddItem(config addItemConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -115,6 +125,10 @@ func runAddItem(config addItemConfig) error {
 		return err
 	}
 
+	if config.opts.format == "json" {
+		return printJSON(config, query.CreateProjectItem.ProjectV2Item)
+	}
+
 	return printResults(config, query.CreateProjectItem.ProjectV2Item)
 
 }
@@ -132,5 +146,14 @@ func printResults(config addItemConfig, item queries.ProjectItem) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Added item")
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config addItemConfig, item queries.ProjectItem) error {
+	b, err := format.JSONProjectItem(item)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

@@ -1,7 +1,6 @@
 package itemlist
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -53,8 +53,7 @@ gh projects item-list 1 --user monalisa
 # list the items in org github's project number 1
 gh projects item-list 1 --org github
 
-# list the items in org github's project number 1 in JSON format
-gh projects item-list 1 --org github --format json
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -113,7 +112,7 @@ func runList(config listConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return jsonPrint(config, project)
+		return printJSON(config, project)
 	}
 
 	return printResults(config, project.Items.Nodes, owner.Login)
@@ -153,36 +152,8 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	return config.tp.Render()
 }
 
-// serialize creates a map from field to field values
-func serialize(project queries.ProjectWithItems) []map[string]any {
-	fields := make(map[string]string)
-
-	// make a map of fields by ID
-	for _, f := range project.Fields.Nodes {
-		fields[f.ID()] = f.Name()
-	}
-	itemsSlice := make([]map[string]any, 0)
-
-	// for each value, look up the name by ID
-	// and set the value to the field value
-	for _, i := range project.Items.Nodes {
-		o := make(map[string]any)
-		o["id"] = i.Id
-		o["content"] = i.Data()
-		for _, v := range i.FieldValues.Nodes {
-			id := v.ID()
-			value := v.Data()
-
-			o[fields[id]] = value
-		}
-		itemsSlice = append(itemsSlice, o)
-	}
-	return itemsSlice
-}
-
-func jsonPrint(config listConfig, project queries.ProjectWithItems) error {
-	items := serialize(project)
-	b, err := json.Marshal(items)
+func printJSON(config listConfig, project queries.ProjectWithItems) error {
+	b, err := format.JSONProjectDetailedItems(project)
 	if err != nil {
 		return err
 	}

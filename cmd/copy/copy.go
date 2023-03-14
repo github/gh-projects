@@ -9,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ type copyOpts struct {
 	targetOrgOwner     string
 	targetUserOwner    string
 	title              string
+	format             string
 }
 
 type copyConfig struct {
@@ -52,6 +54,8 @@ gh projects copy 1 --source-org github --title "a new project" --target-me
 
 # copy project 1 owned by the org github to user monalisa with title "a new project" and include draft issues
 gh projects copy 1 --source-org github --title "a new project" --target-user monalisa --drafts
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -90,6 +94,7 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 	copyCmd.Flags().StringVar(&opts.targetOrgOwner, "target-org", "", "Login of the target organization owner.")
 	copyCmd.Flags().StringVar(&opts.title, "title", "", "Title of the new project copy. Titles do not need to be unique.")
 	copyCmd.Flags().BoolVar(&opts.includeDraftIssues, "drafts", false, "Include draft issues in new copy.")
+	copyCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = copyCmd.MarkFlagRequired("title")
 	copyCmd.MarkFlagsMutuallyExclusive("source-user", "source-org")
@@ -99,6 +104,10 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 }
 
 func runCopy(config copyConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	sourceOwner, err := queries.NewOwner(config.client, config.opts.sourceUserOwner, config.opts.sourceOrgOwner)
 	if err != nil {
 		return err
@@ -124,6 +133,10 @@ func runCopy(config copyConfig) error {
 		return err
 	}
 
+	if config.opts.format == "json" {
+		return printJSON(config, query.CopyProjectV2.ProjectV2)
+	}
+
 	return printResults(config, query.CopyProjectV2.ProjectV2)
 }
 
@@ -144,5 +157,14 @@ func printResults(config copyConfig, project queries.Project) error {
 	config.tp.EndRow()
 	config.tp.AddField(project.URL)
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config copyConfig, project queries.Project) error {
+	b, err := format.JSONProject(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

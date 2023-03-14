@@ -1,6 +1,7 @@
 package itemcreate
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -8,6 +9,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -20,6 +22,7 @@ type createItemOpts struct {
 	orgOwner  string
 	number    int
 	projectID string
+	format    string
 }
 
 type createItemConfig struct {
@@ -48,6 +51,8 @@ gh projects item-create 1 --user monalisa --title "new item" --body "new item bo
 
 # create a draft issue in org github's project 1 with title "new item" and body "new item body"
 gh projects item-create 1 --org github --title "new item" --body "new item body"
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,6 +89,7 @@ gh projects item-create 1 --org github --title "new item" --body "new item body"
 	createItemCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	createItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item.")
 	createItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item.")
+	createItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	createItemCmd.MarkFlagsMutuallyExclusive("user", "org")
 	_ = createItemCmd.MarkFlagRequired("title")
@@ -92,6 +98,10 @@ gh projects item-create 1 --org github --title "new item" --body "new item body"
 }
 
 func runCreateItem(config createItemConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -108,6 +118,10 @@ func runCreateItem(config createItemConfig) error {
 	err = config.client.Mutate("CreateDraftItem", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.CreateProjectDraftItem.ProjectV2Item)
 	}
 
 	return printResults(config, query.CreateProjectDraftItem.ProjectV2Item)
@@ -127,5 +141,14 @@ func printResults(config createItemConfig, item queries.ProjectItem) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Created item")
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config createItemConfig, item queries.ProjectItem) error {
+	b, err := format.JSONProjectItem(item)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }
