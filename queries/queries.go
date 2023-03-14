@@ -48,30 +48,42 @@ type PageInfo struct {
 
 // Project is a ProjectV2 GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2.
 type Project struct {
-	Number           int    `json:"number"`
-	URL              string `json:"url"`
-	ShortDescription string `json:"shortDescription"`
-	Public           bool   `json:"public"`
-	Closed           bool   `json:"closed"`
-	Title            string `json:"title"`
-	ID               string `json:"id"`
-	Readme           string `json:"readme"`
+	Number           int
+	URL              string
+	ShortDescription string
+	Public           bool
+	Closed           bool
+	Title            string
+	ID               string
+	Readme           string
 	Items            struct {
-		TotalCount int `json:"totalCount"`
-	} `graphql:"items(first: 100)" json:"items"`
+		TotalCount int
+	} `graphql:"items(first: 100)"`
 	Fields struct {
-		TotalCount int            `json:"totalCount"`
-		Nodes      []ProjectField `json:"-"`
-		PageInfo   PageInfo       `json:"-"`
-	} `graphql:"fields(first:100)" json:"fields"`
+		TotalCount int
+		Nodes      []ProjectField
+		PageInfo   PageInfo
+	} `graphql:"fields(first:100)"`
 	Owner struct {
-		User struct {
-			Login string `json:"login"`
-		} `graphql:"... on User" json:"user"`
+		TypeName string `graphql:"__typename"`
+		User     struct {
+			Login string
+		} `graphql:"... on User"`
 		Organization struct {
-			Login string `json:"login"`
-		} `graphql:"... on Organization" json:"organization"`
+			Login string
+		} `graphql:"... on Organization"`
 	}
+}
+
+func (p Project) OwnerType() string {
+	return p.Owner.TypeName
+}
+
+func (p Project) OwnerLogin() string {
+	if p.OwnerType() == "User" {
+		return p.Owner.User.Login
+	}
+	return p.Owner.Organization.Login
 }
 
 // ProjectWithItems is for fetching all of the items in a single project with pagination
@@ -338,9 +350,9 @@ func (v FieldValueNodes) Data() any {
 }
 
 type DraftIssue struct {
-	ID    string `json:"id"`
-	Body  string `json:"body"`
-	Title string `json:"title"`
+	ID    string
+	Body  string
+	Title string
 }
 
 type PullRequest struct {

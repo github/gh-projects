@@ -8,7 +8,53 @@ import (
 
 // JSONProject serializes a Project to JSON.
 func JSONProject(project queries.Project) ([]byte, error) {
-	return json.Marshal(project)
+	type t struct {
+		Number           int    `json:"number"`
+		URL              string `json:"url"`
+		ShortDescription string `json:"shortDescription"`
+		Public           bool   `json:"public"`
+		Closed           bool   `json:"closed"`
+		Title            string `json:"title"`
+		ID               string `json:"id"`
+		Readme           string `json:"readme"`
+		Items            struct {
+			TotalCount int `json:"totalCount"`
+		} `graphql:"items(first: 100)" json:"items"`
+		Fields struct {
+			TotalCount int `json:"totalCount"`
+		} `graphql:"fields(first:100)" json:"fields"`
+		Owner struct {
+			Type  string `json:"type"`
+			Login string `json:"login"`
+		}
+	}
+	return json.Marshal(t{
+		Number:           project.Number,
+		URL:              project.URL,
+		ShortDescription: project.ShortDescription,
+		Public:           project.Public,
+		Closed:           project.Closed,
+		Title:            project.Title,
+		ID:               project.ID,
+		Readme:           project.Readme,
+		Items: struct {
+			TotalCount int `json:"totalCount"`
+		}{
+			TotalCount: project.Items.TotalCount,
+		},
+		Fields: struct {
+			TotalCount int `json:"totalCount"`
+		}{
+			TotalCount: project.Fields.TotalCount,
+		},
+		Owner: struct {
+			Type  string `json:"type"`
+			Login string `json:"login"`
+		}{
+			Type:  project.OwnerType(),
+			Login: project.OwnerLogin(),
+		},
+	})
 }
 
 // JSONProjects serializes a slice of Projects to JSON.
