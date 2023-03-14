@@ -129,3 +129,42 @@ func TestJSONProjectFields(t *testing.T) {
 
 	assert.Equal(t, `[{"id":"123","name":"name","type":"ProjectV2Field"}]`, string(b))
 }
+
+func TestJSONProjectItem_DraftIssue(t *testing.T) {
+	item := queries.ProjectItem{}
+	item.TypeName = "DraftIssue"
+	item.Id = "123"
+	item.Content.DraftIssue.Title = "title"
+	item.Content.DraftIssue.Body = "a body"
+
+	b, err := JSONProjectItem(item)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"DraftIssue"}`, string(b))
+}
+
+func TestJSONProjectItem_Issue(t *testing.T) {
+	item := queries.ProjectItem{}
+	item.TypeName = "Issue"
+	item.Id = "123"
+	item.Content.Issue.Title = "title"
+	item.Content.Issue.Body = "a body"
+
+	b, err := JSONProjectItem(item)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"Issue"}`, string(b))
+}
+
+func TestJSONProjectItem_PullRequest(t *testing.T) {
+	item := queries.ProjectItem{}
+	item.TypeName = "PullRequest"
+	item.Id = "123"
+	item.Content.PullRequest.Title = "title"
+	item.Content.PullRequest.Body = "a body"
+
+	b, err := JSONProjectItem(item)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"PullRequest"}`, string(b))
+}

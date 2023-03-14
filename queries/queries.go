@@ -124,7 +124,7 @@ type ProjectItem struct {
 		Issue       Issue       `graphql:"... on Issue"`
 	}
 	Id          string
-	TypeName    string `graphql:"type"`
+	TypeName    string `graphql:"__typename"`
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
@@ -380,11 +380,11 @@ func (p ProjectItem) Type() string {
 
 // Title is the title of the project item.
 func (p ProjectItem) Title() string {
-	if p.TypeName == "ISSUE" {
+	if p.TypeName == "Issue" {
 		return p.Content.Issue.Title
-	} else if p.TypeName == "PULL_REQUEST" {
+	} else if p.TypeName == "PullRequest" {
 		return p.Content.PullRequest.Title
-	} else if p.TypeName == "DRAFT_ISSUE" {
+	} else if p.TypeName == "DraftIssue" {
 		return p.Content.DraftIssue.Title
 	}
 	return ""
@@ -392,11 +392,11 @@ func (p ProjectItem) Title() string {
 
 // Body is the body of the project item.
 func (p ProjectItem) Body() string {
-	if p.TypeName == "ISSUE" {
+	if p.TypeName == "Issue" {
 		return p.Content.Issue.Body
-	} else if p.TypeName == "PULL_REQUEST" {
+	} else if p.TypeName == "PullRequest" {
 		return p.Content.PullRequest.Body
-	} else if p.TypeName == "DRAFT_ISSUE" {
+	} else if p.TypeName == "DraftIssue" {
 		return p.Content.DraftIssue.Body
 	}
 	return ""
@@ -404,9 +404,9 @@ func (p ProjectItem) Body() string {
 
 // Number is the number of the project item. It is only valid for issues and pull requests.
 func (p ProjectItem) Number() int {
-	if p.TypeName == "ISSUE" {
+	if p.TypeName == "Issue" {
 		return p.Content.Issue.Number
-	} else if p.TypeName == "PULL_REQUEST" {
+	} else if p.TypeName == "PullRequest" {
 		return p.Content.PullRequest.Number
 	}
 	return 0
@@ -420,7 +420,7 @@ func (p ProjectItem) ID() string {
 func (p ProjectItem) Repo() string {
 	if p.TypeName == "ISSUE" {
 		return p.Content.Issue.Repository.NameWithOwner
-	} else if p.TypeName == "PULL_REQUEST" {
+	} else if p.TypeName == "PullRequest" {
 		return p.Content.PullRequest.Repository.NameWithOwner
 	}
 	return ""
