@@ -1,6 +1,8 @@
 package delete
 
 import (
+	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -18,6 +20,7 @@ type deleteOpts struct {
 	orgOwner  string
 	number    int
 	projectID string
+	format    string
 }
 
 type deleteConfig struct {
@@ -80,6 +83,7 @@ gh projects delete 1 --org github
 
 	deleteCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	deleteCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
+	deleteCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	deleteCmd.MarkFlagsMutuallyExclusive("user", "org")
 
@@ -87,6 +91,10 @@ gh projects delete 1 --org github
 }
 
 func runDelete(config deleteConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -102,6 +110,10 @@ func runDelete(config deleteConfig) error {
 	err = config.client.Mutate("DeleteProject", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, project)
 	}
 
 	return printResults(config)
@@ -120,5 +132,14 @@ func printResults(config deleteConfig) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Deleted project")
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config deleteConfig, project *queries.Project) error {
+	b, err := json.Marshal(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

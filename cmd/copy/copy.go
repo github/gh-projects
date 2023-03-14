@@ -1,6 +1,7 @@
 package copy
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -24,6 +25,7 @@ type copyOpts struct {
 	targetOrgOwner     string
 	targetUserOwner    string
 	title              string
+	format             string
 }
 
 type copyConfig struct {
@@ -90,6 +92,7 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 	copyCmd.Flags().StringVar(&opts.targetOrgOwner, "target-org", "", "Login of the target organization owner.")
 	copyCmd.Flags().StringVar(&opts.title, "title", "", "Title of the new project copy. Titles do not need to be unique.")
 	copyCmd.Flags().BoolVar(&opts.includeDraftIssues, "drafts", false, "Include draft issues in new copy.")
+	copyCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = copyCmd.MarkFlagRequired("title")
 	copyCmd.MarkFlagsMutuallyExclusive("source-user", "source-org")
@@ -99,6 +102,10 @@ gh projects copy 1 --source-org github --title "a new project" --target-user mon
 }
 
 func runCopy(config copyConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	sourceOwner, err := queries.NewOwner(config.client, config.opts.sourceUserOwner, config.opts.sourceOrgOwner)
 	if err != nil {
 		return err
@@ -124,6 +131,10 @@ func runCopy(config copyConfig) error {
 		return err
 	}
 
+	if config.opts.format == "json" {
+		return printJSON(config, &query.CopyProjectV2.ProjectV2)
+	}
+
 	return printResults(config, query.CopyProjectV2.ProjectV2)
 }
 
@@ -144,5 +155,14 @@ func printResults(config copyConfig, project queries.Project) error {
 	config.tp.EndRow()
 	config.tp.AddField(project.URL)
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config copyConfig, project *queries.Project) error {
+	b, err := json.Marshal(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

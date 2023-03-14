@@ -113,7 +113,7 @@ func runList(config listConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return jsonPrint(config, project)
+		return printJSON(config, project)
 	}
 
 	return printResults(config, project.Items.Nodes, owner.Login)
@@ -180,7 +180,7 @@ func serialize(project queries.ProjectWithItems) []map[string]any {
 	return itemsSlice
 }
 
-func jsonPrint(config listConfig, project queries.ProjectWithItems) error {
+func printJSON(config listConfig, project queries.ProjectWithItems) error {
 	items := serialize(project)
 	b, err := json.Marshal(items)
 	if err != nil {

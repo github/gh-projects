@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -23,6 +24,7 @@ type editOpts struct {
 	visibility       string
 	shortDescription string
 	projectID        string
+	format           string
 }
 
 type editConfig struct {
@@ -92,6 +94,7 @@ gh projects edit 1 --org github --visibility PUBLIC
 	editCmd.Flags().StringVar(&opts.title, "title", "", "The edited title of the project.")
 	editCmd.Flags().StringVar(&opts.readme, "readme", "", "The edited readme of the project.")
 	editCmd.Flags().StringVarP(&opts.shortDescription, "description", "d", "", "The edited short description of the project.")
+	editCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	editCmd.MarkFlagsMutuallyExclusive("user", "org")
 
@@ -105,6 +108,10 @@ func runEdit(config editConfig) error {
 
 	if config.opts.title == "" && config.opts.shortDescription == "" && config.opts.readme == "" && config.opts.visibility == "" {
 		return fmt.Errorf("no fields to edit")
+	}
+
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
 	}
 
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
@@ -122,6 +129,10 @@ func runEdit(config editConfig) error {
 	err = config.client.Mutate("UpdateProjectV2", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, project)
 	}
 
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
@@ -155,5 +166,14 @@ func printResults(config editConfig, project queries.Project) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField(fmt.Sprintf("Updated project %s", project.URL))
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config editConfig, project *queries.Project) error {
+	b, err := json.Marshal(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }

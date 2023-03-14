@@ -60,8 +60,9 @@ type Project struct {
 		TotalCount int
 	} `graphql:"items(first: 100)"`
 	Fields struct {
-		Nodes    []ProjectField
-		PageInfo PageInfo
+		TotalCount int
+		Nodes      []ProjectField `json:"-"`
+		PageInfo   PageInfo       `json:"-"`
 	} `graphql:"fields(first:100)"`
 	Owner struct {
 		User struct {

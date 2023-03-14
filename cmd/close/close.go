@@ -1,6 +1,7 @@
 package close
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -20,6 +21,7 @@ type closeOpts struct {
 	orgOwner  string
 	reopen    bool
 	projectID string
+	format    string
 }
 
 type closeConfig struct {
@@ -84,13 +86,17 @@ gh projects close 1 --org github --undo
 	closeCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	closeCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	closeCmd.Flags().BoolVar(&opts.reopen, "undo", false, "Reopen a closed project.")
-
+	closeCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 	closeCmd.MarkFlagsMutuallyExclusive("user", "org")
 
 	return closeCmd
 }
 
 func runClose(config closeConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -107,6 +113,10 @@ func runClose(config closeConfig) error {
 	err = config.client.Mutate("CloseProjectV2", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, project)
 	}
 
 	return printResults(config, query.UpdateProjectV2.ProjectV2)
@@ -132,5 +142,14 @@ func printResults(config closeConfig, project queries.Project) error {
 	}
 	config.tp.AddField(fmt.Sprintf("%s project %s", action, project.URL))
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config closeConfig, project *queries.Project) error {
+	b, err := json.Marshal(project)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }
