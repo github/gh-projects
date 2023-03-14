@@ -91,7 +91,7 @@ type projectJSON struct {
 	Owner struct {
 		Type  string `json:"type"`
 		Login string `json:"login"`
-	}
+	} `json:"owner"`
 }
 
 // JSONProjectField serializes a ProjectField to JSON.

@@ -25,7 +25,7 @@ func TestJSONProject_User(t *testing.T) {
 	b, err := JSONProject(project)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"User","login":"monalisa"}}`, string(b))
+	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}}`, string(b))
 }
 
 func TestJSONProject_Org(t *testing.T) {
@@ -45,7 +45,7 @@ func TestJSONProject_Org(t *testing.T) {
 	b, err := JSONProject(project)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"Organization","login":"github"}}`, string(b))
+	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}`, string(b))
 }
 
 func TestJSONProjects(t *testing.T) {
@@ -79,7 +79,7 @@ func TestJSONProjects(t *testing.T) {
 	b, err := JSONProjects([]queries.Project{userProject, orgProject})
 	assert.NoError(t, err)
 
-	assert.Equal(t, `[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"Organization","login":"github"}}]`, string(b))
+	assert.Equal(t, `[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}]`, string(b))
 }
 
 func TestJSONProjectField_FieldType(t *testing.T) {
