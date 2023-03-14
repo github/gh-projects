@@ -31,11 +31,6 @@ type deleteProjectV2FieldMutation struct {
 	} `graphql:"deleteProjectV2Field(input:$input)"`
 }
 
-// TODO: update this to use githubv4.DeleteProjectV2FieldInput once it is available there
-type DeleteProjectV2FieldInput struct {
-	FieldID githubv4.ID `json:"fieldId"`
-}
-
 func NewCmdDeleteField(f *cmdutil.Factory, runF func(config deleteFieldConfig) error) *cobra.Command {
 	opts := deleteFieldOpts{}
 	deleteFieldCmd := &cobra.Command{
@@ -99,7 +94,7 @@ func runDeleteField(config deleteFieldConfig) error {
 
 func deleteFieldArgs(config deleteFieldConfig) (*deleteProjectV2FieldMutation, map[string]interface{}) {
 	return &deleteProjectV2FieldMutation{}, map[string]interface{}{
-		"input": DeleteProjectV2FieldInput{
+		"input": githubv4.DeleteProjectV2FieldInput{
 			FieldID: githubv4.ID(config.opts.fieldID),
 		},
 	}
