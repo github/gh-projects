@@ -60,7 +60,8 @@ type Project struct {
 		TotalCount int
 	} `graphql:"items(first: 100)"`
 	Fields struct {
-		Nodes []ProjectField
+		Nodes    []ProjectField
+		PageInfo PageInfo
 	} `graphql:"fields(first:100)"`
 	Owner struct {
 		User struct {
@@ -159,6 +160,13 @@ func (p ProjectItem) Data() any {
 	}
 
 	return nil
+}
+
+type ProjectWithFields struct {
+	Fields struct {
+		PageInfo PageInfo
+		Nodes    []ProjectField
+	} `graphql:"fields(first: $first, after: $after)"`
 }
 
 type FieldValueNodes struct {
@@ -537,27 +545,93 @@ func (p ProjectField) Type() string {
 	return p.TypeName
 }
 
-// ProjectFields returns the fields of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, first int) ([]ProjectField, error) {
+// ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
+func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (ProjectWithFields, error) {
 	variables := map[string]interface{}{
+		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
+		"after":  (*githubv4.String)(nil),
 	}
+
+	project := ProjectWithFields{}
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithFields
 		err := doQuery(client, "UserProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
+		if err != nil {
+			return project, err
+		}
+
+		project = query.Owner.Project
 	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithFields
 		err := doQuery(client, "OrgProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
+		if err != nil {
+			return project, err
+		}
+
+		project = query.Owner.Project
 	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithFields
 		err := doQuery(client, "ViewerProjectWithFields", &query, variables)
-		return query.Owner.Project.Fields.Nodes, err
+		if err != nil {
+			return project, err
+		}
+
+		project = query.Owner.Project
+	} else {
+		return project, errors.New("unknown owner type")
 	}
-	return []ProjectField{}, errors.New("unknown owner type")
+
+	// get the remaining items if there are any
+	// and append them to the project items
+	hasNext := project.Fields.PageInfo.HasNextPage
+	cursor := project.Fields.PageInfo.EndCursor
+	for {
+		if !hasNext {
+			break
+		}
+		// set the cursor to the end of the last page
+		variables["after"] = (*githubv4.String)(&cursor)
+		if o.Type == UserOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query userOwnerWithFields
+			err := doQuery(client, "UserProjectWithFields", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
+			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
+		} else if o.Type == OrgOwner {
+			variables["login"] = graphql.String(o.Login)
+			var query orgOwnerWithFields
+			err := doQuery(client, "OrgProjectWithFields", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
+			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
+
+		} else if o.Type == ViewerOwner {
+			var query viewerOwnerWithFields
+			err := doQuery(client, "ViewerProjectWithFields", &query, variables)
+			if err != nil {
+				return project, err
+			}
+
+			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
+			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
+		}
+	}
+
+	return project, nil
+
 }
 
 // viewerLogin is used to query the Login of the viewer.
@@ -617,11 +691,7 @@ type userOwnerWithItems struct {
 // userOwnerWithFields is used to query the project of a user with its fields.
 type userOwnerWithFields struct {
 	Owner struct {
-		Project struct {
-			Fields struct {
-				Nodes []ProjectField
-			} `graphql:"fields(first: 100)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
@@ -643,11 +713,7 @@ type orgOwnerWithItems struct {
 // orgOwnerWithFields is used to query the project of an organization with its fields.
 type orgOwnerWithFields struct {
 	Owner struct {
-		Project struct {
-			Fields struct {
-				Nodes []ProjectField
-			} `graphql:"fields(first: 100)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
@@ -669,11 +735,7 @@ type viewerOwnerWithItems struct {
 // viewerOwnerWithFields is used to query the project of the viewer with its fields.
 type viewerOwnerWithFields struct {
 	Owner struct {
-		Project struct {
-			Fields struct {
-				Nodes []ProjectField
-			} `graphql:"fields(first: 100)"`
-		} `graphql:"projectV2(number: $number)"`
+		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 

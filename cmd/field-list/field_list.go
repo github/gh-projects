@@ -79,7 +79,6 @@ gh projects field-list 1 --org github --limit 30
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -93,12 +92,12 @@ func runList(config listConfig) error {
 		return err
 	}
 
-	fields, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
+	project, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
 	}
 
-	return printResults(config, fields, owner.Login)
+	return printResults(config, project.Fields.Nodes, owner.Login)
 }
 
 func printResults(config listConfig, fields []queries.ProjectField, login string) error {
