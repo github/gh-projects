@@ -2,6 +2,7 @@ package format
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/github/gh-projects/queries"
 )
@@ -125,7 +126,6 @@ type projectFieldJSON struct {
 
 // JSONProjectItem serializes a ProjectItem to JSON.
 func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
-
 	return json.Marshal(projectItemJSON{
 		ID:    item.ID(),
 		Title: item.Title(),
@@ -161,4 +161,16 @@ type draftIssueJSON struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
 	Type  string `json:"type"`
+}
+
+// CamelCase converts a string to camelCase, which is useful for turning Go field names to JSON keys.
+func CamelCase(s string) string {
+	if len(s) == 0 {
+		return ""
+	}
+
+	if len(s) == 1 {
+		return strings.ToLower(s)
+	}
+	return strings.ToLower(s[0:1]) + s[1:]
 }

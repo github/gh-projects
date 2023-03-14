@@ -10,6 +10,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/spf13/cobra"
 )
@@ -158,7 +159,7 @@ func serialize(project queries.ProjectWithItems) []map[string]any {
 
 	// make a map of fields by ID
 	for _, f := range project.Fields.Nodes {
-		fields[f.ID()] = f.Name()
+		fields[f.ID()] = format.CamelCase(f.Name())
 	}
 	itemsSlice := make([]map[string]any, 0)
 

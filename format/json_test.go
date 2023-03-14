@@ -180,3 +180,10 @@ func TestJSONProjectDraftIssue(t *testing.T) {
 
 	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"DraftIssue"}`, string(b))
 }
+
+func TestCamelCase(t *testing.T) {
+	assert.Equal(t, "camelCase", CamelCase("camelCase"))
+	assert.Equal(t, "camelCase", CamelCase("CamelCase"))
+	assert.Equal(t, "c", CamelCase("C"))
+	assert.Equal(t, "", CamelCase(""))
+}
