@@ -48,29 +48,29 @@ type PageInfo struct {
 
 // Project is a ProjectV2 GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2.
 type Project struct {
-	Number           int
-	URL              string
-	ShortDescription string
-	Public           bool
-	Closed           bool
-	Title            string
-	ID               string
-	Readme           string
+	Number           int    `json:"number"`
+	URL              string `json:"url"`
+	ShortDescription string `json:"shortDescription"`
+	Public           bool   `json:"public"`
+	Closed           bool   `json:"closed"`
+	Title            string `json:"title"`
+	ID               string `json:"id"`
+	Readme           string `json:"readme"`
 	Items            struct {
-		TotalCount int
-	} `graphql:"items(first: 100)"`
+		TotalCount int `json:"totalCount"`
+	} `graphql:"items(first: 100)" json:"items"`
 	Fields struct {
-		TotalCount int
+		TotalCount int            `json:"totalCount"`
 		Nodes      []ProjectField `json:"-"`
 		PageInfo   PageInfo       `json:"-"`
-	} `graphql:"fields(first:100)"`
+	} `graphql:"fields(first:100)" json:"fields"`
 	Owner struct {
 		User struct {
-			Login string
-		} `graphql:"... on User"`
+			Login string `json:"login"`
+		} `graphql:"... on User" json:"user"`
 		Organization struct {
-			Login string
-		} `graphql:"... on Organization"`
+			Login string `json:"login"`
+		} `graphql:"... on Organization" json:"organization"`
 	}
 }
 
@@ -339,8 +339,8 @@ func (v FieldValueNodes) Data() any {
 
 type DraftIssue struct {
 	ID    string `json:"id"`
-	Body  string
-	Title string
+	Body  string `json:"body"`
+	Title string `json:"title"`
 }
 
 type PullRequest struct {

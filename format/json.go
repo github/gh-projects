@@ -13,9 +13,9 @@ func JSONProject(project queries.Project) ([]byte, error) {
 // JSONProjectField serializes a ProjectField to JSON.
 func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 	type t struct {
-		ID   string
-		Name string
-		Type string
+		ID   string `json:"id"`
+		Name string `json:"name"`
+		Type string `json:"type"`
 	}
 
 	return json.Marshal(t{
@@ -28,9 +28,9 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
 func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 	type t struct {
-		ID   string
-		Name string
-		Type string
+		ID   string `json:"id"`
+		Name string `json:"name"`
+		Type string `json:"type"`
 	}
 
 	var result []t
@@ -48,9 +48,9 @@ func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 // JSONProjectItem serializes a ProjectItem to JSON.
 func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
 	type t struct {
-		ID    string
-		Title string
-		Body  string
+		ID    string `json:"id"`
+		Title string `json:"title"`
+		Body  string `json:"body"`
 	}
 
 	return json.Marshal(t{
@@ -67,9 +67,9 @@ func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
 // and not a ProjectV2Item https://docs.github.com/en/graphql/reference/objects#projectv2item
 func JSONProjectDraftIssue(item queries.DraftIssue) ([]byte, error) {
 	type t struct {
-		ID    string
-		Title string
-		Body  string
+		ID    string `json:"id"`
+		Title string `json:"title"`
+		Body  string `json:"body"`
 	}
 
 	return json.Marshal(t{
