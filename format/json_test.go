@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestJSONProject(t *testing.T) {
+func TestJSONProject_User(t *testing.T) {
 	project := queries.Project{
 		ID:               "123",
 		Number:           2,
@@ -27,4 +27,24 @@ func TestJSONProject(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(string(b))
 	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"User","login":"monalisa"}}`, string(b))
+}
+
+func TestJSONProject_Org(t *testing.T) {
+	project := queries.Project{
+		ID:               "123",
+		Number:           2,
+		URL:              "a url",
+		ShortDescription: "short description",
+		Public:           true,
+		Readme:           "readme",
+	}
+
+	project.Items.TotalCount = 1
+	project.Fields.TotalCount = 2
+	project.Owner.TypeName = "Organization"
+	project.Owner.Organization.Login = "github"
+	b, err := JSONProject(project)
+	assert.NoError(t, err)
+	fmt.Println(string(b))
+	assert.Equal(t, `{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"Owner":{"type":"Organization","login":"github"}}`, string(b))
 }
