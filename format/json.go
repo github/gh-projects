@@ -59,7 +59,59 @@ func JSONProject(project queries.Project) ([]byte, error) {
 
 // JSONProjects serializes a slice of Projects to JSON.
 func JSONProjects(projects []queries.Project) ([]byte, error) {
-	return json.Marshal(projects)
+	type t struct {
+		Number           int    `json:"number"`
+		URL              string `json:"url"`
+		ShortDescription string `json:"shortDescription"`
+		Public           bool   `json:"public"`
+		Closed           bool   `json:"closed"`
+		Title            string `json:"title"`
+		ID               string `json:"id"`
+		Readme           string `json:"readme"`
+		Items            struct {
+			TotalCount int `json:"totalCount"`
+		} `graphql:"items(first: 100)" json:"items"`
+		Fields struct {
+			TotalCount int `json:"totalCount"`
+		} `graphql:"fields(first:100)" json:"fields"`
+		Owner struct {
+			Type  string `json:"type"`
+			Login string `json:"login"`
+		}
+	}
+
+	var result []t
+	for _, p := range projects {
+		result = append(result, t{
+			Number:           p.Number,
+			URL:              p.URL,
+			ShortDescription: p.ShortDescription,
+			Public:           p.Public,
+			Closed:           p.Closed,
+			Title:            p.Title,
+			ID:               p.ID,
+			Readme:           p.Readme,
+			Items: struct {
+				TotalCount int `json:"totalCount"`
+			}{
+				TotalCount: p.Items.TotalCount,
+			},
+			Fields: struct {
+				TotalCount int `json:"totalCount"`
+			}{
+				TotalCount: p.Fields.TotalCount,
+			},
+			Owner: struct {
+				Type  string `json:"type"`
+				Login string `json:"login"`
+			}{
+				Type:  p.OwnerType(),
+				Login: p.OwnerLogin(),
+			},
+		})
+	}
+
+	return json.Marshal(result)
 }
 
 // JSONProjectField serializes a ProjectField to JSON.
