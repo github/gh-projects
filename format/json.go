@@ -8,27 +8,7 @@ import (
 
 // JSONProject serializes a Project to JSON.
 func JSONProject(project queries.Project) ([]byte, error) {
-	type t struct {
-		Number           int    `json:"number"`
-		URL              string `json:"url"`
-		ShortDescription string `json:"shortDescription"`
-		Public           bool   `json:"public"`
-		Closed           bool   `json:"closed"`
-		Title            string `json:"title"`
-		ID               string `json:"id"`
-		Readme           string `json:"readme"`
-		Items            struct {
-			TotalCount int `json:"totalCount"`
-		} `graphql:"items(first: 100)" json:"items"`
-		Fields struct {
-			TotalCount int `json:"totalCount"`
-		} `graphql:"fields(first:100)" json:"fields"`
-		Owner struct {
-			Type  string `json:"type"`
-			Login string `json:"login"`
-		}
-	}
-	return json.Marshal(t{
+	return json.Marshal(projectJSON{
 		Number:           project.Number,
 		URL:              project.URL,
 		ShortDescription: project.ShortDescription,
@@ -59,30 +39,9 @@ func JSONProject(project queries.Project) ([]byte, error) {
 
 // JSONProjects serializes a slice of Projects to JSON.
 func JSONProjects(projects []queries.Project) ([]byte, error) {
-	type t struct {
-		Number           int    `json:"number"`
-		URL              string `json:"url"`
-		ShortDescription string `json:"shortDescription"`
-		Public           bool   `json:"public"`
-		Closed           bool   `json:"closed"`
-		Title            string `json:"title"`
-		ID               string `json:"id"`
-		Readme           string `json:"readme"`
-		Items            struct {
-			TotalCount int `json:"totalCount"`
-		} `graphql:"items(first: 100)" json:"items"`
-		Fields struct {
-			TotalCount int `json:"totalCount"`
-		} `graphql:"fields(first:100)" json:"fields"`
-		Owner struct {
-			Type  string `json:"type"`
-			Login string `json:"login"`
-		}
-	}
-
-	var result []t
+	var result []projectJSON
 	for _, p := range projects {
-		result = append(result, t{
+		result = append(result, projectJSON{
 			Number:           p.Number,
 			URL:              p.URL,
 			ShortDescription: p.ShortDescription,
@@ -114,15 +73,30 @@ func JSONProjects(projects []queries.Project) ([]byte, error) {
 	return json.Marshal(result)
 }
 
+type projectJSON struct {
+	Number           int    `json:"number"`
+	URL              string `json:"url"`
+	ShortDescription string `json:"shortDescription"`
+	Public           bool   `json:"public"`
+	Closed           bool   `json:"closed"`
+	Title            string `json:"title"`
+	ID               string `json:"id"`
+	Readme           string `json:"readme"`
+	Items            struct {
+		TotalCount int `json:"totalCount"`
+	} `graphql:"items(first: 100)" json:"items"`
+	Fields struct {
+		TotalCount int `json:"totalCount"`
+	} `graphql:"fields(first:100)" json:"fields"`
+	Owner struct {
+		Type  string `json:"type"`
+		Login string `json:"login"`
+	}
+}
+
 // JSONProjectField serializes a ProjectField to JSON.
 func JSONProjectField(field queries.ProjectField) ([]byte, error) {
-	type t struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		Type string `json:"type"`
-	}
-
-	return json.Marshal(t{
+	return json.Marshal(projectFieldJSON{
 		ID:   field.ID(),
 		Name: field.Name(),
 		Type: field.Type(),
@@ -131,15 +105,9 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
 func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
-	type t struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		Type string `json:"type"`
-	}
-
-	var result []t
+	var result []projectFieldJSON
 	for _, f := range fields {
-		result = append(result, t{
+		result = append(result, projectFieldJSON{
 			ID:   f.ID(),
 			Name: f.Name(),
 			Type: f.Type(),
@@ -149,21 +117,28 @@ func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 	return json.Marshal(result)
 }
 
+type projectFieldJSON struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
 // JSONProjectItem serializes a ProjectItem to JSON.
 func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
-	type t struct {
-		ID    string `json:"id"`
-		Title string `json:"title"`
-		Body  string `json:"body"`
-		Type  string `json:"type"`
-	}
 
-	return json.Marshal(t{
+	return json.Marshal(projectItemJSON{
 		ID:    item.ID(),
 		Title: item.Title(),
 		Body:  item.Body(),
 		Type:  item.Type(),
 	})
+}
+
+type projectItemJSON struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
+	Type  string `json:"type"`
 }
 
 // JSONProjectDraftIssue serializes a DraftIssue to JSON.
@@ -172,17 +147,18 @@ func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
 // is a DraftIssue https://docs.github.com/en/graphql/reference/objects#draftissue
 // and not a ProjectV2Item https://docs.github.com/en/graphql/reference/objects#projectv2item
 func JSONProjectDraftIssue(item queries.DraftIssue) ([]byte, error) {
-	type t struct {
-		ID    string `json:"id"`
-		Title string `json:"title"`
-		Body  string `json:"body"`
-		Type  string `json:"type"`
-	}
 
-	return json.Marshal(t{
+	return json.Marshal(draftIssueJSON{
 		ID:    item.ID,
 		Title: item.Title,
 		Body:  item.Body,
 		Type:  "DraftIssue",
 	})
+}
+
+type draftIssueJSON struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
+	Type  string `json:"type"`
 }
