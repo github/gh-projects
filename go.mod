@@ -9,7 +9,7 @@ require (
 	github.com/cli/browser v1.1.0
 	github.com/cli/cli/v2 v2.21.2
 	github.com/cli/go-gh v1.2.1
-	github.com/shurcooL/githubv4 v0.0.0-20230215024106-420ad0987b9b
+	github.com/shurcooL/githubv4 v0.0.0-20230305132112-efb623903184
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.7.5
@@ -54,10 +54,10 @@ require (
 	github.com/thlib/go-timezone-local v0.0.0-20210907160436-ef149e42d28e // indirect
 	github.com/yuin/goldmark v1.5.2 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

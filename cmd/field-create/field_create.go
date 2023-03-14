@@ -38,14 +38,6 @@ type createProjectV2FieldMutation struct {
 	} `graphql:"createProjectV2Field(input:$input)"`
 }
 
-// TODO: update this to use githubv4.CreateProjectV2FieldInput once it is available there
-type CreateProjectV2FieldInput struct {
-	ProjectID           githubv4.ID     `json:"projectId"`
-	DataType            githubv4.String `json:"dataType"`
-	Name                githubv4.String `json:"name"`
-	SingleSelectOptions []string        `json:"singleSelectOptions,omitempty"`
-}
-
 func NewCmdCreateField(f *cmdutil.Factory, runF func(config createFieldConfig) error) *cobra.Command {
 	opts := createFieldOpts{}
 	createFieldCmd := &cobra.Command{
@@ -146,14 +138,20 @@ func runCreateField(config createFieldConfig) error {
 }
 
 func createFieldArgs(config createFieldConfig) (*createProjectV2FieldMutation, map[string]interface{}) {
-	input := CreateProjectV2FieldInput{
+	input := githubv4.CreateProjectV2FieldInput{
 		ProjectID: githubv4.ID(config.opts.projectID),
-		DataType:  githubv4.String(config.opts.dataType),
+		DataType:  githubv4.ProjectV2CustomFieldType(config.opts.dataType),
 		Name:      githubv4.String(config.opts.name),
 	}
 
 	if len(config.opts.singleSelectOptions) != 0 {
-		input.SingleSelectOptions = config.opts.singleSelectOptions
+		opts := make([]githubv4.ProjectV2SingleSelectFieldOptionInput, len(config.opts.singleSelectOptions))
+		for _, opt := range config.opts.singleSelectOptions {
+			opts = append(opts, githubv4.ProjectV2SingleSelectFieldOptionInput{
+				Name: githubv4.String(opt),
+			})
+		}
+		input.SingleSelectOptions = &opts
 	}
 
 	return &createProjectV2FieldMutation{}, map[string]interface{}{
