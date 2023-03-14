@@ -168,3 +168,15 @@ func TestJSONProjectItem_PullRequest(t *testing.T) {
 
 	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"PullRequest"}`, string(b))
 }
+
+func TestJSONProjectDraftIssue(t *testing.T) {
+	item := queries.DraftIssue{}
+	item.ID = "123"
+	item.Title = "title"
+	item.Body = "a body"
+
+	b, err := JSONProjectDraftIssue(item)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"DraftIssue"}`, string(b))
+}

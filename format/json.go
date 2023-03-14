@@ -176,11 +176,13 @@ func JSONProjectDraftIssue(item queries.DraftIssue) ([]byte, error) {
 		ID    string `json:"id"`
 		Title string `json:"title"`
 		Body  string `json:"body"`
+		Type  string `json:"type"`
 	}
 
 	return json.Marshal(t{
 		ID:    item.ID,
 		Title: item.Title,
 		Body:  item.Body,
+		Type:  "DraftIssue",
 	})
 }
