@@ -338,6 +338,7 @@ func (v FieldValueNodes) Data() any {
 }
 
 type DraftIssue struct {
+	ID    string `json:"id"`
 	Body  string
 	Title string
 }

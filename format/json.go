@@ -44,3 +44,37 @@ func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 
 	return json.Marshal(result)
 }
+
+// JSONProjectItem serializes a ProjectItem to JSON.
+func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
+	type t struct {
+		ID    string
+		Title string
+		Body  string
+	}
+
+	return json.Marshal(t{
+		ID:    item.ID(),
+		Title: item.Title(),
+		Body:  item.Body(),
+	})
+}
+
+// JSONProjectDraftIssue serializes a DraftIssue to JSON.
+// This is needed because the field for
+// https://docs.github.com/en/graphql/reference/mutations#updateprojectv2draftissue
+// is a DraftIssue https://docs.github.com/en/graphql/reference/objects#draftissue
+// and not a ProjectV2Item https://docs.github.com/en/graphql/reference/objects#projectv2item
+func JSONProjectDraftIssue(item queries.DraftIssue) ([]byte, error) {
+	type t struct {
+		ID    string
+		Title string
+		Body  string
+	}
+
+	return json.Marshal(t{
+		ID:    item.ID,
+		Title: item.Title,
+		Body:  item.Body,
+	})
+}

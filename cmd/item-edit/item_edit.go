@@ -2,6 +2,7 @@ package itemedit
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -9,6 +10,7 @@ import (
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
 	"github.com/cli/go-gh/pkg/term"
+	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
@@ -18,6 +20,7 @@ type editItemOpts struct {
 	title  string
 	body   string
 	itemID string
+	format string
 }
 
 type editItemConfig struct {
@@ -67,6 +70,7 @@ gh projects item-edit --id ID --title "a new title" --body "a new body"
 	editItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item to edit.")
 	editItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item to edit.")
 	editItemCmd.Flags().StringVar(&opts.itemID, "id", "", "ID of the draft issue item to edit. Must be the ID of the draft issue content which is prefixed with `DI_`")
+	editItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	_ = editItemCmd.MarkFlagRequired("id")
 
@@ -83,11 +87,19 @@ func runEditItem(config editItemConfig) error {
 		return errors.New("ID must be the ID of the draft issue content which is prefixed with `DI_`")
 	}
 
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	query, variables := buildEditDraftIssue(config)
 
 	err := config.client.Mutate("EditDraftIssueItem", query, variables)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.format == "json" {
+		return printJSON(config, query.UpdateProjectV2DraftIssue.DraftIssue)
 	}
 
 	return printResults(config, query.UpdateProjectV2DraftIssue.DraftIssue)
@@ -111,5 +123,14 @@ func printResults(config editItemConfig, item queries.DraftIssue) error {
 	config.tp.AddField(item.Title)
 	config.tp.AddField(item.Body)
 	config.tp.EndRow()
+	return config.tp.Render()
+}
+
+func printJSON(config editItemConfig, item queries.DraftIssue) error {
+	b, err := format.JSONProjectDraftIssue(item)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
 	return config.tp.Render()
 }
