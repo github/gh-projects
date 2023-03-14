@@ -129,51 +129,6 @@ type ProjectItem struct {
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
 }
 
-func (p ProjectItem) Data() any {
-	switch p.Content.TypeName {
-	case "DraftIssue":
-		return struct {
-			Type  string `json:"type"`
-			Body  string `json:"body"`
-			Title string `json:"title"`
-		}{
-			Type:  p.Content.TypeName,
-			Body:  p.Content.DraftIssue.Body,
-			Title: p.Content.DraftIssue.Title,
-		}
-	case "Issue":
-		return struct {
-			Type       string `json:"type"`
-			Body       string `json:"body"`
-			Title      string `json:"title"`
-			Number     int    `json:"number"`
-			Repository string `json:"repository"`
-		}{
-			Type:       p.Content.TypeName,
-			Body:       p.Content.Issue.Body,
-			Title:      p.Content.Issue.Title,
-			Number:     p.Content.Issue.Number,
-			Repository: p.Content.Issue.Repository.NameWithOwner,
-		}
-	case "PullRequest":
-		return struct {
-			Type       string `json:"type"`
-			Body       string `json:"body"`
-			Title      string `json:"title"`
-			Number     int    `json:"number"`
-			Repository string `json:"repository"`
-		}{
-			Type:       p.Content.TypeName,
-			Body:       p.Content.PullRequest.Body,
-			Title:      p.Content.PullRequest.Title,
-			Number:     p.Content.PullRequest.Number,
-			Repository: p.Content.PullRequest.Repository.NameWithOwner,
-		}
-	}
-
-	return nil
-}
-
 type ProjectWithFields struct {
 	Fields struct {
 		PageInfo PageInfo
@@ -284,68 +239,6 @@ func (v FieldValueNodes) ID() string {
 	}
 
 	return ""
-}
-
-func (v FieldValueNodes) Data() any {
-	switch v.Type {
-	case "ProjectV2ItemFieldDateValue":
-		return v.ProjectV2ItemFieldDateValue.Date
-	case "ProjectV2ItemFieldIterationValue":
-		return struct {
-			StartDate string `json:"startDate"`
-			Duration  int    `json:"duration"`
-		}{
-			StartDate: v.ProjectV2ItemFieldIterationValue.StartDate,
-			Duration:  v.ProjectV2ItemFieldIterationValue.Duration,
-		}
-	case "ProjectV2ItemFieldNumberValue":
-		return v.ProjectV2ItemFieldNumberValue.Number
-	case "ProjectV2ItemFieldSingleSelectValue":
-		return v.ProjectV2ItemFieldSingleSelectValue.Name
-	case "ProjectV2ItemFieldTextValue":
-		return v.ProjectV2ItemFieldTextValue.Text
-	case "ProjectV2ItemFieldMilestoneValue":
-		return struct {
-			Description string `json:"description"`
-			DueOn       string `json:"dueOn"`
-		}{
-			Description: v.ProjectV2ItemFieldMilestoneValue.Milestone.Description,
-			DueOn:       v.ProjectV2ItemFieldMilestoneValue.Milestone.DueOn,
-		}
-	case "ProjectV2ItemFieldLabelValue":
-		names := make([]string, 0)
-		for _, p := range v.ProjectV2ItemFieldLabelValue.Labels.Nodes {
-			names = append(names, p.Name)
-		}
-		return names
-	case "ProjectV2ItemFieldPullRequestValue":
-		urls := make([]string, 0)
-		for _, p := range v.ProjectV2ItemFieldPullRequestValue.PullRequests.Nodes {
-			urls = append(urls, p.Url)
-		}
-		return urls
-	case "ProjectV2ItemFieldRepositoryValue":
-		return v.ProjectV2ItemFieldRepositoryValue.Repository.Url
-	case "ProjectV2ItemFieldUserValue":
-		logins := make([]string, 0)
-		for _, p := range v.ProjectV2ItemFieldUserValue.Users.Nodes {
-			logins = append(logins, p.Login)
-		}
-		return logins
-	case "ProjectV2ItemFieldReviewerValue":
-		names := make([]string, 0)
-		for _, p := range v.ProjectV2ItemFieldReviewerValue.Reviewers.Nodes {
-			if p.Type == "Team" {
-				names = append(names, p.Team.Name)
-			} else if p.Type == "User" {
-				names = append(names, p.User.Login)
-			}
-		}
-		return names
-
-	}
-
-	return nil
 }
 
 type DraftIssue struct {

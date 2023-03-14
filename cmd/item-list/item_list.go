@@ -1,7 +1,6 @@
 package itemlist
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -153,36 +152,8 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	return config.tp.Render()
 }
 
-// serialize creates a map from field to field values
-func serialize(project queries.ProjectWithItems) []map[string]any {
-	fields := make(map[string]string)
-
-	// make a map of fields by ID
-	for _, f := range project.Fields.Nodes {
-		fields[f.ID()] = format.CamelCase(f.Name())
-	}
-	itemsSlice := make([]map[string]any, 0)
-
-	// for each value, look up the name by ID
-	// and set the value to the field value
-	for _, i := range project.Items.Nodes {
-		o := make(map[string]any)
-		o["id"] = i.Id
-		o["content"] = i.Data()
-		for _, v := range i.FieldValues.Nodes {
-			id := v.ID()
-			value := v.Data()
-
-			o[fields[id]] = value
-		}
-		itemsSlice = append(itemsSlice, o)
-	}
-	return itemsSlice
-}
-
 func printJSON(config listConfig, project queries.ProjectWithItems) error {
-	items := serialize(project)
-	b, err := json.Marshal(items)
+	b, err := format.JSONProjectDetailedItems(project)
 	if err != nil {
 		return err
 	}
