@@ -197,8 +197,8 @@ func printResults(config viewConfig, project *queries.Project) error {
 		return err
 	}
 	fmt.Println(out)
-
-	return nil
+	config.tp.AddField(out)
+	return config.tp.Render()
 }
 
 func printJSON(config viewConfig, project queries.Project) error {
