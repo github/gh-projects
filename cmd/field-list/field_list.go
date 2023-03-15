@@ -52,16 +52,18 @@ gh projects field-list 1 --org github --limit 30
 
 # add --format=json to output in JSON format
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
 			if err != nil {
 				return err
 			}
 
-			opts.number, err = strconv.Atoi(args[0])
-			if err != nil {
-				return err
+			if len(args) == 1 {
+				opts.number, err = strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 			}
 
 			terminal := term.FromEnv()
@@ -99,6 +101,14 @@ func runList(config listConfig) error {
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
+	}
+
+	if config.opts.number == 0 {
+		project, err := queries.NewProject(config.client, owner, config.opts.number)
+		if err != nil {
+			return err
+		}
+		config.opts.number = project.Number
 	}
 
 	project, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())

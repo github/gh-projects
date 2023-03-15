@@ -106,6 +106,14 @@ func runList(config listConfig) error {
 		return err
 	}
 
+	if config.opts.number == 0 {
+		project, err := queries.NewProject(config.client, owner, config.opts.number)
+		if err != nil {
+			return err
+		}
+		config.opts.number = project.Number
+	}
+
 	project, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
 	if err != nil {
 		return err
