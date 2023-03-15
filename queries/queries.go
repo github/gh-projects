@@ -729,7 +729,7 @@ type userProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first, after: $after)"`
+		} `graphql:"projectsV2(first: $first, after: $after, query: $query)"`
 		Login string
 	} `graphql:"user(login: $login)"`
 }
@@ -740,7 +740,7 @@ type orgProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first, after: $after)"`
+		} `graphql:"projectsV2(first: $first, after: $after, query: $query)"`
 		Login string
 	} `graphql:"organization(login: $login)"`
 }
@@ -751,7 +751,7 @@ type viewerProjects struct {
 		Projects struct {
 			PageInfo PageInfo
 			Nodes    []Project
-		} `graphql:"projectsV2(first: $first, after: $after)"`
+		} `graphql:"projectsV2(first: $first, after: $after, query: $query)"`
 		Login string
 	} `graphql:"viewer"`
 }
@@ -974,11 +974,12 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 }
 
 // ProjectsLimit returns up to limit projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, error) {
+func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int, query string) ([]Project, error) {
 	variables := map[string]interface{}{
 		"login": graphql.String(login),
 		"first": graphql.Int(limit),
 		"after": (*graphql.String)(nil),
+		"query": graphql.String(query),
 	}
 
 	if t == UserOwner {
@@ -1016,6 +1017,7 @@ func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error
 				"login": graphql.String(login),
 				"first": graphql.Int(100),
 				"after": cursor,
+				"query": graphql.String(""),
 			}
 			if err := doQuery(client, "UserProjects", &query, variables); err != nil {
 				return projects, err

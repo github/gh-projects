@@ -21,6 +21,7 @@ type listOpts struct {
 	orgOwner  string
 	closed    bool
 	format    string
+	query     string
 }
 
 type listConfig struct {
@@ -87,6 +88,7 @@ gh projects list --org github --closed
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
 	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
+	listCmd.Flags().StringVar(&opts.query, "query", "", "Query to filter projects. (e.g. 'is:closed')")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -129,7 +131,7 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projects, err := queries.ProjectsLimit(config.client, login, ownerType, config.opts.first())
+	projects, err := queries.ProjectsLimit(config.client, login, ownerType, config.opts.first(), config.opts.query)
 	if err != nil {
 		return err
 	}

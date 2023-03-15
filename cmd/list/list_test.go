@@ -111,6 +111,56 @@ func TestRunList(t *testing.T) {
 		buf.String())
 }
 
+func TestRunList_Query(t *testing.T) {
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		JSON(map[string]any{
+			"query": "query UserProjects.*",
+			"variables": map[string]any{
+				"query": "is:open",
+				"login": "monalisa",
+				"first": 100,
+				"after": nil,
+			},
+		}).
+		Reply(200).
+		JSON(map[string]any{
+			"data": map[string]any{
+				"user": map[string]any{
+					"login": "monalisa",
+					"projectsV2": map[string]any{
+						"nodes": []map[string]any{
+							{"title": "Project 1", "shortDescription": "Short description 1", "url": "url1", "closed": false, "ID": "1"},
+							{"title": "Project 2", "shortDescription": "", "url": "url2", "closed": true, "ID": "2"},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := listConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: listOpts{
+			userOwner: "monalisa",
+			query:     "is:open",
+		},
+		client: client,
+	}
+
+	err = runList(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Title\tDescription\tURL\tID\nProject 1\tShort description 1\turl1\t1\n",
+		buf.String())
+}
+
 func TestRunList_Me(t *testing.T) {
 	defer gock.Off()
 
