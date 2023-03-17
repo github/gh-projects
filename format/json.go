@@ -270,8 +270,13 @@ func projectFieldValueData(v queries.FieldValueNodes) any {
 	return nil
 }
 
+type projectWithItems struct {
+	Items      []map[string]any `json:"items"`
+	TotalCount int              `json:"totalCount"`
+}
+
 // serialize creates a map from field to field values
-func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]any {
+func serializeProjectWithItems(project queries.ProjectWithItems) projectWithItems {
 	fields := make(map[string]string)
 
 	// make a map of fields by ID
@@ -294,13 +299,16 @@ func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]an
 		}
 		itemsSlice = append(itemsSlice, o)
 	}
-	return itemsSlice
+	return projectWithItems{
+		Items:      itemsSlice,
+		TotalCount: project.Items.TotalCount,
+	}
 }
 
 // JSONProjectWithItems returns a detailed JSON representation of project items.
 func JSONProjectDetailedItems(project queries.ProjectWithItems) ([]byte, error) {
-	items := serializeProjectWithItems(project)
-	return json.Marshal(items)
+	p := serializeProjectWithItems(project)
+	return json.Marshal(p)
 }
 
 // CamelCase converts a string to camelCase, which is useful for turning Go field names to JSON keys.

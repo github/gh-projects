@@ -117,18 +117,19 @@ type ProjectWithItems struct {
 
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
-	Content struct {
-		TypeName    string      `graphql:"__typename"`
-		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
-		PullRequest PullRequest `graphql:"... on PullRequest"`
-		Issue       Issue       `graphql:"... on Issue"`
-	}
+	Content     ProjectItemContent
 	Id          string
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
 }
 
+type ProjectItemContent struct {
+	TypeName    string      `graphql:"__typename"`
+	DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
+	PullRequest PullRequest `graphql:"... on PullRequest"`
+	Issue       Issue       `graphql:"... on Issue"`
+}
 type ProjectWithFields struct {
 	Fields struct {
 		PageInfo PageInfo
