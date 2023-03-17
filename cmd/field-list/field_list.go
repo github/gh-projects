@@ -117,7 +117,7 @@ func runList(config listConfig) error {
 	}
 
 	if config.opts.format == "json" {
-		return printJSON(config, project.Fields.Nodes)
+		return printJSON(config, project)
 	}
 
 	return printResults(config, project.Fields.Nodes, owner.Login)
@@ -145,8 +145,8 @@ func printResults(config listConfig, fields []queries.ProjectField, login string
 	return config.tp.Render()
 }
 
-func printJSON(config listConfig, fields []queries.ProjectField) error {
-	b, err := format.JSONProjectFields(fields)
+func printJSON(config listConfig, project queries.ProjectWithFields) error {
+	b, err := format.JSONProjectFields(project)
 	if err != nil {
 		return err
 	}

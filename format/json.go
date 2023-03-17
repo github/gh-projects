@@ -104,10 +104,15 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 	})
 }
 
+type projectWithFields struct {
+	Fields     []projectFieldJSON `json:"fields"`
+	TotalCount int                `json:"totalCount"`
+}
+
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
-func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
+func JSONProjectFields(project queries.ProjectWithFields) ([]byte, error) {
 	var result []projectFieldJSON
-	for _, f := range fields {
+	for _, f := range project.Fields.Nodes {
 		result = append(result, projectFieldJSON{
 			ID:   f.ID(),
 			Name: f.Name(),
@@ -115,7 +120,10 @@ func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(result)
+	return json.Marshal(projectWithFields{
+		Fields:     result,
+		TotalCount: project.Fields.TotalCount,
+	})
 }
 
 type projectFieldJSON struct {

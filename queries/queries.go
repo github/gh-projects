@@ -132,8 +132,9 @@ type ProjectItemContent struct {
 }
 type ProjectWithFields struct {
 	Fields struct {
-		PageInfo PageInfo
-		Nodes    []ProjectField
+		PageInfo   PageInfo
+		Nodes      []ProjectField
+		TotalCount int
 	} `graphql:"fields(first: $first, after: $after)"`
 }
 

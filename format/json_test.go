@@ -124,10 +124,20 @@ func TestJSONProjectFields(t *testing.T) {
 	field.Field.ID = "123"
 	field.Field.Name = "name"
 
-	b, err := JSONProjectFields([]queries.ProjectField{field})
+	p := queries.ProjectWithFields{
+		Fields: struct {
+			PageInfo   queries.PageInfo
+			Nodes      []queries.ProjectField
+			TotalCount int
+		}{
+			Nodes:      []queries.ProjectField{field},
+			TotalCount: 5,
+		},
+	}
+	b, err := JSONProjectFields(p)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `[{"id":"123","name":"name","type":"ProjectV2Field"}]`, string(b))
+	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"}],"totalCount":5}`, string(b))
 }
 
 func TestJSONProjectItem_DraftIssue(t *testing.T) {
