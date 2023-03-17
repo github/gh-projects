@@ -39,7 +39,8 @@ func JSONProject(project queries.Project) ([]byte, error) {
 }
 
 // JSONProjects serializes a slice of Projects to JSON.
-func JSONProjects(projects []queries.Project) ([]byte, error) {
+// JSON fields are `totalCount` and `projects`.
+func JSONProjects(projects []queries.Project, totalCount int) ([]byte, error) {
 	var result []projectJSON
 	for _, p := range projects {
 		result = append(result, projectJSON{
@@ -71,7 +72,13 @@ func JSONProjects(projects []queries.Project) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(result)
+	return json.Marshal(struct {
+		Projects   []projectJSON `json:"projects"`
+		TotalCount int           `json:"totalCount"`
+	}{
+		Projects:   result,
+		TotalCount: totalCount,
+	})
 }
 
 type projectJSON struct {
@@ -105,9 +112,10 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 }
 
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
-func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
+// JSON fields are `totalCount` and `fields`.
+func JSONProjectFields(project queries.ProjectWithFields) ([]byte, error) {
 	var result []projectFieldJSON
-	for _, f := range fields {
+	for _, f := range project.Fields.Nodes {
 		result = append(result, projectFieldJSON{
 			ID:   f.ID(),
 			Name: f.Name(),
@@ -115,7 +123,13 @@ func JSONProjectFields(fields []queries.ProjectField) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(result)
+	return json.Marshal(struct {
+		Fields     []projectFieldJSON `json:"fields"`
+		TotalCount int                `json:"totalCount"`
+	}{
+		Fields:     result,
+		TotalCount: project.Fields.TotalCount,
+	})
 }
 
 type projectFieldJSON struct {
@@ -298,9 +312,16 @@ func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]an
 }
 
 // JSONProjectWithItems returns a detailed JSON representation of project items.
+// JSON fields are `totalCount` and `items`.
 func JSONProjectDetailedItems(project queries.ProjectWithItems) ([]byte, error) {
 	items := serializeProjectWithItems(project)
-	return json.Marshal(items)
+	return json.Marshal(struct {
+		Items      []map[string]any `json:"items"`
+		TotalCount int              `json:"totalCount"`
+	}{
+		Items:      items,
+		TotalCount: project.Items.TotalCount,
+	})
 }
 
 // CamelCase converts a string to camelCase, which is useful for turning Go field names to JSON keys.

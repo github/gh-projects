@@ -76,10 +76,13 @@ func TestJSONProjects(t *testing.T) {
 	orgProject.Fields.TotalCount = 2
 	orgProject.Owner.TypeName = "Organization"
 	orgProject.Owner.Organization.Login = "github"
-	b, err := JSONProjects([]queries.Project{userProject, orgProject})
+	b, err := JSONProjects([]queries.Project{userProject, orgProject}, 2)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}]`, string(b))
+	assert.Equal(
+		t,
+		`{"projects":[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}],"totalCount":2}`,
+		string(b))
 }
 
 func TestJSONProjectField_FieldType(t *testing.T) {
@@ -124,10 +127,20 @@ func TestJSONProjectFields(t *testing.T) {
 	field.Field.ID = "123"
 	field.Field.Name = "name"
 
-	b, err := JSONProjectFields([]queries.ProjectField{field})
+	p := queries.ProjectWithFields{
+		Fields: struct {
+			PageInfo   queries.PageInfo
+			Nodes      []queries.ProjectField
+			TotalCount int
+		}{
+			Nodes:      []queries.ProjectField{field},
+			TotalCount: 5,
+		},
+	}
+	b, err := JSONProjectFields(p)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `[{"id":"123","name":"name","type":"ProjectV2Field"}]`, string(b))
+	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"}],"totalCount":5}`, string(b))
 }
 
 func TestJSONProjectItem_DraftIssue(t *testing.T) {
@@ -154,6 +167,62 @@ func TestJSONProjectItem_Issue(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"Issue"}`, string(b))
+}
+
+func TestJSONProjectDetailedItems(t *testing.T) {
+	p := queries.ProjectWithItems{}
+	p.Items.TotalCount = 5
+	p.Items.Nodes = []queries.ProjectItem{
+		{
+			Id: "issueId",
+			Content: queries.ProjectItemContent{
+				TypeName: "Issue",
+				Issue: queries.Issue{
+					Title:  "Issue title",
+					Body:   "a body",
+					Number: 1,
+					Repository: struct {
+						NameWithOwner string
+					}{
+						NameWithOwner: "cli/go-gh",
+					},
+				},
+			},
+		},
+		{
+			Id: "pullRequestId",
+			Content: queries.ProjectItemContent{
+				TypeName: "PullRequest",
+				PullRequest: queries.PullRequest{
+					Title:  "Pull Request title",
+					Body:   "a body",
+					Number: 2,
+					Repository: struct {
+						NameWithOwner string
+					}{
+						NameWithOwner: "cli/go-gh",
+					},
+				},
+			},
+		},
+		{
+			Id: "draftIssueId",
+			Content: queries.ProjectItemContent{
+				TypeName: "DraftIssue",
+				DraftIssue: queries.DraftIssue{
+					Title: "Pull Request title",
+					Body:  "a body",
+				},
+			},
+		},
+	}
+
+	out, err := JSONProjectDetailedItems(p)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		`{"items":[{"content":{"type":"Issue","body":"a body","title":"Issue title","number":1,"repository":"cli/go-gh"},"id":"issueId"},{"content":{"type":"PullRequest","body":"a body","title":"Pull Request title","number":2,"repository":"cli/go-gh"},"id":"pullRequestId"},{"content":{"type":"DraftIssue","body":"a body","title":"Pull Request title"},"id":"draftIssueId"}],"totalCount":5}`,
+		string(out))
 }
 
 func TestJSONProjectItem_PullRequest(t *testing.T) {

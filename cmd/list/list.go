@@ -129,14 +129,14 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	projects, err := queries.ProjectsLimit(config.client, login, ownerType, config.opts.first())
+	projects, totalCount, err := queries.ProjectsLimit(config.client, login, ownerType, config.opts.first())
 	if err != nil {
 		return err
 	}
 	projects = filterProjects(projects, config)
 
 	if config.opts.format == "json" {
-		return printJSON(config, projects)
+		return printJSON(config, projects, totalCount)
 	}
 
 	return printResults(config, projects, login)
@@ -214,8 +214,8 @@ func printResults(config listConfig, projects []queries.Project, login string) e
 	return config.tp.Render()
 }
 
-func printJSON(config listConfig, projects []queries.Project) error {
-	b, err := format.JSONProjects(projects)
+func printJSON(config listConfig, projects []queries.Project, totalCount int) error {
+	b, err := format.JSONProjects(projects, totalCount)
 	if err != nil {
 		return err
 	}

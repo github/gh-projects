@@ -117,22 +117,24 @@ type ProjectWithItems struct {
 
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
-	Content struct {
-		TypeName    string      `graphql:"__typename"`
-		DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
-		PullRequest PullRequest `graphql:"... on PullRequest"`
-		Issue       Issue       `graphql:"... on Issue"`
-	}
+	Content     ProjectItemContent
 	Id          string
 	FieldValues struct {
 		Nodes []FieldValueNodes
 	} `graphql:"fieldValues(first: 100)"` // hardcoded to 100 for now on the assumption that this is a reasonable limit
 }
 
+type ProjectItemContent struct {
+	TypeName    string      `graphql:"__typename"`
+	DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
+	PullRequest PullRequest `graphql:"... on PullRequest"`
+	Issue       Issue       `graphql:"... on Issue"`
+}
 type ProjectWithFields struct {
 	Fields struct {
-		PageInfo PageInfo
-		Nodes    []ProjectField
+		PageInfo   PageInfo
+		Nodes      []ProjectField
+		TotalCount int
 	} `graphql:"fields(first: $first, after: $after)"`
 }
 
@@ -727,8 +729,9 @@ func IssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
 type userProjects struct {
 	Owner struct {
 		Projects struct {
-			PageInfo PageInfo
-			Nodes    []Project
+			TotalCount int
+			PageInfo   PageInfo
+			Nodes      []Project
 		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"user(login: $login)"`
@@ -738,8 +741,9 @@ type userProjects struct {
 type orgProjects struct {
 	Owner struct {
 		Projects struct {
-			PageInfo PageInfo
-			Nodes    []Project
+			TotalCount int
+			PageInfo   PageInfo
+			Nodes      []Project
 		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"organization(login: $login)"`
@@ -749,8 +753,9 @@ type orgProjects struct {
 type viewerProjects struct {
 	Owner struct {
 		Projects struct {
-			PageInfo PageInfo
-			Nodes    []Project
+			TotalCount int
+			PageInfo   PageInfo
+			Nodes      []Project
 		} `graphql:"projectsV2(first: $first, after: $after)"`
 		Login string
 	} `graphql:"viewer"`
@@ -974,7 +979,7 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 }
 
 // ProjectsLimit returns up to limit projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, error) {
+func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, int, error) {
 	variables := map[string]interface{}{
 		"login": graphql.String(login),
 		"first": graphql.Int(limit),
@@ -984,19 +989,19 @@ func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) (
 	if t == UserOwner {
 		var query userProjects
 		err := doQuery(client, "UserProjects", &query, variables)
-		return query.Owner.Projects.Nodes, err
+		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
 	} else if t == OrgOwner {
 		var query orgProjects
 		err := doQuery(client, "OrgProjects", &query, variables)
-		return query.Owner.Projects.Nodes, err
+		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
 	} else if t == ViewerOwner {
 		delete(variables, "login")
 		// remove the login from viewer query
 		var query viewerProjects
 		err := doQuery(client, "ViewerProjects", &query, variables)
-		return query.Owner.Projects.Nodes, err
+		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
 	}
-	return []Project{}, errors.New("unknown owner type")
+	return []Project{}, 0, errors.New("unknown owner type")
 }
 
 // Projects returns all the projects for an Owner. If the OwnerType is VIEWER, no login is required.
