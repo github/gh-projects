@@ -38,8 +38,13 @@ func JSONProject(project queries.Project) ([]byte, error) {
 	})
 }
 
+type projectsWithCount struct {
+	Projects   []projectJSON `json:"projects"`
+	TotalCount int           `json:"totalCount"`
+}
+
 // JSONProjects serializes a slice of Projects to JSON.
-func JSONProjects(projects []queries.Project) ([]byte, error) {
+func JSONProjects(projects []queries.Project, totalCount int) ([]byte, error) {
 	var result []projectJSON
 	for _, p := range projects {
 		result = append(result, projectJSON{
@@ -71,7 +76,10 @@ func JSONProjects(projects []queries.Project) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(result)
+	return json.Marshal(projectsWithCount{
+		Projects:   result,
+		TotalCount: totalCount,
+	})
 }
 
 type projectJSON struct {

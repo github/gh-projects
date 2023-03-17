@@ -76,10 +76,13 @@ func TestJSONProjects(t *testing.T) {
 	orgProject.Fields.TotalCount = 2
 	orgProject.Owner.TypeName = "Organization"
 	orgProject.Owner.Organization.Login = "github"
-	b, err := JSONProjects([]queries.Project{userProject, orgProject})
+	b, err := JSONProjects([]queries.Project{userProject, orgProject}, 2)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}]`, string(b))
+	assert.Equal(
+		t,
+		`{"projects":[{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"User","login":"monalisa"}},{"number":2,"url":"a url","shortDescription":"short description","public":true,"closed":false,"title":"","id":"123","readme":"readme","items":{"totalCount":1},"fields":{"totalCount":2},"owner":{"type":"Organization","login":"github"}}],"totalCount":2}`,
+		string(b))
 }
 
 func TestJSONProjectField_FieldType(t *testing.T) {
