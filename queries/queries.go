@@ -463,14 +463,15 @@ func (p ProjectField) Type() string {
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (ProjectWithFields, error) {
+func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithFields, error) {
+	project := ProjectWithFields{}
+	hasLimit := limit != 0
 	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
+		"first":  graphql.Int(limit),
 		"number": graphql.Int(number),
 		"after":  (*githubv4.String)(nil),
 	}
 
-	project := ProjectWithFields{}
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithFields
@@ -503,12 +504,16 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 
 	// get the remaining items if there are any
 	// and append them to the project items
-	hasNext := project.Fields.PageInfo.HasNextPage
+	hasNextPage := project.Fields.PageInfo.HasNextPage
 	cursor := project.Fields.PageInfo.EndCursor
+	// reset to the default batch size on loops after the first
+	variables["first"] = graphql.Int(LimitMax)
+
 	for {
-		if !hasNext {
-			break
+		if !hasNextPage || (hasLimit && len(project.Fields.Nodes) > limit) {
+			return project, nil
 		}
+
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
@@ -520,7 +525,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
 			variables["login"] = graphql.String(o.Login)
@@ -531,9 +536,8 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
-
 		} else if o.Type == ViewerOwner {
 			var query viewerOwnerWithFields
 			err := doQuery(client, "ViewerProjectWithFields", &query, variables)
@@ -542,13 +546,10 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		}
 	}
-
-	return project, nil
-
 }
 
 // viewerLogin is used to query the Login of the viewer.

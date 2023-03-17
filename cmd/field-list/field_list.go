@@ -15,7 +15,7 @@ import (
 )
 
 type listOpts struct {
-	limit     int
+	limit     string
 	userOwner string
 	orgOwner  string
 	number    int
@@ -28,11 +28,13 @@ type listConfig struct {
 	opts   listOpts
 }
 
-func (opts *listOpts) first() int {
-	if opts.limit == 0 {
-		return 100
+func parseLimit(limit string) (int, error) {
+	if limit == "" {
+		return queries.LimitMax, nil
+	} else if limit == "none" {
+		return 0, nil
 	}
-	return opts.limit
+	return strconv.Atoi(limit)
 }
 
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
@@ -111,7 +113,12 @@ func runList(config listConfig) error {
 		config.opts.number = project.Number
 	}
 
-	project, err := queries.ProjectFields(config.client, owner, config.opts.number, config.opts.first())
+	limit, err := parseLimit(config.opts.limit)
+	if err != nil {
+		return err
+	}
+
+	project, err := queries.ProjectFields(config.client, owner, config.opts.number, limit)
 	if err != nil {
 		return err
 	}
