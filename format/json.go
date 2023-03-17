@@ -38,12 +38,8 @@ func JSONProject(project queries.Project) ([]byte, error) {
 	})
 }
 
-type projectsWithCount struct {
-	Projects   []projectJSON `json:"projects"`
-	TotalCount int           `json:"totalCount"`
-}
-
 // JSONProjects serializes a slice of Projects to JSON.
+// JSON fields are `totalCount` and `projects`.
 func JSONProjects(projects []queries.Project, totalCount int) ([]byte, error) {
 	var result []projectJSON
 	for _, p := range projects {
@@ -76,7 +72,10 @@ func JSONProjects(projects []queries.Project, totalCount int) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(projectsWithCount{
+	return json.Marshal(struct {
+		Projects   []projectJSON `json:"projects"`
+		TotalCount int           `json:"totalCount"`
+	}{
 		Projects:   result,
 		TotalCount: totalCount,
 	})
@@ -112,12 +111,8 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 	})
 }
 
-type projectWithFields struct {
-	Fields     []projectFieldJSON `json:"fields"`
-	TotalCount int                `json:"totalCount"`
-}
-
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
+// JSON fields are `totalCount` and `fields`.
 func JSONProjectFields(project queries.ProjectWithFields) ([]byte, error) {
 	var result []projectFieldJSON
 	for _, f := range project.Fields.Nodes {
@@ -128,7 +123,10 @@ func JSONProjectFields(project queries.ProjectWithFields) ([]byte, error) {
 		})
 	}
 
-	return json.Marshal(projectWithFields{
+	return json.Marshal(struct {
+		Fields     []projectFieldJSON `json:"fields"`
+		TotalCount int                `json:"totalCount"`
+	}{
 		Fields:     result,
 		TotalCount: project.Fields.TotalCount,
 	})
@@ -286,13 +284,8 @@ func projectFieldValueData(v queries.FieldValueNodes) any {
 	return nil
 }
 
-type projectWithItems struct {
-	Items      []map[string]any `json:"items"`
-	TotalCount int              `json:"totalCount"`
-}
-
 // serialize creates a map from field to field values
-func serializeProjectWithItems(project queries.ProjectWithItems) projectWithItems {
+func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]any {
 	fields := make(map[string]string)
 
 	// make a map of fields by ID
@@ -315,16 +308,20 @@ func serializeProjectWithItems(project queries.ProjectWithItems) projectWithItem
 		}
 		itemsSlice = append(itemsSlice, o)
 	}
-	return projectWithItems{
-		Items:      itemsSlice,
-		TotalCount: project.Items.TotalCount,
-	}
+	return itemsSlice
 }
 
 // JSONProjectWithItems returns a detailed JSON representation of project items.
+// JSON fields are `totalCount` and `items`.
 func JSONProjectDetailedItems(project queries.ProjectWithItems) ([]byte, error) {
-	p := serializeProjectWithItems(project)
-	return json.Marshal(p)
+	items := serializeProjectWithItems(project)
+	return json.Marshal(struct {
+		Items      []map[string]any `json:"items"`
+		TotalCount int              `json:"totalCount"`
+	}{
+		Items:      items,
+		TotalCount: project.Items.TotalCount,
+	})
 }
 
 // CamelCase converts a string to camelCase, which is useful for turning Go field names to JSON keys.
