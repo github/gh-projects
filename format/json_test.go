@@ -221,7 +221,7 @@ func TestJSONProjectDetailedItems(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		"{\"items\":[{\"content\":{\"type\":\"Issue\",\"body\":\"a body\",\"title\":\"Issue title\",\"number\":1,\"repository\":\"cli/go-gh\"},\"id\":\"issueId\"},{\"content\":{\"type\":\"PullRequest\",\"body\":\"a body\",\"title\":\"Pull Request title\",\"number\":2,\"repository\":\"cli/go-gh\"},\"id\":\"pullRequestId\"},{\"content\":{\"type\":\"DraftIssue\",\"body\":\"a body\",\"title\":\"Pull Request title\"},\"id\":\"draftIssueId\"}],\"totalCount\":5}",
+		`{"items":[{"content":{"type":"Issue","body":"a body","title":"Issue title","number":1,"repository":"cli/go-gh"},"id":"issueId"},{"content":{"type":"PullRequest","body":"a body","title":"Pull Request title","number":2,"repository":"cli/go-gh"},"id":"pullRequestId"},{"content":{"type":"DraftIssue","body":"a body","title":"Pull Request title"},"id":"draftIssueId"}],"totalCount":5}`,
 		string(out))
 }
 
