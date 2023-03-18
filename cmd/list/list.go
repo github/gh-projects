@@ -31,13 +31,13 @@ type listConfig struct {
 	URLOpener func(string) error
 }
 
-func (opts *listOpts) parseLimit() (int, error) {
-	if opts.limit == "" {
+func parseLimit(limit string) (int, error) {
+	if limit == "" {
 		return queries.LimitMax, nil
-	} else if opts.limit == "all" {
+	} else if limit == "all" {
 		return 0, nil
 	}
-	return strconv.Atoi(opts.limit)
+	return strconv.Atoi(limit)
 }
 
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
@@ -132,7 +132,7 @@ func runList(config listConfig) error {
 		ownerType = queries.ViewerOwner
 	}
 
-	limit, err := config.opts.parseLimit()
+	limit, err := parseLimit(config.opts.limit)
 	if err != nil {
 		return err
 	}
