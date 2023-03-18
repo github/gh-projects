@@ -34,7 +34,7 @@ type listConfig struct {
 func (opts *listOpts) parseLimit() (int, error) {
 	if opts.limit == "" {
 		return queries.LimitMax, nil
-	} else if opts.limit == "none" {
+	} else if opts.limit == "all" {
 		return 0, nil
 	}
 	return strconv.Atoi(opts.limit)
@@ -86,11 +86,11 @@ gh projects list --org github --closed
 
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
-	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of projects. Defaults to 100. Set to 'none' to list all projects.")
+	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of projects. Defaults to 100. Set to 'all' to list all projects.")
 	listCmd.Flags().BoolVarP(&opts.closed, "closed", "c", false, "Show closed projects.")
 	listCmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open projects list in the browser.")
 	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
-
+	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of projects. Defaults to 100. Set to 'all' to list all projects.")
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 

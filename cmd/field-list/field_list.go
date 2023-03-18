@@ -31,7 +31,7 @@ type listConfig struct {
 func parseLimit(limit string) (int, error) {
 	if limit == "" {
 		return queries.LimitMax, nil
-	} else if limit == "none" {
+	} else if limit == "all" {
 		return 0, nil
 	}
 	return strconv.Atoi(limit)
@@ -88,7 +88,7 @@ gh projects field-list 1 --org github --limit 30
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
-	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of fields. Defaults to 100. Set to 'none' to list all fields.")
+	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of fields. Defaults to 100. Set to 'all' to list all fields.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
