@@ -378,11 +378,11 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	cursor := project.Items.PageInfo.EndCursor
 
 	for {
-		if !hasNextPage || len(project.Items.Nodes) >= limit {
+		if !hasNextPage || (hasLimit && len(project.Items.Nodes) >= limit) {
 			return project, nil
 		}
 
-		if len(project.Items.Nodes)+LimitMax > limit {
+		if hasLimit && len(project.Items.Nodes)+LimitMax > limit {
 			first := limit - len(project.Items.Nodes)
 			variables["first"] = graphql.Int(first)
 		}
@@ -531,7 +531,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 			return project, nil
 		}
 
-		if len(project.Fields.Nodes)+LimitMax > limit {
+		if hasLimit && len(project.Fields.Nodes)+LimitMax > limit {
 			first := limit - len(project.Fields.Nodes)
 			variables["first"] = graphql.Int(first)
 		}
