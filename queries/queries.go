@@ -333,8 +333,14 @@ func (p ProjectItem) Repo() string {
 func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithItems, error) {
 	project := ProjectWithItems{}
 	hasLimit := limit != 0
+	// the api limits batches to 100. We want to use the maximum batch size unless the user
+	// requested a lower limit.
+	first := LimitMax
+	if hasLimit && limit < first {
+		first = limit
+	}
 	variables := map[string]interface{}{
-		"first":  graphql.Int(limit),
+		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 		"after":  (*githubv4.String)(nil),
 	}
@@ -370,13 +376,17 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	// and append them to the project items
 	hasNextPage := project.Items.PageInfo.HasNextPage
 	cursor := project.Items.PageInfo.EndCursor
-	// reset to the default batch size on loops after the first
-	variables["first"] = graphql.Int(LimitMax)
 
 	for {
-		if !hasNextPage || (hasLimit && len(project.Items.Nodes) >= limit) {
+		if !hasNextPage || len(project.Items.Nodes) >= limit {
 			return project, nil
 		}
+
+		if len(project.Items.Nodes)+LimitMax > limit {
+			first := limit - len(project.Items.Nodes)
+			variables["first"] = graphql.Int(first)
+		}
+
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
