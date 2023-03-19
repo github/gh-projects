@@ -1050,5 +1050,9 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 		if !hasNextPage || (hasLimit && len(projects) >= limit) {
 			return projects, totalCount, nil
 		}
+
+		if len(projects)+LimitMax > limit {
+			first = limit - len(projects)
+		}
 	}
 }
