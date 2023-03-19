@@ -45,7 +45,7 @@ func parseLimit(limit string) (int, error) {
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "List all of the items in a project",
+		Short: "List the items in a project",
 		Use:   "item-list [number]",
 		Example: `
 The default output is a column format with a subset of system defined fields.
