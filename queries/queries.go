@@ -374,7 +374,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	variables["first"] = graphql.Int(LimitMax)
 
 	for {
-		if !hasNextPage || (hasLimit && len(project.Items.Nodes) > limit) {
+		if !hasNextPage || (hasLimit && len(project.Items.Nodes) >= limit) {
 			return project, nil
 		}
 		// set the cursor to the end of the last page
@@ -512,7 +512,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 	variables["first"] = graphql.Int(LimitMax)
 
 	for {
-		if !hasNextPage || (hasLimit && len(project.Fields.Nodes) > limit) {
+		if !hasNextPage || (hasLimit && len(project.Fields.Nodes) >= limit) {
 			return project, nil
 		}
 
@@ -1047,7 +1047,7 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 			totalCount = query.Owner.Projects.TotalCount
 		}
 
-		if !hasNextPage || (hasLimit && len(projects) > limit) {
+		if !hasNextPage || (hasLimit && len(projects) >= limit) {
 			return projects, totalCount, nil
 		}
 		first = LimitMax // reset to the default batch size on loops after the first
