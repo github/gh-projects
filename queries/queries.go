@@ -1050,6 +1050,5 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 		if !hasNextPage || (hasLimit && len(projects) >= limit) {
 			return projects, totalCount, nil
 		}
-		first = LimitMax // reset to the default batch size on loops after the first
 	}
 }
