@@ -34,7 +34,12 @@ func parseLimit(limit string) (int, error) {
 	} else if limit == "all" {
 		return 0, nil
 	}
-	return strconv.Atoi(limit)
+
+	v, err := strconv.Atoi(limit)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value '%s' for limit", limit)
+	}
+	return v, nil
 }
 
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
