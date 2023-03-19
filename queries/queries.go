@@ -996,7 +996,7 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
 	// requested a lower limit.
 	first := LimitMax
-	if limit < first {
+	if hasLimit && limit < first {
 		first = limit
 	}
 	// loop until we get all the projects
