@@ -15,7 +15,7 @@ import (
 )
 
 type listOpts struct {
-	limit     int
+	limit     string
 	userOwner string
 	orgOwner  string
 	number    int
@@ -28,17 +28,24 @@ type listConfig struct {
 	opts   listOpts
 }
 
-func (opts *listOpts) first() int {
-	if opts.limit == 0 {
-		return 100
+func parseLimit(limit string) (int, error) {
+	if limit == "" {
+		return queries.LimitMax, nil
+	} else if limit == "all" {
+		return 0, nil
 	}
-	return opts.limit
+
+	v, err := strconv.Atoi(limit)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value '%s' for limit", limit)
+	}
+	return v, nil
 }
 
 func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "List all of the items in a project",
+		Short: "List the items in a project",
 		Use:   "item-list [number]",
 		Example: `
 The default output is a column format with a subset of system defined fields.
@@ -89,7 +96,7 @@ gh projects item-list 1 --org github
 	listCmd.Flags().StringVar(&opts.userOwner, "user", "", "Login of the user owner. Use \"@me\" for the current user.")
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
-
+	listCmd.Flags().StringVar(&opts.limit, "limit", "", "Maximum number of items. Defaults to 100. Set to 'all' to list all items.")
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
 
@@ -99,6 +106,11 @@ gh projects item-list 1 --org github
 func runList(config listConfig) error {
 	if config.opts.format != "" && config.opts.format != "json" {
 		return fmt.Errorf("format must be 'json'")
+	}
+
+	limit, err := parseLimit(config.opts.limit)
+	if err != nil {
+		return err
 	}
 
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
@@ -114,7 +126,7 @@ func runList(config listConfig) error {
 		config.opts.number = project.Number
 	}
 
-	project, err := queries.ProjectItems(config.client, owner, config.opts.number, config.opts.first())
+	project, err := queries.ProjectItems(config.client, owner, config.opts.number, limit)
 	if err != nil {
 		return err
 	}

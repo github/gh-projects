@@ -29,6 +29,10 @@ func NewClient() (api.GQLClient, error) {
 	return gh.GQLClient(&apiOpts)
 }
 
+const (
+	LimitMax = 100 // https://docs.github.com/en/graphql/overview/resource-limitations#node-limit
+)
+
 // doQuery wraps calls to client.Query with a spinner
 func doQuery(client api.GQLClient, name string, query interface{}, variables map[string]interface{}) error {
 	// https://github.com/briandowns/spinner#available-character-sets
@@ -326,14 +330,20 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (ProjectWithItems, error) {
+func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithItems, error) {
+	project := ProjectWithItems{}
+	hasLimit := limit != 0
+	// the api limits batches to 100. We want to use the maximum batch size unless the user
+	// requested a lower limit.
+	first := LimitMax
+	if hasLimit && limit < first {
+		first = limit
+	}
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 		"after":  (*githubv4.String)(nil),
 	}
-
-	project := ProjectWithItems{}
 
 	// get the project by type
 	if o.Type == UserOwner {
@@ -364,12 +374,19 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 	}
 	// get the remaining items if there are any
 	// and append them to the project items
-	hasNext := project.Items.PageInfo.HasNextPage
+	hasNextPage := project.Items.PageInfo.HasNextPage
 	cursor := project.Items.PageInfo.EndCursor
+
 	for {
-		if !hasNext {
-			break
+		if !hasNextPage || (hasLimit && len(project.Items.Nodes) >= limit) {
+			return project, nil
 		}
+
+		if hasLimit && len(project.Items.Nodes)+LimitMax > limit {
+			first := limit - len(project.Items.Nodes)
+			variables["first"] = graphql.Int(first)
+		}
+
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
@@ -381,7 +398,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 			}
 
 			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Items.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
 			variables["login"] = graphql.String(o.Login)
@@ -392,7 +409,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 			}
 
 			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Items.PageInfo.EndCursor
 		} else if o.Type == ViewerOwner {
 			var query viewerOwnerWithItems
@@ -402,11 +419,10 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, first int) (Projec
 			}
 
 			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNext = query.Owner.Project.Items.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Items.PageInfo.EndCursor
 		}
 	}
-	return project, nil
 }
 
 // ProjectField is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration.
@@ -459,14 +475,22 @@ func (p ProjectField) Type() string {
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (ProjectWithFields, error) {
+func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithFields, error) {
+	project := ProjectWithFields{}
+	hasLimit := limit != 0
+	// the api limits batches to 100. We want to use the maximum batch size unless the user
+	// requested a lower limit.
+	first := LimitMax
+	if hasLimit && limit < first {
+		first = limit
+	}
+
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
 		"after":  (*githubv4.String)(nil),
 	}
 
-	project := ProjectWithFields{}
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithFields
@@ -499,12 +523,19 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 
 	// get the remaining items if there are any
 	// and append them to the project items
-	hasNext := project.Fields.PageInfo.HasNextPage
+	hasNextPage := project.Fields.PageInfo.HasNextPage
 	cursor := project.Fields.PageInfo.EndCursor
+
 	for {
-		if !hasNext {
-			break
+		if !hasNextPage || (hasLimit && len(project.Fields.Nodes) >= limit) {
+			return project, nil
 		}
+
+		if hasLimit && len(project.Fields.Nodes)+LimitMax > limit {
+			first := limit - len(project.Fields.Nodes)
+			variables["first"] = graphql.Int(first)
+		}
+
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
@@ -516,7 +547,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
 			variables["login"] = graphql.String(o.Login)
@@ -527,9 +558,8 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
-
 		} else if o.Type == ViewerOwner {
 			var query viewerOwnerWithFields
 			err := doQuery(client, "ViewerProjectWithFields", &query, variables)
@@ -538,13 +568,10 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, first int) (Proje
 			}
 
 			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNext = query.Owner.Project.Fields.PageInfo.HasNextPage
+			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		}
 	}
-
-	return project, nil
-
 }
 
 // viewerLogin is used to query the Login of the viewer.
@@ -943,7 +970,7 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 		return nil, errors.New("unknown owner type")
 	}
 
-	projects, err := Projects(client, o.Login, o.Type)
+	projects, _, err := Projects(client, o.Login, o.Type, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -978,38 +1005,20 @@ func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 	return &projects[answerIndex], nil
 }
 
-// ProjectsLimit returns up to limit projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func ProjectsLimit(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, int, error) {
-	variables := map[string]interface{}{
-		"login": graphql.String(login),
-		"first": graphql.Int(limit),
-		"after": (*graphql.String)(nil),
-	}
-
-	if t == UserOwner {
-		var query userProjects
-		err := doQuery(client, "UserProjects", &query, variables)
-		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
-	} else if t == OrgOwner {
-		var query orgProjects
-		err := doQuery(client, "OrgProjects", &query, variables)
-		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
-	} else if t == ViewerOwner {
-		delete(variables, "login")
-		// remove the login from viewer query
-		var query viewerProjects
-		err := doQuery(client, "ViewerProjects", &query, variables)
-		return query.Owner.Projects.Nodes, query.Owner.Projects.TotalCount, err
-	}
-	return []Project{}, 0, errors.New("unknown owner type")
-}
-
 // Projects returns all the projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error) {
+func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, int, error) {
 	projects := make([]Project, 0)
 	cursor := (*githubv4.String)(nil)
 	hasNextPage := false
+	hasLimit := limit != 0
+	totalCount := 0
 
+	// the api limits batches to 100. We want to use the maximum batch size unless the user
+	// requested a lower limit.
+	first := LimitMax
+	if hasLimit && limit < first {
+		first = limit
+	}
 	// loop until we get all the projects
 	for {
 		// the code below is very repetitive, the only real difference being the type of the query
@@ -1019,44 +1028,51 @@ func Projects(client api.GQLClient, login string, t OwnerType) ([]Project, error
 			var query userProjects
 			variables := map[string]interface{}{
 				"login": graphql.String(login),
-				"first": graphql.Int(100),
+				"first": graphql.Int(first),
 				"after": cursor,
 			}
 			if err := doQuery(client, "UserProjects", &query, variables); err != nil {
-				return projects, err
+				return projects, 0, err
 			}
 			projects = append(projects, query.Owner.Projects.Nodes...)
 			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
 			cursor = &query.Owner.Projects.PageInfo.EndCursor
+			totalCount = query.Owner.Projects.TotalCount
 		} else if t == OrgOwner {
 			var query orgProjects
 			variables := map[string]interface{}{
 				"login": graphql.String(login),
-				"first": graphql.Int(100),
+				"first": graphql.Int(first),
 				"after": cursor,
 			}
 			if err := doQuery(client, "OrgProjects", &query, variables); err != nil {
-				return projects, err
+				return projects, 0, err
 			}
 			projects = append(projects, query.Owner.Projects.Nodes...)
 			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
 			cursor = &query.Owner.Projects.PageInfo.EndCursor
+			totalCount = query.Owner.Projects.TotalCount
 		} else if t == ViewerOwner {
 			var query viewerProjects
 			variables := map[string]interface{}{
-				"first": graphql.Int(100),
+				"first": graphql.Int(first),
 				"after": cursor,
 			}
 			if err := doQuery(client, "ViewerProjects", &query, variables); err != nil {
-				return projects, err
+				return projects, 0, err
 			}
 			projects = append(projects, query.Owner.Projects.Nodes...)
 			hasNextPage = query.Owner.Projects.PageInfo.HasNextPage
 			cursor = &query.Owner.Projects.PageInfo.EndCursor
+			totalCount = query.Owner.Projects.TotalCount
 		}
 
-		if !hasNextPage {
-			return projects, nil
+		if !hasNextPage || (hasLimit && len(projects) >= limit) {
+			return projects, totalCount, nil
+		}
+
+		if len(projects)+LimitMax > limit {
+			first = limit - len(projects)
 		}
 	}
 }
