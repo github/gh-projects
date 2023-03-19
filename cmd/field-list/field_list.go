@@ -101,6 +101,11 @@ func runList(config listConfig) error {
 		return fmt.Errorf("format must be 'json'")
 	}
 
+	limit, err := parseLimit(config.opts.limit)
+	if err != nil {
+		return err
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -112,11 +117,6 @@ func runList(config listConfig) error {
 			return err
 		}
 		config.opts.number = project.Number
-	}
-
-	limit, err := parseLimit(config.opts.limit)
-	if err != nil {
-		return err
 	}
 
 	project, err := queries.ProjectFields(config.client, owner, config.opts.number, limit)

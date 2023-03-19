@@ -113,6 +113,11 @@ func runList(config listConfig) error {
 		return fmt.Errorf("format must be 'json'")
 	}
 
+	limit, err := parseLimit(config.opts.limit)
+	if err != nil {
+		return err
+	}
+
 	var login string
 	var ownerType queries.OwnerType
 	if config.opts.userOwner != "" {
@@ -129,11 +134,6 @@ func runList(config listConfig) error {
 	} else {
 		login = "me"
 		ownerType = queries.ViewerOwner
-	}
-
-	limit, err := parseLimit(config.opts.limit)
-	if err != nil {
-		return err
 	}
 
 	projects, totalCount, err := queries.Projects(config.client, login, ownerType, limit)
