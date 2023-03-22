@@ -390,7 +390,6 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query userOwnerWithItems
 			err := doQuery(client, "UserProjectWithItems", &query, variables)
 			if err != nil {
@@ -401,7 +400,6 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Items.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query orgOwnerWithItems
 			err := doQuery(client, "OrgProjectWithItems", &query, variables)
 			if err != nil {
@@ -539,7 +537,6 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query userOwnerWithFields
 			err := doQuery(client, "UserProjectWithFields", &query, variables)
 			if err != nil {
@@ -550,7 +547,6 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
-			variables["login"] = graphql.String(o.Login)
 			var query orgOwnerWithFields
 			err := doQuery(client, "OrgProjectWithFields", &query, variables)
 			if err != nil {
