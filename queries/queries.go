@@ -280,6 +280,7 @@ func (p ProjectItem) Number() int {
 	return 0
 }
 
+// ID is the id of the ProjectItem.
 func (p ProjectItem) ID() string {
 	return p.Id
 }
@@ -313,7 +314,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 		"number":      graphql.Int(number),
 	}
 
-	var query Pager[ProjectItem]
+	var query pager[ProjectItem]
 	switch o.Type {
 	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
@@ -330,7 +331,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	}
 	project = query.Project()
 
-	items, err := paginate(client, query, variables, "firstItems", "afterItems", limit, query.Nodes())
+	items, err := paginateAttributes(client, query, variables, "firstItems", "afterItems", limit, query.Nodes())
 	if err != nil {
 		return project, err
 	}
@@ -339,7 +340,8 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	return project, nil
 }
 
-type Pager[N any] interface {
+// pager is an interface for paginating over the attributes of a Project.
+type pager[N any] interface {
 	HasNextPage() bool
 	EndCursor() string
 	Nodes() []N
@@ -473,7 +475,17 @@ func (q viewerOwnerWithFields) Project() Project {
 	return q.Owner.Project
 }
 
-func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
+// paginateAttributes is for paginating over the attributes of a project, such as items or fields
+//
+// firstKey and afterKey are the keys in the variables map that are used to set the first and after
+// as these are set independently based on the attribute type, such as item or field.
+//
+// limit is the maximum number of attributes to return, or 0 for no limit.
+//
+// nodes is the list of attributes that have already been fetched.
+//
+// the return value is a slice of the newly fetched attributes appended to nodes.
+func paginateAttributes[N any](client api.GQLClient, p pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
 	hasLimit := limit != 0
@@ -567,7 +579,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 		"number":      graphql.Int(number),
 	}
 
-	var query Pager[ProjectField]
+	var query pager[ProjectField]
 	switch o.Type {
 	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
@@ -584,7 +596,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 	}
 	project = query.Project()
 
-	fields, err := paginate(client, query, variables, "firstFields", "afterFields", limit, query.Nodes())
+	fields, err := paginateAttributes(client, query, variables, "firstFields", "afterFields", limit, query.Nodes())
 	if err != nil {
 		return project, err
 	}
