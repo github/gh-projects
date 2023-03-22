@@ -113,7 +113,7 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
 // JSON fields are `totalCount` and `fields`.
-func JSONProjectFields(project queries.ProjectWithFields) ([]byte, error) {
+func JSONProjectFields(project queries.Project) ([]byte, error) {
 	var result []projectFieldJSON
 	for _, f := range project.Fields.Nodes {
 		result = append(result, projectFieldJSON{
@@ -285,7 +285,7 @@ func projectFieldValueData(v queries.FieldValueNodes) any {
 }
 
 // serialize creates a map from field to field values
-func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]any {
+func serializeProjectWithItems(project queries.Project) []map[string]any {
 	fields := make(map[string]string)
 
 	// make a map of fields by ID
@@ -313,7 +313,7 @@ func serializeProjectWithItems(project queries.ProjectWithItems) []map[string]an
 
 // JSONProjectWithItems returns a detailed JSON representation of project items.
 // JSON fields are `totalCount` and `items`.
-func JSONProjectDetailedItems(project queries.ProjectWithItems) ([]byte, error) {
+func JSONProjectDetailedItems(project queries.Project) ([]byte, error) {
 	items := serializeProjectWithItems(project)
 	return json.Marshal(struct {
 		Items      []map[string]any `json:"items"`

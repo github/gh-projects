@@ -38,7 +38,7 @@ func TestRunList_User(t *testing.T) {
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		JSON(map[string]interface{}{
-			"query": "query UserProjectWithFields.*",
+			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
 				"login":  "monalisa",
 				"number": 1,
@@ -122,7 +122,7 @@ func TestRunList_Org(t *testing.T) {
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		JSON(map[string]interface{}{
-			"query": "query OrgProjectWithFields.*",
+			"query": "query OrgProject.*",
 			"variables": map[string]interface{}{
 				"login":  "github",
 				"number": 1,
@@ -204,7 +204,7 @@ func TestRunList_Me(t *testing.T) {
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		JSON(map[string]interface{}{
-			"query": "query ViewerProjectWithFields.*",
+			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
 				"number": 1,
 				"first":  100,
@@ -285,7 +285,7 @@ func TestRunList_Empty(t *testing.T) {
 	gock.New("https://api.github.com").
 		Post("/graphql").
 		JSON(map[string]interface{}{
-			"query": "query ViewerProjectWithFields.*",
+			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
 				"number": 1,
 				"first":  100,

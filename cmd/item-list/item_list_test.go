@@ -39,10 +39,12 @@ func TestRunList_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"login":  "monalisa",
-				"number": 1,
-				"after":  nil,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
+				"login":       "monalisa",
+				"number":      1,
 			},
 		}).
 		Reply(200).
@@ -137,10 +139,12 @@ func TestRunList_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query OrgProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"login":  "github",
-				"number": 1,
-				"after":  nil,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
+				"login":       "github",
+				"number":      1,
 			},
 		}).
 		Reply(200).
@@ -233,9 +237,11 @@ func TestRunList_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query ViewerProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"number": 1,
-				"after":  nil,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
+				"number":      1,
 			},
 		}).
 		Reply(200).

@@ -158,7 +158,7 @@ func printResults(config listConfig, fields []queries.ProjectField, login string
 	return config.tp.Render()
 }
 
-func printJSON(config listConfig, project queries.ProjectWithFields) error {
+func printJSON(config listConfig, project queries.Project) error {
 	b, err := format.JSONProjectFields(project)
 	if err != nil {
 		return err

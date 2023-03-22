@@ -172,7 +172,7 @@ func printResults(config listConfig, items []queries.ProjectItem, login string) 
 	return config.tp.Render()
 }
 
-func printJSON(config listConfig, project queries.ProjectWithItems) error {
+func printJSON(config listConfig, project queries.Project) error {
 	b, err := format.JSONProjectDetailedItems(project)
 	if err != nil {
 		return err

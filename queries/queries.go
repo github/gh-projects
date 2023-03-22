@@ -61,13 +61,15 @@ type Project struct {
 	ID               string
 	Readme           string
 	Items            struct {
+		PageInfo   PageInfo
 		TotalCount int
-	} `graphql:"items(first: 100)"`
+		Nodes      []ProjectItem
+	} `graphql:"items(first: $firstItems, after: $afterItems)"`
 	Fields struct {
 		TotalCount int
 		Nodes      []ProjectField
 		PageInfo   PageInfo
-	} `graphql:"fields(first:100)"`
+	} `graphql:"fields(first: $firstFields, after: $afterFields)"`
 	Owner struct {
 		TypeName string `graphql:"__typename"`
 		User     struct {
@@ -90,35 +92,6 @@ func (p Project) OwnerLogin() string {
 	return p.Owner.Organization.Login
 }
 
-// ProjectWithItems is for fetching all of the items in a single project with pagination
-// it fetches a lot of data, be careful with it!
-type ProjectWithItems struct {
-	Number           int
-	URL              string
-	ShortDescription string
-	Public           bool
-	Closed           bool
-	Title            string
-	ID               string
-	Readme           string
-	Items            struct {
-		PageInfo   PageInfo
-		TotalCount int
-		Nodes      []ProjectItem
-	} `graphql:"items(first: $first, after: $after)"`
-	Fields struct {
-		Nodes []ProjectField
-	} `graphql:"fields(first:100)"`
-	Owner struct {
-		User struct {
-			Login string
-		} `graphql:"... on User"`
-		Organization struct {
-			Login string
-		} `graphql:"... on Organization"`
-	}
-}
-
 // ProjectItem is a ProjectV2Item GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2item.
 type ProjectItem struct {
 	Content     ProjectItemContent
@@ -133,13 +106,6 @@ type ProjectItemContent struct {
 	DraftIssue  DraftIssue  `graphql:"... on DraftIssue"`
 	PullRequest PullRequest `graphql:"... on PullRequest"`
 	Issue       Issue       `graphql:"... on Issue"`
-}
-type ProjectWithFields struct {
-	Fields struct {
-		PageInfo   PageInfo
-		Nodes      []ProjectField
-		TotalCount int
-	} `graphql:"fields(first: $first, after: $after)"`
 }
 
 type FieldValueNodes struct {
@@ -330,8 +296,8 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithItems, error) {
-	project := ProjectWithItems{}
+func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Project, error) {
+	project := Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
 	// requested a lower limit.
@@ -340,9 +306,11 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 		first = limit
 	}
 	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
-		"number": graphql.Int(number),
-		"after":  (*githubv4.String)(nil),
+		"firstItems":  graphql.Int(first),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": graphql.Int(LimitMax),
+		"afterFields": (*githubv4.String)(nil),
+		"number":      graphql.Int(number),
 	}
 
 	var query Pager[ProjectItem]
@@ -362,7 +330,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 	}
 	project = query.Project()
 
-	items, err := paginate(client, query, variables, limit, query.Nodes())
+	items, err := paginate(client, query, variables, "firstItems", "afterItems", limit, query.Nodes())
 	if err != nil {
 		return project, err
 	}
@@ -376,7 +344,7 @@ type Pager[N any] interface {
 	EndCursor() string
 	Nodes() []N
 	QueryName() string
-	Project() ProjectWithItems
+	Project() Project
 }
 
 // userOwnerWithItems
@@ -396,7 +364,7 @@ func (q userOwnerWithItems) QueryName() string {
 	return "UserProjectWithItems"
 }
 
-func (q userOwnerWithItems) Project() ProjectWithItems {
+func (q userOwnerWithItems) Project() Project {
 	return q.Owner.Project
 }
 
@@ -417,7 +385,7 @@ func (q orgOwnerWithItems) QueryName() string {
 	return "OrgProjectWithItems"
 }
 
-func (q orgOwnerWithItems) Project() ProjectWithItems {
+func (q orgOwnerWithItems) Project() Project {
 	return q.Owner.Project
 }
 
@@ -438,11 +406,11 @@ func (q viewerOwnerWithItems) QueryName() string {
 	return "ViewerProjectWithItems"
 }
 
-func (q viewerOwnerWithItems) Project() ProjectWithItems {
+func (q viewerOwnerWithItems) Project() Project {
 	return q.Owner.Project
 }
 
-func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any, limit int, nodes []N) ([]N, error) {
+func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
 	hasLimit := limit != 0
@@ -453,11 +421,11 @@ func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any,
 
 		if hasLimit && len(nodes)+LimitMax > limit {
 			first := limit - len(nodes)
-			variables["first"] = graphql.Int(first)
+			variables[firstKey] = graphql.Int(first)
 		}
 
 		// set the cursor to the end of the last page
-		variables["after"] = (*githubv4.String)(&cursor)
+		variables[afterKey] = (*githubv4.String)(&cursor)
 		err := doQuery(client, p.QueryName(), p, variables)
 		if err != nil {
 			return nodes, err
@@ -519,8 +487,8 @@ func (p ProjectField) Type() string {
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (ProjectWithFields, error) {
-	project := ProjectWithFields{}
+func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Project, error) {
+	project := Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
 	// requested a lower limit.
@@ -538,7 +506,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 	if o.Type == UserOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query userOwnerWithFields
-		err := doQuery(client, "UserProjectWithFields", &query, variables)
+		err := doQuery(client, "UserProject", &query, variables)
 		if err != nil {
 			return project, err
 		}
@@ -547,7 +515,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 	} else if o.Type == OrgOwner {
 		variables["login"] = graphql.String(o.Login)
 		var query orgOwnerWithFields
-		err := doQuery(client, "OrgProjectWithFields", &query, variables)
+		err := doQuery(client, "OrgProject", &query, variables)
 		if err != nil {
 			return project, err
 		}
@@ -555,7 +523,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 		project = query.Owner.Project
 	} else if o.Type == ViewerOwner {
 		var query viewerOwnerWithFields
-		err := doQuery(client, "ViewerProjectWithFields", &query, variables)
+		err := doQuery(client, "ViewerProject", &query, variables)
 		if err != nil {
 			return project, err
 		}
@@ -584,7 +552,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 		variables["after"] = (*githubv4.String)(&cursor)
 		if o.Type == UserOwner {
 			var query userOwnerWithFields
-			err := doQuery(client, "UserProjectWithFields", &query, variables)
+			err := doQuery(client, "UserProject", &query, variables)
 			if err != nil {
 				return project, err
 			}
@@ -594,7 +562,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		} else if o.Type == OrgOwner {
 			var query orgOwnerWithFields
-			err := doQuery(client, "OrgProjectWithFields", &query, variables)
+			err := doQuery(client, "OrgProject", &query, variables)
 			if err != nil {
 				return project, err
 			}
@@ -604,7 +572,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
 		} else if o.Type == ViewerOwner {
 			var query viewerOwnerWithFields
-			err := doQuery(client, "ViewerProjectWithFields", &query, variables)
+			err := doQuery(client, "ViewerProject", &query, variables)
 			if err != nil {
 				return project, err
 			}
@@ -666,14 +634,14 @@ type userOwner struct {
 // userOwnerWithItems is used to query the project of a user with its items.
 type userOwnerWithItems struct {
 	Owner struct {
-		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
 // userOwnerWithFields is used to query the project of a user with its fields.
 type userOwnerWithFields struct {
 	Owner struct {
-		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
 }
 
@@ -688,14 +656,14 @@ type orgOwner struct {
 // orgOwnerWithItems is used to query the project of an organization with its items.
 type orgOwnerWithItems struct {
 	Owner struct {
-		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
 // orgOwnerWithFields is used to query the project of an organization with its fields.
 type orgOwnerWithFields struct {
 	Owner struct {
-		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
 }
 
@@ -710,14 +678,14 @@ type viewerOwner struct {
 // viewerOwnerWithItems is used to query the project of the viewer with its items.
 type viewerOwnerWithItems struct {
 	Owner struct {
-		Project ProjectWithItems `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
 // viewerOwnerWithFields is used to query the project of the viewer with its fields.
 type viewerOwnerWithFields struct {
 	Owner struct {
-		Project ProjectWithFields `graphql:"projectV2(number: $number)"`
+		Project Project `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`
 }
 
