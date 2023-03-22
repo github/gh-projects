@@ -410,6 +410,69 @@ func (q viewerOwnerWithItems) Project() Project {
 	return q.Owner.Project
 }
 
+// userOwnerWithFields
+func (q userOwnerWithFields) HasNextPage() bool {
+	return q.Owner.Project.Fields.PageInfo.HasNextPage
+}
+
+func (q userOwnerWithFields) EndCursor() string {
+	return string(q.Owner.Project.Fields.PageInfo.EndCursor)
+}
+
+func (q userOwnerWithFields) Nodes() []ProjectField {
+	return q.Owner.Project.Fields.Nodes
+}
+
+func (q userOwnerWithFields) QueryName() string {
+	return "UserProjectWithFields"
+}
+
+func (q userOwnerWithFields) Project() Project {
+	return q.Owner.Project
+}
+
+// orgOwnerWithFields
+func (q orgOwnerWithFields) HasNextPage() bool {
+	return q.Owner.Project.Fields.PageInfo.HasNextPage
+}
+
+func (q orgOwnerWithFields) EndCursor() string {
+	return string(q.Owner.Project.Fields.PageInfo.EndCursor)
+}
+
+func (q orgOwnerWithFields) Nodes() []ProjectField {
+	return q.Owner.Project.Fields.Nodes
+}
+
+func (q orgOwnerWithFields) QueryName() string {
+	return "OrgProjectWithFields"
+}
+
+func (q orgOwnerWithFields) Project() Project {
+	return q.Owner.Project
+}
+
+// viewerOwnerWithFields
+func (q viewerOwnerWithFields) HasNextPage() bool {
+	return q.Owner.Project.Fields.PageInfo.HasNextPage
+}
+
+func (q viewerOwnerWithFields) EndCursor() string {
+	return string(q.Owner.Project.Fields.PageInfo.EndCursor)
+}
+
+func (q viewerOwnerWithFields) Nodes() []ProjectField {
+	return q.Owner.Project.Fields.Nodes
+}
+
+func (q viewerOwnerWithFields) QueryName() string {
+	return "ViewerProjectWithFields"
+}
+
+func (q viewerOwnerWithFields) Project() Project {
+	return q.Owner.Project
+}
+
 func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
@@ -496,92 +559,38 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Proje
 	if hasLimit && limit < first {
 		first = limit
 	}
-
 	variables := map[string]interface{}{
-		"first":  graphql.Int(first),
-		"number": graphql.Int(number),
-		"after":  (*githubv4.String)(nil),
+		"firstItems":  graphql.Int(LimitMax),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": graphql.Int(first),
+		"afterFields": (*githubv4.String)(nil),
+		"number":      graphql.Int(number),
 	}
 
-	if o.Type == UserOwner {
+	var query Pager[ProjectField]
+	switch o.Type {
+	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
-		var query userOwnerWithFields
-		err := doQuery(client, "UserProject", &query, variables)
-		if err != nil {
-			return project, err
-		}
-
-		project = query.Owner.Project
-	} else if o.Type == OrgOwner {
+		query = &userOwnerWithFields{} // must be a pointer to work with graphql queries
+	case OrgOwner:
 		variables["login"] = graphql.String(o.Login)
-		var query orgOwnerWithFields
-		err := doQuery(client, "OrgProject", &query, variables)
-		if err != nil {
-			return project, err
-		}
+		query = &orgOwnerWithFields{} // must be a pointer to work with graphql queries
+	case ViewerOwner:
+		query = &viewerOwnerWithFields{} // must be a pointer to work with graphql queries
+	}
+	err := doQuery(client, query.QueryName(), query, variables)
+	if err != nil {
+		return project, err
+	}
+	project = query.Project()
 
-		project = query.Owner.Project
-	} else if o.Type == ViewerOwner {
-		var query viewerOwnerWithFields
-		err := doQuery(client, "ViewerProject", &query, variables)
-		if err != nil {
-			return project, err
-		}
-
-		project = query.Owner.Project
-	} else {
-		return project, errors.New("unknown owner type")
+	fields, err := paginate(client, query, variables, "firstFields", "afterFields", limit, query.Nodes())
+	if err != nil {
+		return project, err
 	}
 
-	// get the remaining items if there are any
-	// and append them to the project items
-	hasNextPage := project.Fields.PageInfo.HasNextPage
-	cursor := project.Fields.PageInfo.EndCursor
-
-	for {
-		if !hasNextPage || (hasLimit && len(project.Fields.Nodes) >= limit) {
-			return project, nil
-		}
-
-		if hasLimit && len(project.Fields.Nodes)+LimitMax > limit {
-			first := limit - len(project.Fields.Nodes)
-			variables["first"] = graphql.Int(first)
-		}
-
-		// set the cursor to the end of the last page
-		variables["after"] = (*githubv4.String)(&cursor)
-		if o.Type == UserOwner {
-			var query userOwnerWithFields
-			err := doQuery(client, "UserProject", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
-		} else if o.Type == OrgOwner {
-			var query orgOwnerWithFields
-			err := doQuery(client, "OrgProject", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
-		} else if o.Type == ViewerOwner {
-			var query viewerOwnerWithFields
-			err := doQuery(client, "ViewerProject", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Fields.Nodes = append(project.Fields.Nodes, query.Owner.Project.Fields.Nodes...)
-			hasNextPage = query.Owner.Project.Fields.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Fields.PageInfo.EndCursor
-		}
-	}
+	project.Fields.Nodes = fields
+	return project, nil
 }
 
 // viewerLogin is used to query the Login of the viewer.
