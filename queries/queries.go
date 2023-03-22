@@ -345,81 +345,127 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Projec
 		"after":  (*githubv4.String)(nil),
 	}
 
-	// get the project by type
-	if o.Type == UserOwner {
+	var query Pager[ProjectItem]
+	switch o.Type {
+	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
-		var query userOwnerWithItems
-		err := doQuery(client, "UserProjectWithItems", &query, variables)
-		if err != nil {
-			return project, err
-		}
-		project = query.Owner.Project
-	} else if o.Type == OrgOwner {
+		query = &userOwnerWithItems{} // must be a pointer to work with graphql queries
+	case OrgOwner:
 		variables["login"] = graphql.String(o.Login)
-		var query orgOwnerWithItems
-		err := doQuery(client, "OrgProjectWithItems", &query, variables)
-		if err != nil {
-			return project, err
-		}
-		project = query.Owner.Project
-	} else if o.Type == ViewerOwner {
-		var query viewerOwnerWithItems
-		err := doQuery(client, "ViewerProjectWithItems", &query, variables)
-		if err != nil {
-			return project, err
-		}
-		project = query.Owner.Project
-	} else {
-		return project, errors.New("unknown owner type")
+		query = &orgOwnerWithItems{} // must be a pointer to work with graphql queries
+	case ViewerOwner:
+		query = &viewerOwnerWithItems{} // must be a pointer to work with graphql queries
 	}
-	// get the remaining items if there are any
-	// and append them to the project items
-	hasNextPage := project.Items.PageInfo.HasNextPage
-	cursor := project.Items.PageInfo.EndCursor
+	err := doQuery(client, query.QueryName(), query, variables)
+	if err != nil {
+		return project, err
+	}
+	project = query.Project()
 
+	items, err := paginate(client, query, variables, limit, query.Nodes())
+	if err != nil {
+		return project, err
+	}
+
+	project.Items.Nodes = items
+	return project, nil
+}
+
+type Pager[N any] interface {
+	HasNextPage() bool
+	EndCursor() string
+	Nodes() []N
+	QueryName() string
+	Project() ProjectWithItems
+}
+
+// userOwnerWithItems
+func (q userOwnerWithItems) HasNextPage() bool {
+	return q.Owner.Project.Items.PageInfo.HasNextPage
+}
+
+func (q userOwnerWithItems) EndCursor() string {
+	return string(q.Owner.Project.Items.PageInfo.EndCursor)
+}
+
+func (q userOwnerWithItems) Nodes() []ProjectItem {
+	return q.Owner.Project.Items.Nodes
+}
+
+func (q userOwnerWithItems) QueryName() string {
+	return "UserProjectWithItems"
+}
+
+func (q userOwnerWithItems) Project() ProjectWithItems {
+	return q.Owner.Project
+}
+
+// orgOwnerWithItems
+func (q orgOwnerWithItems) HasNextPage() bool {
+	return q.Owner.Project.Items.PageInfo.HasNextPage
+}
+
+func (q orgOwnerWithItems) EndCursor() string {
+	return string(q.Owner.Project.Items.PageInfo.EndCursor)
+}
+
+func (q orgOwnerWithItems) Nodes() []ProjectItem {
+	return q.Owner.Project.Items.Nodes
+}
+
+func (q orgOwnerWithItems) QueryName() string {
+	return "OrgProjectWithItems"
+}
+
+func (q orgOwnerWithItems) Project() ProjectWithItems {
+	return q.Owner.Project
+}
+
+// viewerOwnerWithItems
+func (q viewerOwnerWithItems) HasNextPage() bool {
+	return q.Owner.Project.Items.PageInfo.HasNextPage
+}
+
+func (q viewerOwnerWithItems) EndCursor() string {
+	return string(q.Owner.Project.Items.PageInfo.EndCursor)
+}
+
+func (q viewerOwnerWithItems) Nodes() []ProjectItem {
+	return q.Owner.Project.Items.Nodes
+}
+
+func (q viewerOwnerWithItems) QueryName() string {
+	return "ViewerProjectWithItems"
+}
+
+func (q viewerOwnerWithItems) Project() ProjectWithItems {
+	return q.Owner.Project
+}
+
+func paginate[N any](client api.GQLClient, p Pager[N], variables map[string]any, limit int, nodes []N) ([]N, error) {
+	hasNextPage := p.HasNextPage()
+	cursor := p.EndCursor()
+	hasLimit := limit != 0
 	for {
-		if !hasNextPage || (hasLimit && len(project.Items.Nodes) >= limit) {
-			return project, nil
+		if !hasNextPage || (hasLimit && len(nodes) >= limit) {
+			return nodes, nil
 		}
 
-		if hasLimit && len(project.Items.Nodes)+LimitMax > limit {
-			first := limit - len(project.Items.Nodes)
+		if hasLimit && len(nodes)+LimitMax > limit {
+			first := limit - len(nodes)
 			variables["first"] = graphql.Int(first)
 		}
 
 		// set the cursor to the end of the last page
 		variables["after"] = (*githubv4.String)(&cursor)
-		if o.Type == UserOwner {
-			var query userOwnerWithItems
-			err := doQuery(client, "UserProjectWithItems", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Items.PageInfo.EndCursor
-		} else if o.Type == OrgOwner {
-			var query orgOwnerWithItems
-			err := doQuery(client, "OrgProjectWithItems", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Items.PageInfo.EndCursor
-		} else if o.Type == ViewerOwner {
-			var query viewerOwnerWithItems
-			err := doQuery(client, "ViewerProjectWithItems", &query, variables)
-			if err != nil {
-				return project, err
-			}
-
-			project.Items.Nodes = append(project.Items.Nodes, query.Owner.Project.Items.Nodes...)
-			hasNextPage = query.Owner.Project.Items.PageInfo.HasNextPage
-			cursor = query.Owner.Project.Items.PageInfo.EndCursor
+		err := doQuery(client, p.QueryName(), p, variables)
+		if err != nil {
+			return nodes, err
 		}
+
+		nodes = append(nodes, p.Nodes()...)
+		hasNextPage = p.HasNextPage()
+		cursor = p.EndCursor()
 	}
 }
 
