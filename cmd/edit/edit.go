@@ -160,7 +160,11 @@ func editArgs(config editConfig) (*updateProjectMutation, map[string]interface{}
 	}
 
 	return &updateProjectMutation{}, map[string]interface{}{
-		"input": variables,
+		"input":       variables,
+		"firstItems":  githubv4.Int(queries.LimitMax),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(queries.LimitMax),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

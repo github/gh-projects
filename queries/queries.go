@@ -982,20 +982,25 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
 	if number != 0 {
 		variables := map[string]interface{}{
-			"login":  graphql.String(o.Login),
-			"number": graphql.Int(number),
+			"number":      graphql.Int(number),
+			"firstItems":  githubv4.Int(LimitMax),
+			"afterItems":  (*githubv4.String)(nil),
+			"firstFields": githubv4.Int(LimitMax),
+			"afterFields": (*githubv4.String)(nil),
 		}
 		if o.Type == UserOwner {
 			var query userOwner
+			variables["login"] = githubv4.String(o.Login)
 			err := doQuery(client, "UserProject", &query, variables)
 			return &query.Owner.Project, err
 		} else if o.Type == OrgOwner {
+			variables["login"] = githubv4.String(o.Login)
 			var query orgOwner
 			err := doQuery(client, "OrgProject", &query, variables)
 			return &query.Owner.Project, err
 		} else if o.Type == ViewerOwner {
 			var query viewerOwner
-			err := doQuery(client, "ViewerProject", &query, map[string]interface{}{"number": graphql.Int(number)})
+			err := doQuery(client, "ViewerProject", &query, variables)
 			return &query.Owner.Project, err
 		}
 		return nil, errors.New("unknown owner type")
@@ -1050,6 +1055,19 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 	if hasLimit && limit < first {
 		first = limit
 	}
+
+	variables := map[string]interface{}{
+		"first":       graphql.Int(first),
+		"after":       cursor,
+		"firstItems":  githubv4.Int(0),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(0),
+		"afterFields": (*githubv4.String)(nil),
+	}
+
+	if t != ViewerOwner {
+		variables["login"] = graphql.String(login)
+	}
 	// loop until we get all the projects
 	for {
 		// the code below is very repetitive, the only real difference being the type of the query
@@ -1057,11 +1075,6 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 		// the cost.
 		if t == UserOwner {
 			var query userProjects
-			variables := map[string]interface{}{
-				"login": graphql.String(login),
-				"first": graphql.Int(first),
-				"after": cursor,
-			}
 			if err := doQuery(client, "UserProjects", &query, variables); err != nil {
 				return projects, 0, err
 			}
@@ -1071,11 +1084,6 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 			totalCount = query.Owner.Projects.TotalCount
 		} else if t == OrgOwner {
 			var query orgProjects
-			variables := map[string]interface{}{
-				"login": graphql.String(login),
-				"first": graphql.Int(first),
-				"after": cursor,
-			}
 			if err := doQuery(client, "OrgProjects", &query, variables); err != nil {
 				return projects, 0, err
 			}
@@ -1085,10 +1093,6 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 			totalCount = query.Owner.Projects.TotalCount
 		} else if t == ViewerOwner {
 			var query viewerProjects
-			variables := map[string]interface{}{
-				"first": graphql.Int(first),
-				"after": cursor,
-			}
 			if err := doQuery(client, "ViewerProjects", &query, variables); err != nil {
 				return projects, 0, err
 			}
@@ -1104,6 +1108,8 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 
 		if len(projects)+LimitMax > limit {
 			first = limit - len(projects)
+			variables["first"] = graphql.Int(first)
 		}
+		variables["after"] = cursor
 	}
 }

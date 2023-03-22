@@ -148,6 +148,10 @@ func copyArgs(config copyConfig) (*copyProjectMutation, map[string]interface{}) 
 			Title:              githubv4.String(config.opts.title),
 			IncludeDraftIssues: githubv4.NewBoolean(githubv4.Boolean(config.opts.includeDraftIssues)),
 		},
+		"firstItems":  githubv4.Int(queries.LimitMax),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(queries.LimitMax),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

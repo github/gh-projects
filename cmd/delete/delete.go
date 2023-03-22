@@ -127,6 +127,10 @@ func deleteItemArgs(config deleteConfig) (*deleteProjectMutation, map[string]int
 		"input": githubv4.DeleteProjectV2Input{
 			ProjectID: githubv4.ID(config.opts.projectID),
 		},
+		"firstItems":  githubv4.Int(queries.LimitMax),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(queries.LimitMax),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

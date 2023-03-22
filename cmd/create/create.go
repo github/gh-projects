@@ -115,6 +115,10 @@ func createArgs(config createConfig) (*createProjectMutation, map[string]interfa
 			OwnerID: githubv4.ID(config.opts.ownerID),
 			Title:   githubv4.String(config.opts.title),
 		},
+		"firstItems":  githubv4.Int(queries.LimitMax),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(queries.LimitMax),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 
