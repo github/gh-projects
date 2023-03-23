@@ -475,6 +475,10 @@ func (q viewerOwnerWithFields) Project() Project {
 	return q.Owner.Project
 }
 
+type projectAttribute interface {
+	ProjectItem | ProjectField
+}
+
 // paginateAttributes is for paginating over the attributes of a project, such as items or fields
 //
 // firstKey and afterKey are the keys in the variables map that are used to set the first and after
@@ -485,7 +489,7 @@ func (q viewerOwnerWithFields) Project() Project {
 // nodes is the list of attributes that have already been fetched.
 //
 // the return value is a slice of the newly fetched attributes appended to nodes.
-func paginateAttributes[N any](client api.GQLClient, p pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
+func paginateAttributes[N projectAttribute](client api.GQLClient, p pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
 	hasLimit := limit != 0
