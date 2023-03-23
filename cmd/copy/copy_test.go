@@ -84,7 +84,7 @@ func TestRunCopy_User(t *testing.T) {
 	// Copy project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).
+		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":0,"firstItems":0,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -195,7 +195,7 @@ func TestRunCopy_Org(t *testing.T) {
 	// Copy project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).
+		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":0,"firstItems":0,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -299,7 +299,7 @@ func TestRunCopy_Me(t *testing.T) {
 	// Copy project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).Reply(200).
+		BodyString(`{"query":"mutation CopyProjectV2.*","variables":{"afterFields":null,"afterItems":null,"firstFields":0,"firstItems":0,"input":{"projectId":"an ID","ownerId":"an ID","title":"a title","includeDraftIssues":false}}}`).Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
 				"copyProjectV2": map[string]interface{}{

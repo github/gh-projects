@@ -131,9 +131,9 @@ func closeArgs(config closeConfig) (*updateProjectMutation, map[string]interface
 			ProjectID: githubv4.ID(config.opts.projectID),
 			Closed:    githubv4.NewBoolean(githubv4.Boolean(closed)),
 		},
-		"firstItems":  githubv4.Int(queries.LimitMax),
+		"firstItems":  githubv4.Int(0),
 		"afterItems":  (*githubv4.String)(nil),
-		"firstFields": githubv4.Int(queries.LimitMax),
+		"firstFields": githubv4.Int(0),
 		"afterFields": (*githubv4.String)(nil),
 	}
 }
