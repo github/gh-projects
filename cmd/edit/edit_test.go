@@ -41,8 +41,12 @@ func TestRunUpdate_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
-				"login":  "monalisa",
-				"number": 1,
+				"login":       "monalisa",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -59,7 +63,7 @@ func TestRunUpdate_User(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
+		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -129,8 +133,12 @@ func TestRunUpdate_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query OrgProject.*",
 			"variables": map[string]interface{}{
-				"login":  "github",
-				"number": 1,
+				"login":       "github",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -147,7 +155,7 @@ func TestRunUpdate_Org(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
+		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":true}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -214,7 +222,11 @@ func TestRunUpdate_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
-				"number": 1,
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -231,7 +243,7 @@ func TestRunUpdate_Me(t *testing.T) {
 	// edit project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":false}}}`).
+		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","title":"a new title","shortDescription":"a new description","readme":"a new readme","public":false}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -301,8 +313,12 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
-				"login":  "monalisa",
-				"number": 1,
+				"login":       "monalisa",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -319,7 +335,7 @@ func TestRunUpdate_OmitParams(t *testing.T) {
 	// Update project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"input":{"projectId":"an ID","title":"another title"}}}`).
+		BodyString(`{"query":"mutation UpdateProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","title":"another title"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{

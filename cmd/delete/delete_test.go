@@ -41,8 +41,12 @@ func TestRunDelete_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
-				"login":  "monalisa",
-				"number": 1,
+				"login":       "monalisa",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -59,7 +63,7 @@ func TestRunDelete_User(t *testing.T) {
 	// delete project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation DeleteProject.*","variables":{"input":{"projectId":"an ID"}}}`).
+		BodyString(`{"query":"mutation DeleteProject.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -122,8 +126,12 @@ func TestRunDelete_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query OrgProject.*",
 			"variables": map[string]interface{}{
-				"login":  "github",
-				"number": 1,
+				"login":       "github",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -140,7 +148,7 @@ func TestRunDelete_Org(t *testing.T) {
 	// delete project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation DeleteProject.*","variables":{"input":{"projectId":"an ID"}}}`).
+		BodyString(`{"query":"mutation DeleteProject.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -200,7 +208,11 @@ func TestRunDelete_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
-				"number": 1,
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -217,7 +229,7 @@ func TestRunDelete_Me(t *testing.T) {
 	// delete project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation DeleteProject.*","variables":{"input":{"projectId":"an ID"}}}`).
+		BodyString(`{"query":"mutation DeleteProject.*","variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID"}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{

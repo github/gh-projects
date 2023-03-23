@@ -41,8 +41,12 @@ func TestRunClose_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
-				"login":  "monalisa",
-				"number": 1,
+				"login":       "monalisa",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -59,7 +63,7 @@ func TestRunClose_User(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
+		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","closed":true}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -126,8 +130,12 @@ func TestRunClose_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query OrgProject.*",
 			"variables": map[string]interface{}{
-				"login":  "github",
-				"number": 1,
+				"login":       "github",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -144,7 +152,7 @@ func TestRunClose_Org(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
+		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","closed":true}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -208,7 +216,11 @@ func TestRunClose_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
-				"number": 1,
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -225,7 +237,7 @@ func TestRunClose_Me(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":true}}}`).
+		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","closed":true}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
@@ -292,8 +304,12 @@ func TestRunClose_Reopen(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProject.*",
 			"variables": map[string]interface{}{
-				"login":  "monalisa",
-				"number": 1,
+				"login":       "monalisa",
+				"number":      1,
+				"firstItems":  100,
+				"afterItems":  nil,
+				"firstFields": 100,
+				"afterFields": nil,
 			},
 		}).
 		Reply(200).
@@ -310,7 +326,7 @@ func TestRunClose_Reopen(t *testing.T) {
 	// close project
 	gock.New("https://api.github.com").
 		Post("/graphql").
-		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"input":{"projectId":"an ID","closed":false}}}`).
+		BodyString(`{"query":"mutation CloseProjectV2.*"variables":{"afterFields":null,"afterItems":null,"firstFields":100,"firstItems":100,"input":{"projectId":"an ID","closed":false}}}`).
 		Reply(200).
 		JSON(map[string]interface{}{
 			"data": map[string]interface{}{
