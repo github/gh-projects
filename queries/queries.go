@@ -983,14 +983,18 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 // NewProject creates a project based on the owner and project number
 // if number is 0 it will prompt the user to select a project interactively
 // otherwise it will make a request to get the project by number
-func NewProject(client api.GQLClient, o *Owner, number int) (*Project, error) {
+func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Project, error) {
 	if number != 0 {
 		variables := map[string]interface{}{
 			"number":      graphql.Int(number),
-			"firstItems":  githubv4.Int(LimitMax),
+			"firstItems":  githubv4.Int(0),
 			"afterItems":  (*githubv4.String)(nil),
-			"firstFields": githubv4.Int(LimitMax),
+			"firstFields": githubv4.Int(0),
 			"afterFields": (*githubv4.String)(nil),
+		}
+
+		if fields {
+			variables["firstFields"] = githubv4.Int(LimitMax)
 		}
 		if o.Type == UserOwner {
 			var query userOwner

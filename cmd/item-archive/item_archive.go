@@ -116,7 +116,7 @@ func runArchiveItem(config archiveItemConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	project, err := queries.NewProject(config.client, owner, config.opts.number, false)
 	if err != nil {
 		return err
 	}

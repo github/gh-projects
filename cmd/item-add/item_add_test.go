@@ -43,9 +43,9 @@ func TestRunAddItem_User(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":       "monalisa",
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  0,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": 0,
 				"afterFields": nil,
 			},
 		}).
@@ -148,9 +148,9 @@ func TestRunAddItem_Org(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":       "github",
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  0,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": 0,
 				"afterFields": nil,
 			},
 		}).
@@ -249,9 +249,9 @@ func TestRunAddItem_Me(t *testing.T) {
 			"query": "query ViewerProject.*",
 			"variables": map[string]interface{}{
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  0,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": 0,
 				"afterFields": nil,
 			},
 		}).

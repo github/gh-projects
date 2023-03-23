@@ -118,7 +118,7 @@ func runCopy(config copyConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, sourceOwner, config.opts.number)
+	project, err := queries.NewProject(config.client, sourceOwner, config.opts.number, false)
 	if err != nil {
 		return err
 	}
