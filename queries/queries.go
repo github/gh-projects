@@ -983,6 +983,7 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 // NewProject creates a project based on the owner and project number
 // if number is 0 it will prompt the user to select a project interactively
 // otherwise it will make a request to get the project by number
+// set `fields“ to true to get the project's field data
 func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Project, error) {
 	if number != 0 {
 		variables := map[string]interface{}{
