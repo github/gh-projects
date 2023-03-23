@@ -315,23 +315,27 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (*Proje
 	}
 
 	var query pager[ProjectItem]
+	var queryName string
 	switch o.Type {
 	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
 		query = &userOwnerWithItems{} // must be a pointer to work with graphql queries
+		queryName = "UserProjectWithItems"
 	case OrgOwner:
 		variables["login"] = graphql.String(o.Login)
 		query = &orgOwnerWithItems{} // must be a pointer to work with graphql queries
+		queryName = "OrgProjectWithItems"
 	case ViewerOwner:
 		query = &viewerOwnerWithItems{} // must be a pointer to work with graphql queries
+		queryName = "ViewerProjectWithItems"
 	}
-	err := doQuery(client, query.QueryName(), query, variables)
+	err := doQuery(client, queryName, query, variables)
 	if err != nil {
 		return project, err
 	}
 	project = query.Project()
 
-	items, err := paginateAttributes(client, query, variables, "firstItems", "afterItems", limit, query.Nodes())
+	items, err := paginateAttributes(client, query, variables, queryName, "firstItems", "afterItems", limit, query.Nodes())
 	if err != nil {
 		return project, err
 	}
@@ -345,7 +349,6 @@ type pager[N projectAttribute] interface {
 	HasNextPage() bool
 	EndCursor() string
 	Nodes() []N
-	QueryName() string
 	Project() *Project
 }
 
@@ -360,10 +363,6 @@ func (q userOwnerWithItems) EndCursor() string {
 
 func (q userOwnerWithItems) Nodes() []ProjectItem {
 	return q.Owner.Project.Items.Nodes
-}
-
-func (q userOwnerWithItems) QueryName() string {
-	return "UserProjectWithItems"
 }
 
 func (q userOwnerWithItems) Project() *Project {
@@ -383,10 +382,6 @@ func (q orgOwnerWithItems) Nodes() []ProjectItem {
 	return q.Owner.Project.Items.Nodes
 }
 
-func (q orgOwnerWithItems) QueryName() string {
-	return "OrgProjectWithItems"
-}
-
 func (q orgOwnerWithItems) Project() *Project {
 	return &q.Owner.Project
 }
@@ -402,10 +397,6 @@ func (q viewerOwnerWithItems) EndCursor() string {
 
 func (q viewerOwnerWithItems) Nodes() []ProjectItem {
 	return q.Owner.Project.Items.Nodes
-}
-
-func (q viewerOwnerWithItems) QueryName() string {
-	return "ViewerProjectWithItems"
 }
 
 func (q viewerOwnerWithItems) Project() *Project {
@@ -425,10 +416,6 @@ func (q userOwnerWithFields) Nodes() []ProjectField {
 	return q.Owner.Project.Fields.Nodes
 }
 
-func (q userOwnerWithFields) QueryName() string {
-	return "UserProjectWithFields"
-}
-
 func (q userOwnerWithFields) Project() *Project {
 	return &q.Owner.Project
 }
@@ -446,10 +433,6 @@ func (q orgOwnerWithFields) Nodes() []ProjectField {
 	return q.Owner.Project.Fields.Nodes
 }
 
-func (q orgOwnerWithFields) QueryName() string {
-	return "OrgProjectWithFields"
-}
-
 func (q orgOwnerWithFields) Project() *Project {
 	return &q.Owner.Project
 }
@@ -465,10 +448,6 @@ func (q viewerOwnerWithFields) EndCursor() string {
 
 func (q viewerOwnerWithFields) Nodes() []ProjectField {
 	return q.Owner.Project.Fields.Nodes
-}
-
-func (q viewerOwnerWithFields) QueryName() string {
-	return "ViewerProjectWithFields"
 }
 
 func (q viewerOwnerWithFields) Project() *Project {
@@ -489,7 +468,7 @@ type projectAttribute interface {
 // nodes is the list of attributes that have already been fetched.
 //
 // the return value is a slice of the newly fetched attributes appended to nodes.
-func paginateAttributes[N projectAttribute](client api.GQLClient, p pager[N], variables map[string]any, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
+func paginateAttributes[N projectAttribute](client api.GQLClient, p pager[N], variables map[string]any, queryName string, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
 	hasLimit := limit != 0
@@ -505,7 +484,7 @@ func paginateAttributes[N projectAttribute](client api.GQLClient, p pager[N], va
 
 		// set the cursor to the end of the last page
 		variables[afterKey] = (*githubv4.String)(&cursor)
-		err := doQuery(client, p.QueryName(), p, variables)
+		err := doQuery(client, queryName, p, variables)
 		if err != nil {
 			return nodes, err
 		}
@@ -584,23 +563,27 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (*Proj
 	}
 
 	var query pager[ProjectField]
+	var queryName string
 	switch o.Type {
 	case UserOwner:
 		variables["login"] = graphql.String(o.Login)
 		query = &userOwnerWithFields{} // must be a pointer to work with graphql queries
+		queryName = "UserProjectWithFields"
 	case OrgOwner:
 		variables["login"] = graphql.String(o.Login)
 		query = &orgOwnerWithFields{} // must be a pointer to work with graphql queries
+		queryName = "OrgProjectWithFields"
 	case ViewerOwner:
 		query = &viewerOwnerWithFields{} // must be a pointer to work with graphql queries
+		queryName = "ViewerProjectWithFields"
 	}
-	err := doQuery(client, query.QueryName(), query, variables)
+	err := doQuery(client, queryName, query, variables)
 	if err != nil {
 		return project, err
 	}
 	project = query.Project()
 
-	fields, err := paginateAttributes(client, query, variables, "firstFields", "afterFields", limit, query.Nodes())
+	fields, err := paginateAttributes(client, query, variables, queryName, "firstFields", "afterFields", limit, query.Nodes())
 	if err != nil {
 		return project, err
 	}
