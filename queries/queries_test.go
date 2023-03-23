@@ -19,9 +19,9 @@ func TestProjectItems_DefaultLimit(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"firstItems":  100,
+				"firstItems":  LimitMax,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": LimitMax,
 				"afterFields": nil,
 				"login":       "monalisa",
 				"number":      1,
@@ -58,7 +58,7 @@ func TestProjectItems_DefaultLimit(t *testing.T) {
 		Login: "monalisa",
 		ID:    "user ID",
 	}
-	project, err := ProjectItems(client, owner, 1, 100)
+	project, err := ProjectItems(client, owner, 1, LimitMax)
 	assert.NoError(t, err)
 	assert.Len(t, project.Items.Nodes, 3)
 }
@@ -75,7 +75,7 @@ func TestProjectItems_LowerLimit(t *testing.T) {
 			"variables": map[string]interface{}{
 				"firstItems":  2,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": LimitMax,
 				"afterFields": nil,
 				"login":       "monalisa",
 				"number":      1,
@@ -124,9 +124,9 @@ func TestProjectItems_NoLimit(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"firstItems":  100,
+				"firstItems":  LimitMax,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": LimitMax,
 				"afterFields": nil,
 				"login":       "monalisa",
 				"number":      1,
@@ -180,7 +180,7 @@ func TestProjectFields_LowerLimit(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":       "monalisa",
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  LimitMax,
 				"afterItems":  nil,
 				"firstFields": 2,
 				"afterFields": nil,
@@ -232,9 +232,9 @@ func TestProjectFields_DefaultLimit(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":       "monalisa",
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  LimitMax,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": LimitMax,
 				"afterFields": nil,
 			},
 		}).
@@ -269,7 +269,7 @@ func TestProjectFields_DefaultLimit(t *testing.T) {
 		Login: "monalisa",
 		ID:    "user ID",
 	}
-	project, err := ProjectFields(client, owner, 1, 100)
+	project, err := ProjectFields(client, owner, 1, LimitMax)
 	assert.NoError(t, err)
 	assert.Len(t, project.Fields.Nodes, 3)
 }
@@ -286,9 +286,9 @@ func TestProjectFields_NoLimit(t *testing.T) {
 			"variables": map[string]interface{}{
 				"login":       "monalisa",
 				"number":      1,
-				"firstItems":  100,
+				"firstItems":  LimitMax,
 				"afterItems":  nil,
-				"firstFields": 100,
+				"firstFields": LimitMax,
 				"afterFields": nil,
 			},
 		}).
