@@ -1015,7 +1015,7 @@ func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Proje
 		return nil, errors.New("unknown owner type")
 	}
 
-	projects, _, err := Projects(client, o.Login, o.Type, 0)
+	projects, _, err := Projects(client, o.Login, o.Type, 0, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -1051,7 +1051,7 @@ func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Proje
 }
 
 // Projects returns all the projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Project, int, error) {
+func Projects(client api.GQLClient, login string, t OwnerType, limit int, fields bool) ([]Project, int, error) {
 	projects := make([]Project, 0)
 	cursor := (*githubv4.String)(nil)
 	hasNextPage := false
@@ -1072,6 +1072,10 @@ func Projects(client api.GQLClient, login string, t OwnerType, limit int) ([]Pro
 		"afterItems":  (*githubv4.String)(nil),
 		"firstFields": githubv4.Int(0),
 		"afterFields": (*githubv4.String)(nil),
+	}
+
+	if fields {
+		variables["firstFields"] = githubv4.Int(LimitMax)
 	}
 
 	if t != ViewerOwner {
