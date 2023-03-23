@@ -116,6 +116,7 @@ func runList(config listConfig) error {
 		return err
 	}
 
+	// no need to fetch the project if we already have the number
 	if config.opts.number == 0 {
 		project, err := queries.NewProject(config.client, owner, config.opts.number, false)
 		if err != nil {
@@ -158,7 +159,7 @@ func printResults(config listConfig, fields []queries.ProjectField, login string
 	return config.tp.Render()
 }
 
-func printJSON(config listConfig, project queries.Project) error {
+func printJSON(config listConfig, project *queries.Project) error {
 	b, err := format.JSONProjectFields(project)
 	if err != nil {
 		return err

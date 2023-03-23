@@ -297,8 +297,8 @@ func (p ProjectItem) Repo() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (Project, error) {
-	project := Project{}
+func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (*Project, error) {
+	project := &Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
 	// requested a lower limit.
@@ -346,7 +346,7 @@ type pager[N any] interface {
 	EndCursor() string
 	Nodes() []N
 	QueryName() string
-	Project() Project
+	Project() *Project
 }
 
 // userOwnerWithItems
@@ -366,8 +366,8 @@ func (q userOwnerWithItems) QueryName() string {
 	return "UserProjectWithItems"
 }
 
-func (q userOwnerWithItems) Project() Project {
-	return q.Owner.Project
+func (q userOwnerWithItems) Project() *Project {
+	return &q.Owner.Project
 }
 
 // orgOwnerWithItems
@@ -387,8 +387,8 @@ func (q orgOwnerWithItems) QueryName() string {
 	return "OrgProjectWithItems"
 }
 
-func (q orgOwnerWithItems) Project() Project {
-	return q.Owner.Project
+func (q orgOwnerWithItems) Project() *Project {
+	return &q.Owner.Project
 }
 
 // viewerOwnerWithItems
@@ -408,8 +408,8 @@ func (q viewerOwnerWithItems) QueryName() string {
 	return "ViewerProjectWithItems"
 }
 
-func (q viewerOwnerWithItems) Project() Project {
-	return q.Owner.Project
+func (q viewerOwnerWithItems) Project() *Project {
+	return &q.Owner.Project
 }
 
 // userOwnerWithFields
@@ -429,8 +429,8 @@ func (q userOwnerWithFields) QueryName() string {
 	return "UserProjectWithFields"
 }
 
-func (q userOwnerWithFields) Project() Project {
-	return q.Owner.Project
+func (q userOwnerWithFields) Project() *Project {
+	return &q.Owner.Project
 }
 
 // orgOwnerWithFields
@@ -450,8 +450,8 @@ func (q orgOwnerWithFields) QueryName() string {
 	return "OrgProjectWithFields"
 }
 
-func (q orgOwnerWithFields) Project() Project {
-	return q.Owner.Project
+func (q orgOwnerWithFields) Project() *Project {
+	return &q.Owner.Project
 }
 
 // viewerOwnerWithFields
@@ -471,8 +471,8 @@ func (q viewerOwnerWithFields) QueryName() string {
 	return "ViewerProjectWithFields"
 }
 
-func (q viewerOwnerWithFields) Project() Project {
-	return q.Owner.Project
+func (q viewerOwnerWithFields) Project() *Project {
+	return &q.Owner.Project
 }
 
 type projectAttribute interface {
@@ -566,8 +566,8 @@ func (p ProjectField) Type() string {
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (Project, error) {
-	project := Project{}
+func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (*Project, error) {
+	project := &Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
 	// requested a lower limit.

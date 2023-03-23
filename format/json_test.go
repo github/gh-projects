@@ -127,7 +127,7 @@ func TestJSONProjectFields(t *testing.T) {
 	field.Field.ID = "123"
 	field.Field.Name = "name"
 
-	p := queries.Project{
+	p := &queries.Project{
 		Fields: struct {
 			TotalCount int
 			Nodes      []queries.ProjectField
@@ -170,7 +170,7 @@ func TestJSONProjectItem_Issue(t *testing.T) {
 }
 
 func TestJSONProjectDetailedItems(t *testing.T) {
-	p := queries.Project{}
+	p := &queries.Project{}
 	p.Items.TotalCount = 5
 	p.Items.Nodes = []queries.ProjectItem{
 		{
