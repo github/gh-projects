@@ -341,7 +341,7 @@ func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (*Proje
 }
 
 // pager is an interface for paginating over the attributes of a Project.
-type pager[N any] interface {
+type pager[N projectAttribute] interface {
 	HasNextPage() bool
 	EndCursor() string
 	Nodes() []N
