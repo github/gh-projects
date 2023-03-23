@@ -118,7 +118,7 @@ func runView(config viewConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	project, err := queries.NewProject(config.client, owner, config.opts.number, true)
 	if err != nil {
 		return err
 	}

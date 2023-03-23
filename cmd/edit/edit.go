@@ -121,7 +121,7 @@ func runEdit(config editConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	project, err := queries.NewProject(config.client, owner, config.opts.number, false)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,11 @@ func editArgs(config editConfig) (*updateProjectMutation, map[string]interface{}
 	}
 
 	return &updateProjectMutation{}, map[string]interface{}{
-		"input": variables,
+		"input":       variables,
+		"firstItems":  githubv4.Int(0),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(0),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

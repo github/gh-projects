@@ -7,6 +7,7 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
 	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/github/gh-projects/queries"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -39,10 +40,12 @@ func TestRunList_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query UserProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"login":  "monalisa",
-				"number": 1,
-				"after":  nil,
+				"firstItems":  queries.LimitMax,
+				"afterItems":  nil,
+				"firstFields": queries.LimitMax,
+				"afterFields": nil,
+				"login":       "monalisa",
+				"number":      1,
 			},
 		}).
 		Reply(200).
@@ -137,10 +140,12 @@ func TestRunList_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query OrgProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"login":  "github",
-				"number": 1,
-				"after":  nil,
+				"firstItems":  queries.LimitMax,
+				"afterItems":  nil,
+				"firstFields": queries.LimitMax,
+				"afterFields": nil,
+				"login":       "github",
+				"number":      1,
 			},
 		}).
 		Reply(200).
@@ -233,9 +238,11 @@ func TestRunList_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query ViewerProjectWithItems.*",
 			"variables": map[string]interface{}{
-				"first":  100,
-				"number": 1,
-				"after":  nil,
+				"firstItems":  queries.LimitMax,
+				"afterItems":  nil,
+				"firstFields": queries.LimitMax,
+				"afterFields": nil,
+				"number":      1,
 			},
 		}).
 		Reply(200).

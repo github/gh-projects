@@ -102,7 +102,7 @@ func runDelete(config deleteConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	project, err := queries.NewProject(config.client, owner, config.opts.number, false)
 	if err != nil {
 		return err
 	}
@@ -127,6 +127,10 @@ func deleteItemArgs(config deleteConfig) (*deleteProjectMutation, map[string]int
 		"input": githubv4.DeleteProjectV2Input{
 			ProjectID: githubv4.ID(config.opts.projectID),
 		},
+		"firstItems":  githubv4.Int(0),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(0),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

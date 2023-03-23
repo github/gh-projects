@@ -104,7 +104,7 @@ func runClose(config closeConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, owner, config.opts.number)
+	project, err := queries.NewProject(config.client, owner, config.opts.number, false)
 	if err != nil {
 		return err
 	}
@@ -131,6 +131,10 @@ func closeArgs(config closeConfig) (*updateProjectMutation, map[string]interface
 			ProjectID: githubv4.ID(config.opts.projectID),
 			Closed:    githubv4.NewBoolean(githubv4.Boolean(closed)),
 		},
+		"firstItems":  githubv4.Int(0),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(0),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 

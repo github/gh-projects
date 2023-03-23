@@ -118,7 +118,7 @@ func runCopy(config copyConfig) error {
 		return err
 	}
 
-	project, err := queries.NewProject(config.client, sourceOwner, config.opts.number)
+	project, err := queries.NewProject(config.client, sourceOwner, config.opts.number, false)
 	if err != nil {
 		return err
 	}
@@ -148,6 +148,10 @@ func copyArgs(config copyConfig) (*copyProjectMutation, map[string]interface{}) 
 			Title:              githubv4.String(config.opts.title),
 			IncludeDraftIssues: githubv4.NewBoolean(githubv4.Boolean(config.opts.includeDraftIssues)),
 		},
+		"firstItems":  githubv4.Int(0),
+		"afterItems":  (*githubv4.String)(nil),
+		"firstFields": githubv4.Int(0),
+		"afterFields": (*githubv4.String)(nil),
 	}
 }
 
