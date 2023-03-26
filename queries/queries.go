@@ -539,8 +539,8 @@ func (p ProjectField) Name() string {
 	return ""
 }
 
-// ProjectFieldWithValue is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration with values.
-type ProjectFieldWithValue struct {
+// ProjectFieldWithOptions is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration with values.
+type ProjectFieldWithOptions struct {
 	ProjectField
 	SingleSelectField ProjectSingleSelectFieldValues `graphql:"... on ProjectV2SingleSelectField"`
 	IterationField    ProjectIterationFieldValues    `graphql:"... on ProjectV2IterationField"`
@@ -651,7 +651,7 @@ func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (*Proj
 }
 
 // ProjectIterationFieldValues returns the values of a project iteration field. If the OwnerType is VIEWER, no login is required.
-func ProjectFieldWithValues(client api.GQLClient, o *Owner, number int, first int) ([]ProjectFieldWithValue, error) {
+func ProjectFieldWithValues(client api.GQLClient, o *Owner, number int, first int) ([]ProjectFieldWithOptions, error) {
 	variables := map[string]interface{}{
 		"first":  graphql.Int(first),
 		"number": graphql.Int(number),
@@ -671,7 +671,7 @@ func ProjectFieldWithValues(client api.GQLClient, o *Owner, number int, first in
 		err := client.Query("ViewerProjectWithFieldsWithValues", &query, variables)
 		return query.Owner.Project.Fields.Nodes, err
 	}
-	return []ProjectFieldWithValue{}, errors.New("unknown owner type")
+	return []ProjectFieldWithOptions{}, errors.New("unknown owner type")
 }
 
 // viewerLogin is used to query the Login of the viewer.
@@ -740,7 +740,7 @@ type userOwnerWithFieldsWithValues struct {
 	Owner struct {
 		Project struct {
 			Fields struct {
-				Nodes []ProjectFieldWithValue
+				Nodes []ProjectFieldWithOptions
 			} `graphql:"fields(first: $first)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"user(login: $login)"`
@@ -773,7 +773,7 @@ type orgOwnerWithFieldsWithValues struct {
 	Owner struct {
 		Project struct {
 			Fields struct {
-				Nodes []ProjectFieldWithValue
+				Nodes []ProjectFieldWithOptions
 			} `graphql:"fields(first: $first)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"organization(login: $login)"`
@@ -806,7 +806,7 @@ type viewerOwnerWithFieldsWithValues struct {
 	Owner struct {
 		Project struct {
 			Fields struct {
-				Nodes []ProjectFieldWithValue
+				Nodes []ProjectFieldWithOptions
 			} `graphql:"fields(first: $first)"`
 		} `graphql:"projectV2(number: $number)"`
 	} `graphql:"viewer"`

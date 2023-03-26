@@ -38,17 +38,17 @@ func (opts *listOpts) first() int {
 func NewCmdListValues(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.Command {
 	opts := listOpts{}
 	listCmd := &cobra.Command{
-		Short: "List the field values in a project.",
-		Use:   "field-list-values [number]",
+		Short: "List the field options.",
+		Use:   "field-list-options [number]",
 		Example: `
-# list the field values in the current user's project number 1
-gh projects field-list-values 1 --id ID --user "@me"
+# list the field options in the current user's project number 1
+gh projects field-list-options 1 --id ID --user "@me"
 
 # list the field values in user monalisa's project number 1
-gh projects field-list-values 1 --id ID --user monalisa
+gh projects field-list-options 1 --id ID --user monalisa
 
 # list the first 30 fields in org github's project number 1
-gh projects field-list-values 1 --id ID --org github --limit 30
+gh projects field-list-options 1 --id ID --org github --limit 30
 
 # add --format=json to output in JSON format
 `,
@@ -106,7 +106,7 @@ func runList(config listConfig) error {
 	if err != nil {
 		return err
 	}
-	var field queries.ProjectFieldWithValue
+	var field queries.ProjectFieldWithOptions
 	for _, f := range fields {
 		if f.ID() == config.opts.itemID {
 			field = f
@@ -116,7 +116,7 @@ func runList(config listConfig) error {
 	return printResults(config, field, owner.Login)
 }
 
-func printResults(config listConfig, field queries.ProjectFieldWithValue, login string) error {
+func printResults(config listConfig, field queries.ProjectFieldWithOptions, login string) error {
 	if field.ID() == "" {
 		config.tp.AddField(fmt.Sprintf("Project %d for login %s has no fields with given ID.", config.opts.number, login))
 		config.tp.EndRow()
@@ -152,7 +152,7 @@ func printResults(config listConfig, field queries.ProjectFieldWithValue, login 
 	return config.tp.Render()
 }
 
-func printIterationField(config listConfig, field queries.ProjectFieldWithValue) {
+func printIterationField(config listConfig, field queries.ProjectFieldWithOptions) {
 	config.tp.AddField("ID")
 	config.tp.AddField("Title")
 	config.tp.AddField("Start Date")
@@ -185,7 +185,7 @@ func reverseSlice[T comparable](s []T) []T {
 	return r
 }
 
-func printJSON(config listConfig, fields []queries.ProjectFieldWithValue) error {
+func printJSON(config listConfig, fields []queries.ProjectFieldWithOptions) error {
 	//b, err := format.JSONProjectFields(fields)
 	//if err != nil {
 	//	return err
