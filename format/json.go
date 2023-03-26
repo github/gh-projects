@@ -138,6 +138,70 @@ type projectFieldJSON struct {
 	Type string `json:"type"`
 }
 
+// JSONProjectFieldsOptions serializes a slice of ProjectFieldsWithOptions to JSON.
+// JSON fields are `totalCount` and `fields`.
+func JSONProjectFieldsIterableOptions(completedIterations []queries.Iteration, iterations []queries.Iteration) ([]byte, error) {
+	var result []projectFieldIterableOptionsJSON
+	for _, f := range completedIterations {
+		result = append(result, projectFieldIterableOptionsJSON{
+			ID:        f.Id,
+			Title:     f.Title,
+			Duration:  f.Duration,
+			StartDate: f.StartDate,
+			Completed: true,
+		})
+	}
+	for _, f := range iterations {
+		result = append(result, projectFieldIterableOptionsJSON{
+			ID:        f.Id,
+			Title:     f.Title,
+			Duration:  f.Duration,
+			StartDate: f.StartDate,
+			Completed: false,
+		})
+	}
+
+	return json.Marshal(struct {
+		Options    []projectFieldIterableOptionsJSON `json:"options"`
+		TotalCount int                               `json:"totalCount"`
+	}{
+		Options:    result,
+		TotalCount: len(completedIterations) + len(iterations),
+	})
+}
+
+type projectFieldIterableOptionsJSON struct {
+	ID        string                `json:"id"`
+	Title     string                `json:"title"`
+	Duration  int                   `json:"duration"`
+	StartDate queries.IterationDate `json:"startDate"`
+	Completed bool                  `json:"completed"`
+}
+
+func JSONProjectFieldsSingleSelectOptions(options []queries.SelectOption) ([]byte, error) {
+	var result []projectFieldSingleSelectOptionsJSON
+
+	for _, o := range options {
+		result = append(result, projectFieldSingleSelectOptionsJSON{
+			ID:   o.ID,
+			Name: o.Name,
+		})
+	}
+
+	return json.Marshal(struct {
+		Options    []projectFieldSingleSelectOptionsJSON `json:"options"`
+		TotalCount int                                   `json:"totalCount"`
+	}{
+		Options:    result,
+		TotalCount: len(options),
+	})
+}
+
+type projectFieldSingleSelectOptionsJSON struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 // JSONProjectItem serializes a ProjectItem to JSON.
 func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
 	return json.Marshal(projectItemJSON{

@@ -593,6 +593,11 @@ func (t *IterationDate) UnmarshalJSON(b []byte) (err error) {
 	t.Time = date
 	return
 }
+
+func (t *IterationDate) MarshalJSON() ([]byte, error) {
+	stamp := fmt.Sprintf("\"%s\"", t.Format("2006-01-02"))
+	return []byte(stamp), nil
+}
 func (t IterationDate) String() string {
 	return t.Time.Format("2006-01-02")
 }

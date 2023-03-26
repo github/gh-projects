@@ -2,6 +2,7 @@ package fieldlistvalues
 
 import (
 	"fmt"
+	"github.com/github/gh-projects/format"
 	"strconv"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -130,29 +131,21 @@ func printResults(config listConfig, field queries.ProjectFieldWithOptions, logi
 	}
 
 	if field.TypeName == "ProjectV2IterationField" {
-		printIterationField(config, field)
+		return printIterationField(config, field)
 	}
 
 	if field.TypeName == "ProjectV2SingleSelectField" {
-		config.tp.AddField("ID")
-		config.tp.AddField("Name")
-		config.tp.EndRow()
-
-		for _, o := range field.SingleSelectField.Options {
-			config.tp.AddField(o.ID)
-			config.tp.AddField(o.Name)
-			config.tp.EndRow()
-		}
+		return printSingleSelectField(config, field)
 	}
 
-	if config.opts.format == "json" {
-		return printJSON(config, nil) // TODO
-	}
-
-	return config.tp.Render()
+	return nil
 }
 
-func printIterationField(config listConfig, field queries.ProjectFieldWithOptions) {
+func printIterationField(config listConfig, field queries.ProjectFieldWithOptions) error {
+	if config.opts.format == "json" {
+		return printIterationFieldJSON(config, field)
+	}
+
 	config.tp.AddField("ID")
 	config.tp.AddField("Title")
 	config.tp.AddField("Start Date")
@@ -175,6 +168,45 @@ func printIterationField(config listConfig, field queries.ProjectFieldWithOption
 		config.tp.AddField(strconv.Itoa(i.Duration))
 		config.tp.EndRow()
 	}
+	return config.tp.Render()
+}
+
+func printIterationFieldJSON(config listConfig, field queries.ProjectFieldWithOptions) error {
+	b, err := format.JSONProjectFieldsIterableOptions(
+		reverseSlice(field.IterationField.Configuration.CompletedIterations),
+		field.IterationField.Configuration.Iterations,
+	)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	return config.tp.Render()
+}
+
+func printSingleSelectField(config listConfig, field queries.ProjectFieldWithOptions) error {
+	if config.opts.format == "json" {
+		return printSingleSelectFieldJSON(config, field)
+	}
+
+	config.tp.AddField("ID")
+	config.tp.AddField("Name")
+	config.tp.EndRow()
+
+	for _, o := range field.SingleSelectField.Options {
+		config.tp.AddField(o.ID)
+		config.tp.AddField(o.Name)
+		config.tp.EndRow()
+	}
+	return config.tp.Render()
+}
+
+func printSingleSelectFieldJSON(config listConfig, field queries.ProjectFieldWithOptions) error {
+	b, err := format.JSONProjectFieldsSingleSelectOptions(field.SingleSelectField.Options)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	return config.tp.Render()
 }
 
 func reverseSlice[T comparable](s []T) []T {
@@ -183,15 +215,4 @@ func reverseSlice[T comparable](s []T) []T {
 		r = append(r, s[i])
 	}
 	return r
-}
-
-func printJSON(config listConfig, fields []queries.ProjectFieldWithOptions) error {
-	//b, err := format.JSONProjectFields(fields)
-	//if err != nil {
-	//	return err
-	//}
-	//config.tp.AddField(string(b))
-	//
-	//return config.tp.Render()
-	return nil
 }
