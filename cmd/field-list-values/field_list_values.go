@@ -19,6 +19,7 @@ type listOpts struct {
 	orgOwner  string
 	number    int
 	itemID    string
+	format    string
 }
 
 type listConfig struct {
@@ -48,6 +49,8 @@ gh projects field-list-values 1 --id ID --user monalisa
 
 # list the first 30 fields in org github's project number 1
 gh projects field-list-values 1 --id ID --org github --limit 30
+
+# add --format=json to output in JSON format
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -81,6 +84,7 @@ gh projects field-list-values 1 --id ID --org github --limit 30
 	listCmd.Flags().StringVar(&opts.orgOwner, "org", "", "Login of the organization owner.")
 	listCmd.Flags().StringVar(&opts.itemID, "id", "", "ID of the field to list from the project.")
 	listCmd.Flags().IntVar(&opts.limit, "limit", 0, "Maximum number of fields to get. Defaults to 100.")
+	listCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
 	// owner can be a user or an org
 	listCmd.MarkFlagsMutuallyExclusive("user", "org")
@@ -89,6 +93,10 @@ gh projects field-list-values 1 --id ID --org github --limit 30
 }
 
 func runList(config listConfig) error {
+	if config.opts.format != "" && config.opts.format != "json" {
+		return fmt.Errorf("format must be 'json'")
+	}
+
 	owner, err := queries.NewOwner(config.client, config.opts.userOwner, config.opts.orgOwner)
 	if err != nil {
 		return err
@@ -115,32 +123,58 @@ func printResults(config listConfig, field queries.ProjectFieldWithValue, login 
 		return config.tp.Render()
 	}
 
+	if field.TypeName != "ProjectV2IterationField" && field.TypeName != "ProjectV2SingleSelectField" {
+		config.tp.AddField(fmt.Sprintf("Field \"%s\" does not have options.", field.Name()))
+		config.tp.EndRow()
+		return config.tp.Render()
+	}
+
 	if field.TypeName == "ProjectV2IterationField" {
+		printIterationField(config, field)
+	}
+
+	if field.TypeName == "ProjectV2SingleSelectField" {
 		config.tp.AddField("ID")
-		config.tp.AddField("Title")
-		config.tp.AddField("Start Date")
-		config.tp.AddField("Duration")
-		config.tp.AddField("Completed")
+		config.tp.AddField("Name")
 		config.tp.EndRow()
 
-		for _, i := range reverseSlice(field.IterationField.Configuration.CompletedIterations) {
-			config.tp.AddField(i.Id)
-			config.tp.AddField(i.Title)
-			config.tp.AddField(i.StartDate.String())
-			config.tp.AddField(strconv.Itoa(i.Duration))
-			config.tp.AddField(strconv.FormatBool(true))
-			config.tp.EndRow()
-		}
-		for _, i := range field.IterationField.Configuration.Iterations {
-			config.tp.AddField(i.Id)
-			config.tp.AddField(i.Title)
-			config.tp.AddField(i.StartDate.String())
-			config.tp.AddField(strconv.Itoa(i.Duration))
+		for _, o := range field.SingleSelectField.Options {
+			config.tp.AddField(o.ID)
+			config.tp.AddField(o.Name)
 			config.tp.EndRow()
 		}
 	}
 
+	if config.opts.format == "json" {
+		return printJSON(config, nil) // TODO
+	}
+
 	return config.tp.Render()
+}
+
+func printIterationField(config listConfig, field queries.ProjectFieldWithValue) {
+	config.tp.AddField("ID")
+	config.tp.AddField("Title")
+	config.tp.AddField("Start Date")
+	config.tp.AddField("Duration")
+	config.tp.AddField("Completed")
+	config.tp.EndRow()
+
+	for _, i := range reverseSlice(field.IterationField.Configuration.CompletedIterations) {
+		config.tp.AddField(i.Id)
+		config.tp.AddField(i.Title)
+		config.tp.AddField(i.StartDate.String())
+		config.tp.AddField(strconv.Itoa(i.Duration))
+		config.tp.AddField(strconv.FormatBool(true))
+		config.tp.EndRow()
+	}
+	for _, i := range field.IterationField.Configuration.Iterations {
+		config.tp.AddField(i.Id)
+		config.tp.AddField(i.Title)
+		config.tp.AddField(i.StartDate.String())
+		config.tp.AddField(strconv.Itoa(i.Duration))
+		config.tp.EndRow()
+	}
 }
 
 func reverseSlice[T comparable](s []T) []T {
@@ -149,4 +183,15 @@ func reverseSlice[T comparable](s []T) []T {
 		r = append(r, s[i])
 	}
 	return r
+}
+
+func printJSON(config listConfig, fields []queries.ProjectFieldWithValue) error {
+	//b, err := format.JSONProjectFields(fields)
+	//if err != nil {
+	//	return err
+	//}
+	//config.tp.AddField(string(b))
+	//
+	//return config.tp.Render()
+	return nil
 }

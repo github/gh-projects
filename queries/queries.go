@@ -542,7 +542,8 @@ func (p ProjectField) Name() string {
 // ProjectFieldWithValue is a ProjectV2FieldConfiguration GraphQL object https://docs.github.com/en/graphql/reference/unions#projectv2fieldconfiguration with values.
 type ProjectFieldWithValue struct {
 	ProjectField
-	IterationField ProjectIterationFieldValues `graphql:"... on ProjectV2IterationField"`
+	SingleSelectField ProjectSingleSelectFieldValues `graphql:"... on ProjectV2SingleSelectField"`
+	IterationField    ProjectIterationFieldValues    `graphql:"... on ProjectV2IterationField"`
 }
 
 // ProjectIterationFieldValues is a ProjectV2IterationField GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2iterationfield.
@@ -558,20 +559,20 @@ type ProjectIterationFieldValues struct {
 	}
 }
 
-// Iteration is a ProjectV2IterationFieldIteration GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2iterationfielditeration
-type Iteration struct {
-	Duration  int
-	Id        string
-	StartDate IterationDate
-	Title     string
-}
-
 // ProjectSingleSelectFieldValues is a ProjectV2SingleSelectField GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2singleselectfield.
 type ProjectSingleSelectFieldValues struct {
 	ID       string
 	Name     string
 	DataType string
 	Options  []SelectOption
+}
+
+// Iteration is a ProjectV2IterationFieldIteration GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2iterationfielditeration
+type Iteration struct {
+	Duration  int
+	Id        string
+	StartDate IterationDate
+	Title     string
 }
 
 // SelectOption is a ProjectV2SingleSelectFieldOption GraphQL object https://docs.github.com/en/graphql/reference/objects#projectv2singleselectfieldoption.
