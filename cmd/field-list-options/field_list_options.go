@@ -124,12 +124,6 @@ func printResults(config listConfig, field queries.ProjectFieldWithOptions, logi
 		return config.tp.Render()
 	}
 
-	if field.TypeName != "ProjectV2IterationField" && field.TypeName != "ProjectV2SingleSelectField" {
-		config.tp.AddField(fmt.Sprintf("Field \"%s\" does not have options.", field.Name()))
-		config.tp.EndRow()
-		return config.tp.Render()
-	}
-
 	if field.TypeName == "ProjectV2IterationField" {
 		return printIterationField(config, field)
 	}
@@ -138,7 +132,9 @@ func printResults(config listConfig, field queries.ProjectFieldWithOptions, logi
 		return printSingleSelectField(config, field)
 	}
 
-	return nil
+	config.tp.AddField(fmt.Sprintf("Field \"%s\" does not have options.", field.Name()))
+	config.tp.EndRow()
+	return config.tp.Render()
 }
 
 func printIterationField(config listConfig, field queries.ProjectFieldWithOptions) error {
