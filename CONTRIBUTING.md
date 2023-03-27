@@ -11,6 +11,14 @@ Contributions to this project are [released](https://help.github.com/articles/gi
 
 Please note that this project is released with a [Contributor Code of Conduct](CODE-OF-CONDUCT.md). By participating in this project you agree to abide by its terms.
 
+## Open an issue
+
+Thank you for wanting to contribute, we’d love to chat about it!
+
+To propose a new feature or a change to existing functionality, please [open an issue](https://github.com/github/gh-projects/issues/new) to discuss the use case, your intended approach, tradeoffs, and other relevant context. You can include code snippets if it’s helpful! All ideas are welcome, however it’s important to have alignment before contributions will be considered.
+
+Once there is agreement, you can move on to submitting a pull request.
+
 ## Prerequisites for running and testing code
 
 These are one time installations required to be able to test your changes locally as part of the pull request (PR) submission process.
