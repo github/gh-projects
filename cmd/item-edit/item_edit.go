@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
@@ -17,9 +18,19 @@ import (
 )
 
 type editItemOpts struct {
+	// updateDraftIssue
 	title  string
 	body   string
 	itemID string
+	// updateItem
+	fieldID              string
+	projectID            string
+	text                 string
+	number               float32
+	date                 string
+	singleSelectOptionID string
+	iterationID          string
+	// format
 	format string
 }
 
@@ -35,14 +46,23 @@ type EditProjectDraftIssue struct {
 	} `graphql:"updateProjectV2DraftIssue(input:$input)"`
 }
 
+type UpdateProjectV2FieldValue struct {
+	Update struct {
+		Item queries.ProjectItem `graphql:"projectV2Item"`
+	} `graphql:"updateProjectV2ItemFieldValue(input:$input)"`
+}
+
 func NewCmdEditItem(f *cmdutil.Factory, runF func(config editItemConfig) error) *cobra.Command {
 	opts := editItemOpts{}
 	editItemCmd := &cobra.Command{
-		Short: "Edit a draft issue in a project by ID",
+		Short: "Edit an item in a project by ID",
 		Use:   "item-edit",
 		Example: `
 # edit a draft issue
 gh projects item-edit --id ID --title "a new title" --body "a new body"
+
+# edit an item
+gh projects item-edit --id ID --text "new text"
 
 # add --format=json to output in JSON format
 `,
@@ -74,37 +94,80 @@ gh projects item-edit --id ID --title "a new title" --body "a new body"
 	editItemCmd.Flags().StringVar(&opts.itemID, "id", "", "ID of the draft issue item to edit. Must be the ID of the draft issue content which is prefixed with `DI_`")
 	editItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
+	editItemCmd.Flags().StringVar(&opts.fieldID, "field-id", "", "The id of the field to update.")
+	editItemCmd.Flags().StringVar(&opts.projectID, "project-id", "", "The id of the project to which the field belongs so.")
+	editItemCmd.Flags().StringVar(&opts.text, "text", "", "The text to set on the field.")
+	editItemCmd.Flags().Float32Var(&opts.number, "number", 0, "The number to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.date, "date", "", "The ISO 8601 date to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.singleSelectOptionID, "single-select-option-id", "", "The id of the single select option to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.iterationID, "iteration-id", "", "The id of the iteration to set on the field.")
+
+	editItemCmd.MarkFlagsMutuallyExclusive("text", "number", "date", "single-select-option-id", "iteration-id")
 	_ = editItemCmd.MarkFlagRequired("id")
 
 	return editItemCmd
 }
 
 func runEditItem(config editItemConfig) error {
-	if config.opts.title == "" && config.opts.body == "" {
-		config.tp.AddField("No changes to make")
-		return config.tp.Render()
+	// update draft issue
+	if config.opts.title != "" || config.opts.body != "" {
+		if !strings.HasPrefix(config.opts.itemID, "DI_") {
+			return errors.New("ID must be the ID of the draft issue content which is prefixed with `DI_`")
+		}
+
+		if config.opts.format != "" && config.opts.format != "json" {
+			return fmt.Errorf("format must be 'json'")
+		}
+
+		query, variables := buildEditDraftIssue(config)
+
+		err := config.client.Mutate("EditDraftIssueItem", query, variables)
+		if err != nil {
+			return err
+		}
+
+		if config.opts.format == "json" {
+			return printJSON(config, query.UpdateProjectV2DraftIssue.DraftIssue)
+		}
+
+		return printResults(config, query.UpdateProjectV2DraftIssue.DraftIssue)
 	}
 
-	if !strings.HasPrefix(config.opts.itemID, "DI_") {
-		return errors.New("ID must be the ID of the draft issue content which is prefixed with `DI_`")
+	// update item values
+	if config.opts.text != "" || config.opts.number != 0 || config.opts.date != "" || config.opts.singleSelectOptionID != "" || config.opts.iterationID != "" {
+		if config.opts.fieldID == "" {
+			return errors.New("field-id must be provided")
+		}
+		// this could be fetched interactively
+		if config.opts.projectID == "" {
+			return errors.New("project-id must be provided")
+		}
+
+		var parsedDate time.Time
+		if config.opts.date != "" {
+			date, error := time.Parse("2006-01-02", config.opts.date)
+			if error != nil {
+				return error
+			}
+			parsedDate = date
+		}
+
+		query, variables := buildUpdateItem(config, parsedDate)
+		err := config.client.Mutate("UpdateItemValues", query, variables)
+		if err != nil {
+			return err
+		}
+
+		if config.opts.format == "json" {
+			return printJSONItem(config, &query.Update.Item)
+		}
+
+		return printResultsItem(config, &query.Update.Item)
 	}
 
-	if config.opts.format != "" && config.opts.format != "json" {
-		return fmt.Errorf("format must be 'json'")
-	}
+	config.tp.AddField("No changes to make")
+	return config.tp.Render()
 
-	query, variables := buildEditDraftIssue(config)
-
-	err := config.client.Mutate("EditDraftIssueItem", query, variables)
-	if err != nil {
-		return err
-	}
-
-	if config.opts.format == "json" {
-		return printJSON(config, query.UpdateProjectV2DraftIssue.DraftIssue)
-	}
-
-	return printResults(config, query.UpdateProjectV2DraftIssue.DraftIssue)
 }
 
 func buildEditDraftIssue(config editItemConfig) (*EditProjectDraftIssue, map[string]interface{}) {
@@ -113,6 +176,40 @@ func buildEditDraftIssue(config editItemConfig) (*EditProjectDraftIssue, map[str
 			Body:         githubv4.NewString(githubv4.String(config.opts.body)),
 			DraftIssueID: githubv4.ID(config.opts.itemID),
 			Title:        githubv4.NewString(githubv4.String(config.opts.title)),
+		},
+	}
+}
+
+func buildUpdateItem(config editItemConfig, date time.Time) (*UpdateProjectV2FieldValue, map[string]interface{}) {
+	var value githubv4.ProjectV2FieldValue
+	if config.opts.text != "" {
+		value = githubv4.ProjectV2FieldValue{
+			Text: githubv4.NewString(githubv4.String(config.opts.text)),
+		}
+	} else if config.opts.number != 0 {
+		value = githubv4.ProjectV2FieldValue{
+			Number: githubv4.NewFloat(githubv4.Float(config.opts.number)),
+		}
+	} else if config.opts.date != "" {
+		value = githubv4.ProjectV2FieldValue{
+			Date: githubv4.NewDate(githubv4.Date{date}),
+		}
+	} else if config.opts.singleSelectOptionID != "" {
+		value = githubv4.ProjectV2FieldValue{
+			SingleSelectOptionID: githubv4.NewString(githubv4.String(config.opts.singleSelectOptionID)),
+		}
+	} else if config.opts.iterationID != "" {
+		value = githubv4.ProjectV2FieldValue{
+			IterationID: githubv4.NewString(githubv4.String(config.opts.iterationID)),
+		}
+	}
+
+	return &UpdateProjectV2FieldValue{}, map[string]interface{}{
+		"input": githubv4.UpdateProjectV2ItemFieldValueInput{
+			ProjectID: githubv4.ID(config.opts.projectID),
+			ItemID:    githubv4.ID(config.opts.itemID),
+			FieldID:   githubv4.ID(config.opts.fieldID),
+			Value:     value,
 		},
 	}
 }
@@ -135,4 +232,41 @@ func printJSON(config editItemConfig, item queries.DraftIssue) error {
 	}
 	config.tp.AddField(string(b))
 	return config.tp.Render()
+}
+
+func printResultsItem(config editItemConfig, item *queries.ProjectItem) error {
+	config.tp.AddField("Type")
+	config.tp.AddField("Title")
+	config.tp.AddField("Number")
+	config.tp.AddField("Repository")
+	config.tp.AddField("ID")
+	config.tp.EndRow()
+
+	config.tp.AddField(item.Type())
+	config.tp.AddField(item.Title())
+	if item.Number() == 0 {
+		config.tp.AddField(" - ")
+	} else {
+		config.tp.AddField(fmt.Sprintf("%d", item.Number()))
+	}
+	if item.Repo() == "" {
+		config.tp.AddField(" - ")
+	} else {
+		config.tp.AddField(item.Repo())
+	}
+	config.tp.AddField(item.ID())
+	config.tp.EndRow()
+
+	return config.tp.Render()
+}
+
+func printJSONItem(config editItemConfig, item *queries.ProjectItem) error {
+	b, err := format.JSONProjectItem(*item)
+	if err != nil {
+		return err
+	}
+	config.tp.AddField(string(b))
+	config.tp.EndRow()
+	return config.tp.Render()
+
 }
