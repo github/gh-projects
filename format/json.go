@@ -104,11 +104,19 @@ type projectJSON struct {
 
 // JSONProjectField serializes a ProjectField to JSON.
 func JSONProjectField(field queries.ProjectField) ([]byte, error) {
-	return json.Marshal(projectFieldJSON{
+	val := projectFieldJSON{
 		ID:   field.ID(),
 		Name: field.Name(),
 		Type: field.Type(),
-	})
+	}
+	for _, o := range field.Options() {
+		val.Options = append(val.Options, singleSelectOptionJSON{
+			Name: o.Name,
+			ID:   o.ID,
+		})
+	}
+
+	return json.Marshal(val)
 }
 
 // JSONProjectFields serializes a slice of ProjectFields to JSON.
@@ -116,11 +124,19 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 func JSONProjectFields(project *queries.Project) ([]byte, error) {
 	var result []projectFieldJSON
 	for _, f := range project.Fields.Nodes {
-		result = append(result, projectFieldJSON{
+		val := projectFieldJSON{
 			ID:   f.ID(),
 			Name: f.Name(),
 			Type: f.Type(),
-		})
+		}
+		for _, o := range f.Options() {
+			val.Options = append(val.Options, singleSelectOptionJSON{
+				Name: o.Name,
+				ID:   o.ID,
+			})
+		}
+
+		result = append(result, val)
 	}
 
 	return json.Marshal(struct {
@@ -133,9 +149,15 @@ func JSONProjectFields(project *queries.Project) ([]byte, error) {
 }
 
 type projectFieldJSON struct {
+	ID      string                   `json:"id"`
+	Name    string                   `json:"name"`
+	Type    string                   `json:"type"`
+	Options []singleSelectOptionJSON `json:"options,omitempty"`
+}
+
+type singleSelectOptionJSON struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	Type string `json:"type"`
 }
 
 // JSONProjectItem serializes a ProjectItem to JSON.
