@@ -102,10 +102,7 @@ func TestJSONProjectField_SingleSelectType(t *testing.T) {
 	field.TypeName = "ProjectV2SingleSelectField"
 	field.SingleSelectField.ID = "123"
 	field.SingleSelectField.Name = "name"
-	field.SingleSelectField.Options = []struct {
-		ID   string
-		Name string
-	}{
+	field.SingleSelectField.Options = []queries.SingleSelectOptions{
 		{
 			ID:   "123",
 			Name: "name",
@@ -144,10 +141,7 @@ func TestJSONProjectFields(t *testing.T) {
 	field2.TypeName = "ProjectV2SingleSelectField"
 	field2.SingleSelectField.ID = "123"
 	field2.SingleSelectField.Name = "name"
-	field2.SingleSelectField.Options = []struct {
-		ID   string
-		Name string
-	}{
+	field2.SingleSelectField.Options = []queries.SingleSelectOptions{
 		{
 			ID:   "123",
 			Name: "name",

@@ -112,10 +112,7 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 
 	if len(field.Options()) != 0 {
 		for _, o := range field.Options() {
-			val.Options = append(val.Options, struct {
-				Name string `json:"name"`
-				ID   string `json:"id"`
-			}{
+			val.Options = append(val.Options, singleSelectOptionJSON{
 				Name: o.Name,
 				ID:   o.ID,
 			})
@@ -136,10 +133,7 @@ func JSONProjectFields(project *queries.Project) ([]byte, error) {
 		}
 		if len(f.Options()) != 0 {
 			for _, o := range f.Options() {
-				val.Options = append(val.Options, struct {
-					Name string `json:"name"`
-					ID   string `json:"id"`
-				}{
+				val.Options = append(val.Options, singleSelectOptionJSON{
 					Name: o.Name,
 					ID:   o.ID,
 				})
@@ -158,13 +152,15 @@ func JSONProjectFields(project *queries.Project) ([]byte, error) {
 }
 
 type projectFieldJSON struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Type    string `json:"type"`
-	Options []struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
-	} `json:"options,omitempty"`
+	ID      string                   `json:"id"`
+	Name    string                   `json:"name"`
+	Type    string                   `json:"type"`
+	Options []singleSelectOptionJSON `json:"options,omitempty"`
+}
+
+type singleSelectOptionJSON struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // JSONProjectItem serializes a ProjectItem to JSON.

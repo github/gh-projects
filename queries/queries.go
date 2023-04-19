@@ -512,10 +512,7 @@ type ProjectField struct {
 		ID       string
 		Name     string
 		DataType string
-		Options  []struct {
-			ID   string
-			Name string
-		}
+		Options  []SingleSelectOptions
 	} `graphql:"... on ProjectV2SingleSelectField"`
 }
 
