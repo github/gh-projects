@@ -109,15 +109,13 @@ func JSONProjectField(field queries.ProjectField) ([]byte, error) {
 		Name: field.Name(),
 		Type: field.Type(),
 	}
-
-	if len(field.Options()) != 0 {
-		for _, o := range field.Options() {
-			val.Options = append(val.Options, singleSelectOptionJSON{
-				Name: o.Name,
-				ID:   o.ID,
-			})
-		}
+	for _, o := range field.Options() {
+		val.Options = append(val.Options, singleSelectOptionJSON{
+			Name: o.Name,
+			ID:   o.ID,
+		})
 	}
+
 	return json.Marshal(val)
 }
 
@@ -131,14 +129,13 @@ func JSONProjectFields(project *queries.Project) ([]byte, error) {
 			Name: f.Name(),
 			Type: f.Type(),
 		}
-		if len(f.Options()) != 0 {
-			for _, o := range f.Options() {
-				val.Options = append(val.Options, singleSelectOptionJSON{
-					Name: o.Name,
-					ID:   o.ID,
-				})
-			}
+		for _, o := range f.Options() {
+			val.Options = append(val.Options, singleSelectOptionJSON{
+				Name: o.Name,
+				ID:   o.ID,
+			})
 		}
+
 		result = append(result, val)
 	}
 
