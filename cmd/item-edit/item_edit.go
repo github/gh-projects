@@ -55,14 +55,16 @@ type UpdateProjectV2FieldValue struct {
 func NewCmdEditItem(f *cmdutil.Factory, runF func(config editItemConfig) error) *cobra.Command {
 	opts := editItemOpts{}
 	editItemCmd := &cobra.Command{
-		Short: "Edit an item in a project by ID",
 		Use:   "item-edit",
+		Short: "Edit an item in a project by ID",
+		Long: `
+Edit one of a draft issue or a project item. Both require the ID of the item to edit. For non-draft issues, the ID of the project is also required, and only a single field value can be updated per invocation. See the flags for more details.`,
 		Example: `
 # edit a draft issue
 gh projects item-edit --id ID --title "a new title" --body "a new body"
 
 # edit an item
-gh projects item-edit --id ID --text "new text"
+gh projects item-edit --id ID --project-id PROJECT_ID --text "new text"
 
 # add --format=json to output in JSON format
 `,
@@ -89,18 +91,19 @@ gh projects item-edit --id ID --text "new text"
 		},
 	}
 
-	editItemCmd.Flags().StringVar(&opts.title, "title", "", "Title of the draft issue item to edit.")
-	editItemCmd.Flags().StringVar(&opts.body, "body", "", "Body of the draft issue item to edit.")
-	editItemCmd.Flags().StringVar(&opts.itemID, "id", "", "ID of the draft issue item to edit. Must be the ID of the draft issue content which is prefixed with `DI_`")
+	editItemCmd.Flags().StringVar(&opts.itemID, "id", "", "ID of the item to edit (required). For draft issues, the ID is for the draft issue content which is prefixed with `DI_`. For other issues, it is the ID of the project item.")
 	editItemCmd.Flags().StringVar(&opts.format, "format", "", "Output format, must be 'json'.")
 
-	editItemCmd.Flags().StringVar(&opts.fieldID, "field-id", "", "The id of the field to update.")
-	editItemCmd.Flags().StringVar(&opts.projectID, "project-id", "", "The id of the project to which the field belongs so.")
-	editItemCmd.Flags().StringVar(&opts.text, "text", "", "The text to set on the field.")
-	editItemCmd.Flags().Float32Var(&opts.number, "number", 0, "The number to set on the field.")
-	editItemCmd.Flags().StringVar(&opts.date, "date", "", "The ISO 8601 date to set on the field.")
-	editItemCmd.Flags().StringVar(&opts.singleSelectOptionID, "single-select-option-id", "", "The id of the single select option to set on the field.")
-	editItemCmd.Flags().StringVar(&opts.iterationID, "iteration-id", "", "The id of the iteration to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.title, "title", "", "DRAFT ISSUE - Title of the draft issue item to edit.")
+	editItemCmd.Flags().StringVar(&opts.body, "body", "", "DRAFT ISSUE - Body of the draft issue item to edit.")
+
+	editItemCmd.Flags().StringVar(&opts.fieldID, "field-id", "", "ID of the field to update.")
+	editItemCmd.Flags().StringVar(&opts.projectID, "project-id", "", "ID of the project to which the field belongs to.")
+	editItemCmd.Flags().StringVar(&opts.text, "text", "", "Text value to set on the field.")
+	editItemCmd.Flags().Float32Var(&opts.number, "number", 0, "Number value to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.date, "date", "", "The ISO 8601 date value to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.singleSelectOptionID, "single-select-option-id", "", "ID of the single select option value to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.iterationID, "iteration-id", "", "ID of the iteration value to set on the field.")
 
 	editItemCmd.MarkFlagsMutuallyExclusive("text", "number", "date", "single-select-option-id", "iteration-id")
 	_ = editItemCmd.MarkFlagRequired("id")
@@ -127,10 +130,10 @@ func runEditItem(config editItemConfig) error {
 		}
 
 		if config.opts.format == "json" {
-			return printJSON(config, query.UpdateProjectV2DraftIssue.DraftIssue)
+			return printDraftIssueJSON(config, query.UpdateProjectV2DraftIssue.DraftIssue)
 		}
 
-		return printResults(config, query.UpdateProjectV2DraftIssue.DraftIssue)
+		return printDraftIssueResults(config, query.UpdateProjectV2DraftIssue.DraftIssue)
 	}
 
 	// update item values
@@ -138,8 +141,8 @@ func runEditItem(config editItemConfig) error {
 		if config.opts.fieldID == "" {
 			return errors.New("field-id must be provided")
 		}
-		// this could be fetched interactively
 		if config.opts.projectID == "" {
+			// TODO: offer to fetch interactively
 			return errors.New("project-id must be provided")
 		}
 
@@ -159,10 +162,10 @@ func runEditItem(config editItemConfig) error {
 		}
 
 		if config.opts.format == "json" {
-			return printJSONItem(config, &query.Update.Item)
+			return printItemJSON(config, &query.Update.Item)
 		}
 
-		return printResultsItem(config, &query.Update.Item)
+		return printItemResults(config, &query.Update.Item)
 	}
 
 	config.tp.AddField("No changes to make")
@@ -192,7 +195,7 @@ func buildUpdateItem(config editItemConfig, date time.Time) (*UpdateProjectV2Fie
 		}
 	} else if config.opts.date != "" {
 		value = githubv4.ProjectV2FieldValue{
-			Date: githubv4.NewDate(githubv4.Date{date}),
+			Date: githubv4.NewDate(githubv4.Date{Time: date}),
 		}
 	} else if config.opts.singleSelectOptionID != "" {
 		value = githubv4.ProjectV2FieldValue{
@@ -214,7 +217,7 @@ func buildUpdateItem(config editItemConfig, date time.Time) (*UpdateProjectV2Fie
 	}
 }
 
-func printResults(config editItemConfig, item queries.DraftIssue) error {
+func printDraftIssueResults(config editItemConfig, item queries.DraftIssue) error {
 	// using table printer here for consistency in case it ends up being needed in the future
 	config.tp.AddField("Title")
 	config.tp.AddField("Body")
@@ -225,7 +228,7 @@ func printResults(config editItemConfig, item queries.DraftIssue) error {
 	return config.tp.Render()
 }
 
-func printJSON(config editItemConfig, item queries.DraftIssue) error {
+func printDraftIssueJSON(config editItemConfig, item queries.DraftIssue) error {
 	b, err := format.JSONProjectDraftIssue(item)
 	if err != nil {
 		return err
@@ -234,7 +237,7 @@ func printJSON(config editItemConfig, item queries.DraftIssue) error {
 	return config.tp.Render()
 }
 
-func printResultsItem(config editItemConfig, item *queries.ProjectItem) error {
+func printItemResults(config editItemConfig, item *queries.ProjectItem) error {
 	config.tp.AddField("Type")
 	config.tp.AddField("Title")
 	config.tp.AddField("Number")
@@ -260,7 +263,7 @@ func printResultsItem(config editItemConfig, item *queries.ProjectItem) error {
 	return config.tp.Render()
 }
 
-func printJSONItem(config editItemConfig, item *queries.ProjectItem) error {
+func printItemJSON(config editItemConfig, item *queries.ProjectItem) error {
 	b, err := format.JSONProjectItem(*item)
 	if err != nil {
 		return err

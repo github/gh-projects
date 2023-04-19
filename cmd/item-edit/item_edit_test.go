@@ -11,7 +11,7 @@ import (
 	"gopkg.in/h2non/gock.v1"
 )
 
-func TestRunItemEdit(t *testing.T) {
+func TestRunItemEdit_Draft(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
@@ -53,6 +53,261 @@ func TestRunItemEdit(t *testing.T) {
 		buf.String())
 }
 
+func TestRunItemEdit_Text(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// edit item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation UpdateItemValues.*","variables":{"input":{"projectId":"project_id","itemId":"item_id","fieldId":"field_id","value":{"text":"item text"}}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"updateProjectV2ItemFieldValue": map[string]interface{}{
+					"projectV2Item": map[string]interface{}{
+						"ID": "item_id",
+						"content": map[string]interface{}{
+							"__typename": "Issue",
+							"body":       "body",
+							"title":      "title",
+							"number":     1,
+							"repository": map[string]interface{}{
+								"nameWithOwner": "my-repo",
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := editItemConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: editItemOpts{
+			text:      "item text",
+			itemID:    "item_id",
+			projectID: "project_id",
+			fieldID:   "field_id",
+		},
+		client: client,
+	}
+
+	err = runEditItem(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\ttitle\t1\tmy-repo\titem_id\n",
+		buf.String())
+}
+
+func TestRunItemEdit_Number(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// edit item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation UpdateItemValues.*","variables":{"input":{"projectId":"project_id","itemId":"item_id","fieldId":"field_id","value":{"number":2}}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"updateProjectV2ItemFieldValue": map[string]interface{}{
+					"projectV2Item": map[string]interface{}{
+						"ID": "item_id",
+						"content": map[string]interface{}{
+							"__typename": "Issue",
+							"body":       "body",
+							"title":      "title",
+							"number":     1,
+							"repository": map[string]interface{}{
+								"nameWithOwner": "my-repo",
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := editItemConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: editItemOpts{
+			number:    2,
+			itemID:    "item_id",
+			projectID: "project_id",
+			fieldID:   "field_id",
+		},
+		client: client,
+	}
+
+	err = runEditItem(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\ttitle\t1\tmy-repo\titem_id\n",
+		buf.String())
+}
+
+func TestRunItemEdit_Date(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// edit item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation UpdateItemValues.*","variables":{"input":{"projectId":"project_id","itemId":"item_id","fieldId":"field_id","value":{"date":"2023-01-01T00:00:00Z"}}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"updateProjectV2ItemFieldValue": map[string]interface{}{
+					"projectV2Item": map[string]interface{}{
+						"ID": "item_id",
+						"content": map[string]interface{}{
+							"__typename": "Issue",
+							"body":       "body",
+							"title":      "title",
+							"number":     1,
+							"repository": map[string]interface{}{
+								"nameWithOwner": "my-repo",
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := editItemConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: editItemOpts{
+			date:      "2023-01-01",
+			itemID:    "item_id",
+			projectID: "project_id",
+			fieldID:   "field_id",
+		},
+		client: client,
+	}
+
+	err = runEditItem(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\ttitle\t1\tmy-repo\titem_id\n",
+		buf.String())
+}
+
+func TestRunItemEdit_SingleSelect(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// edit item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation UpdateItemValues.*","variables":{"input":{"projectId":"project_id","itemId":"item_id","fieldId":"field_id","value":{"singleSelectOptionId":"option_id"}}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"updateProjectV2ItemFieldValue": map[string]interface{}{
+					"projectV2Item": map[string]interface{}{
+						"ID": "item_id",
+						"content": map[string]interface{}{
+							"__typename": "Issue",
+							"body":       "body",
+							"title":      "title",
+							"number":     1,
+							"repository": map[string]interface{}{
+								"nameWithOwner": "my-repo",
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := editItemConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: editItemOpts{
+			singleSelectOptionID: "option_id",
+			itemID:               "item_id",
+			projectID:            "project_id",
+			fieldID:              "field_id",
+		},
+		client: client,
+	}
+
+	err = runEditItem(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\ttitle\t1\tmy-repo\titem_id\n",
+		buf.String())
+}
+
+func TestRunItemEdit_Iteration(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(gock.DumpRequest)
+
+	// edit item
+	gock.New("https://api.github.com").
+		Post("/graphql").
+		BodyString(`{"query":"mutation UpdateItemValues.*","variables":{"input":{"projectId":"project_id","itemId":"item_id","fieldId":"field_id","value":{"iterationId":"option_id"}}}}`).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"updateProjectV2ItemFieldValue": map[string]interface{}{
+					"projectV2Item": map[string]interface{}{
+						"ID": "item_id",
+						"content": map[string]interface{}{
+							"__typename": "Issue",
+							"body":       "body",
+							"title":      "title",
+							"number":     1,
+							"repository": map[string]interface{}{
+								"nameWithOwner": "my-repo",
+							},
+						},
+					},
+				},
+			},
+		})
+
+	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	assert.NoError(t, err)
+
+	buf := bytes.Buffer{}
+	config := editItemConfig{
+		tp: tableprinter.New(&buf, false, 0),
+		opts: editItemOpts{
+			iterationID: "option_id",
+			itemID:      "item_id",
+			projectID:   "project_id",
+			fieldID:     "field_id",
+		},
+		client: client,
+	}
+
+	err = runEditItem(config)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		"Type\tTitle\tNumber\tRepository\tID\nIssue\ttitle\t1\tmy-repo\titem_id\n",
+		buf.String())
+}
+
 func TestRunItemEdit_NoChanges(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
@@ -75,7 +330,7 @@ func TestRunItemEdit_NoChanges(t *testing.T) {
 		buf.String())
 }
 
-func TestRunItemEdit_InavlidID(t *testing.T) {
+func TestRunItemEdit_InvalidID(t *testing.T) {
 	defer gock.Off()
 	gock.Observe(gock.DumpRequest)
 
