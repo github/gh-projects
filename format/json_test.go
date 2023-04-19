@@ -116,7 +116,7 @@ func TestJSONProjectField_SingleSelectType(t *testing.T) {
 	b, err := JSONProjectField(field)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"name":"name","id":"123"},{"name":"name2","id":"456"}]}`, string(b))
+	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"id":"123","name":"name"},{"id":"456","name":"name2"}]}`, string(b))
 }
 
 func TestJSONProjectField_ProjectV2IterationField(t *testing.T) {
@@ -165,7 +165,7 @@ func TestJSONProjectFields(t *testing.T) {
 	b, err := JSONProjectFields(p)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"},{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"name":"name","id":"123"},{"name":"name2","id":"456"}]}],"totalCount":5}`, string(b))
+	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"},{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"id":"123","name":"name"},{"id":"456","name":"name2"}]}],"totalCount":5}`, string(b))
 }
 
 func TestJSONProjectItem_DraftIssue(t *testing.T) {
