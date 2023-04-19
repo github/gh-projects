@@ -512,7 +512,7 @@ type ProjectField struct {
 		ID       string
 		Name     string
 		DataType string
-		Options  []SingleSelectOptions
+		Options  []SingleSelectFieldOptions
 	} `graphql:"... on ProjectV2SingleSelectField"`
 }
 
@@ -545,16 +545,16 @@ func (p ProjectField) Type() string {
 	return p.TypeName
 }
 
-type SingleSelectOptions struct {
+type SingleSelectFieldOptions struct {
 	ID   string
 	Name string
 }
 
-func (p ProjectField) Options() []SingleSelectOptions {
+func (p ProjectField) Options() []SingleSelectFieldOptions {
 	if p.TypeName == "ProjectV2SingleSelectField" {
-		var options []SingleSelectOptions
+		var options []SingleSelectFieldOptions
 		for _, o := range p.SingleSelectField.Options {
-			options = append(options, SingleSelectOptions{
+			options = append(options, SingleSelectFieldOptions{
 				ID:   o.ID,
 				Name: o.Name,
 			})
