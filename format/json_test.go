@@ -102,11 +102,24 @@ func TestJSONProjectField_SingleSelectType(t *testing.T) {
 	field.TypeName = "ProjectV2SingleSelectField"
 	field.SingleSelectField.ID = "123"
 	field.SingleSelectField.Name = "name"
+	field.SingleSelectField.Options = []struct {
+		ID   string
+		Name string
+	}{
+		{
+			ID:   "123",
+			Name: "name",
+		},
+		{
+			ID:   "456",
+			Name: "name2",
+		},
+	}
 
 	b, err := JSONProjectField(field)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2SingleSelectField"}`, string(b))
+	assert.Equal(t, `{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"name":"name","id":"123"},{"name":"name2","id":"456"}]}`, string(b))
 }
 
 func TestJSONProjectField_ProjectV2IterationField(t *testing.T) {
@@ -127,20 +140,38 @@ func TestJSONProjectFields(t *testing.T) {
 	field.Field.ID = "123"
 	field.Field.Name = "name"
 
+	field2 := queries.ProjectField{}
+	field2.TypeName = "ProjectV2SingleSelectField"
+	field2.SingleSelectField.ID = "123"
+	field2.SingleSelectField.Name = "name"
+	field2.SingleSelectField.Options = []struct {
+		ID   string
+		Name string
+	}{
+		{
+			ID:   "123",
+			Name: "name",
+		},
+		{
+			ID:   "456",
+			Name: "name2",
+		},
+	}
+
 	p := &queries.Project{
 		Fields: struct {
 			TotalCount int
 			Nodes      []queries.ProjectField
 			PageInfo   queries.PageInfo
 		}{
-			Nodes:      []queries.ProjectField{field},
+			Nodes:      []queries.ProjectField{field, field2},
 			TotalCount: 5,
 		},
 	}
 	b, err := JSONProjectFields(p)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"}],"totalCount":5}`, string(b))
+	assert.Equal(t, `{"fields":[{"id":"123","name":"name","type":"ProjectV2Field"},{"id":"123","name":"name","type":"ProjectV2SingleSelectField","options":[{"name":"name","id":"123"},{"name":"name2","id":"456"}]}],"totalCount":5}`, string(b))
 }
 
 func TestJSONProjectItem_DraftIssue(t *testing.T) {

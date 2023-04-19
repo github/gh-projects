@@ -145,10 +145,11 @@ func createFieldArgs(config createFieldConfig) (*createProjectV2FieldMutation, m
 	}
 
 	if len(config.opts.singleSelectOptions) != 0 {
-		opts := make([]githubv4.ProjectV2SingleSelectFieldOptionInput, len(config.opts.singleSelectOptions))
+		opts := make([]githubv4.ProjectV2SingleSelectFieldOptionInput, 0)
 		for _, opt := range config.opts.singleSelectOptions {
 			opts = append(opts, githubv4.ProjectV2SingleSelectFieldOptionInput{
-				Name: githubv4.String(opt),
+				Name:  githubv4.String(opt),
+				Color: githubv4.ProjectV2SingleSelectFieldOptionColor("GRAY"),
 			})
 		}
 		input.SingleSelectOptions = &opts

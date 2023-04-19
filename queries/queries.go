@@ -512,6 +512,10 @@ type ProjectField struct {
 		ID       string
 		Name     string
 		DataType string
+		Options  []struct {
+			ID   string
+			Name string
+		}
 	} `graphql:"... on ProjectV2SingleSelectField"`
 }
 
@@ -542,6 +546,25 @@ func (p ProjectField) Name() string {
 // Type is the typename of the project field.
 func (p ProjectField) Type() string {
 	return p.TypeName
+}
+
+type SingleSelectOptions struct {
+	ID   string
+	Name string
+}
+
+func (p ProjectField) Options() []SingleSelectOptions {
+	if p.TypeName == "ProjectV2SingleSelectField" {
+		var options []SingleSelectOptions
+		for _, o := range p.SingleSelectField.Options {
+			options = append(options, SingleSelectOptions{
+				ID:   o.ID,
+				Name: o.Name,
+			})
+		}
+		return options
+	}
+	return nil
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
