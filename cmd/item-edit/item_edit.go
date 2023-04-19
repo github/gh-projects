@@ -101,7 +101,7 @@ gh projects item-edit --id ID --project-id PROJECT_ID --text "new text"
 	editItemCmd.Flags().StringVar(&opts.projectID, "project-id", "", "ID of the project to which the field belongs to.")
 	editItemCmd.Flags().StringVar(&opts.text, "text", "", "Text value to set on the field.")
 	editItemCmd.Flags().Float32Var(&opts.number, "number", 0, "Number value to set on the field.")
-	editItemCmd.Flags().StringVar(&opts.date, "date", "", "The ISO 8601 date value to set on the field.")
+	editItemCmd.Flags().StringVar(&opts.date, "date", "", "The ISO 8601 (YYYY-MM-DD) date value to set on the field.")
 	editItemCmd.Flags().StringVar(&opts.singleSelectOptionID, "single-select-option-id", "", "ID of the single select option value to set on the field.")
 	editItemCmd.Flags().StringVar(&opts.iterationID, "iteration-id", "", "ID of the iteration value to set on the field.")
 
