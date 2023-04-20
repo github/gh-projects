@@ -187,11 +187,26 @@ func TestJSONProjectItem_Issue(t *testing.T) {
 	item.Id = "123"
 	item.Content.Issue.Title = "title"
 	item.Content.Issue.Body = "a body"
+	item.Content.Issue.URL = "a-url"
 
 	b, err := JSONProjectItem(item)
 	assert.NoError(t, err)
 
-	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"Issue"}`, string(b))
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"Issue","url":"a-url"}`, string(b))
+}
+
+func TestJSONProjectItem_PullRequest(t *testing.T) {
+	item := queries.ProjectItem{}
+	item.Content.TypeName = "PullRequest"
+	item.Id = "123"
+	item.Content.PullRequest.Title = "title"
+	item.Content.PullRequest.Body = "a body"
+	item.Content.PullRequest.URL = "a-url"
+
+	b, err := JSONProjectItem(item)
+	assert.NoError(t, err)
+
+	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"PullRequest","url":"a-url"}`, string(b))
 }
 
 func TestJSONProjectDetailedItems(t *testing.T) {
@@ -206,6 +221,7 @@ func TestJSONProjectDetailedItems(t *testing.T) {
 					Title:  "Issue title",
 					Body:   "a body",
 					Number: 1,
+					URL:    "issue-url",
 					Repository: struct {
 						NameWithOwner string
 					}{
@@ -222,6 +238,7 @@ func TestJSONProjectDetailedItems(t *testing.T) {
 					Title:  "Pull Request title",
 					Body:   "a body",
 					Number: 2,
+					URL:    "pr-url",
 					Repository: struct {
 						NameWithOwner string
 					}{
@@ -246,21 +263,8 @@ func TestJSONProjectDetailedItems(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		`{"items":[{"content":{"type":"Issue","body":"a body","title":"Issue title","number":1,"repository":"cli/go-gh"},"id":"issueId"},{"content":{"type":"PullRequest","body":"a body","title":"Pull Request title","number":2,"repository":"cli/go-gh"},"id":"pullRequestId"},{"content":{"type":"DraftIssue","body":"a body","title":"Pull Request title"},"id":"draftIssueId"}],"totalCount":5}`,
+		`{"items":[{"content":{"type":"Issue","body":"a body","title":"Issue title","number":1,"repository":"cli/go-gh","url":"issue-url"},"id":"issueId"},{"content":{"type":"PullRequest","body":"a body","title":"Pull Request title","number":2,"repository":"cli/go-gh","url":"pr-url"},"id":"pullRequestId"},{"content":{"type":"DraftIssue","body":"a body","title":"Pull Request title"},"id":"draftIssueId"}],"totalCount":5}`,
 		string(out))
-}
-
-func TestJSONProjectItem_PullRequest(t *testing.T) {
-	item := queries.ProjectItem{}
-	item.Content.TypeName = "PullRequest"
-	item.Id = "123"
-	item.Content.PullRequest.Title = "title"
-	item.Content.PullRequest.Body = "a body"
-
-	b, err := JSONProjectItem(item)
-	assert.NoError(t, err)
-
-	assert.Equal(t, `{"id":"123","title":"title","body":"a body","type":"PullRequest"}`, string(b))
 }
 
 func TestJSONProjectDraftIssue(t *testing.T) {
