@@ -167,6 +167,7 @@ func JSONProjectItem(item queries.ProjectItem) ([]byte, error) {
 		Title: item.Title(),
 		Body:  item.Body(),
 		Type:  item.Type(),
+		URL:   item.URL(),
 	})
 }
 
@@ -175,6 +176,7 @@ type projectItemJSON struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
 	Type  string `json:"type"`
+	URL   string `json:"url,omitempty"`
 }
 
 // JSONProjectDraftIssue serializes a DraftIssue to JSON.
@@ -207,9 +209,9 @@ func projectItemContent(p queries.ProjectItem) any {
 			Body  string `json:"body"`
 			Title string `json:"title"`
 		}{
-			Type:  p.Content.TypeName,
-			Body:  p.Content.DraftIssue.Body,
-			Title: p.Content.DraftIssue.Title,
+			Type:  p.Type(),
+			Body:  p.Body(),
+			Title: p.Title(),
 		}
 	case "Issue":
 		return struct {
@@ -218,12 +220,14 @@ func projectItemContent(p queries.ProjectItem) any {
 			Title      string `json:"title"`
 			Number     int    `json:"number"`
 			Repository string `json:"repository"`
+			URL        string `json:"url"`
 		}{
-			Type:       p.Content.TypeName,
-			Body:       p.Content.Issue.Body,
-			Title:      p.Content.Issue.Title,
-			Number:     p.Content.Issue.Number,
-			Repository: p.Content.Issue.Repository.NameWithOwner,
+			Type:       p.Type(),
+			Body:       p.Body(),
+			Title:      p.Title(),
+			Number:     p.Number(),
+			Repository: p.Repo(),
+			URL:        p.URL(),
 		}
 	case "PullRequest":
 		return struct {
@@ -232,12 +236,14 @@ func projectItemContent(p queries.ProjectItem) any {
 			Title      string `json:"title"`
 			Number     int    `json:"number"`
 			Repository string `json:"repository"`
+			URL        string `json:"url"`
 		}{
-			Type:       p.Content.TypeName,
-			Body:       p.Content.PullRequest.Body,
-			Title:      p.Content.PullRequest.Title,
-			Number:     p.Content.PullRequest.Number,
-			Repository: p.Content.PullRequest.Repository.NameWithOwner,
+			Type:       p.Type(),
+			Body:       p.Body(),
+			Title:      p.Title(),
+			Number:     p.Number(),
+			Repository: p.Repo(),
+			URL:        p.URL(),
 		}
 	}
 

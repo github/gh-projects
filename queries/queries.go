@@ -223,6 +223,7 @@ type PullRequest struct {
 	Body       string
 	Title      string
 	Number     int
+	URL        string
 	Repository struct {
 		NameWithOwner string
 	}
@@ -232,6 +233,7 @@ type Issue struct {
 	Body       string
 	Title      string
 	Number     int
+	URL        string
 	Repository struct {
 		NameWithOwner string
 	}
@@ -292,6 +294,17 @@ func (p ProjectItem) Repo() string {
 		return p.Content.Issue.Repository.NameWithOwner
 	case "PullRequest":
 		return p.Content.PullRequest.Repository.NameWithOwner
+	}
+	return ""
+}
+
+// URL is the URL of the project item. Note the draft issues do not have URLs
+func (p ProjectItem) URL() string {
+	switch p.Content.TypeName {
+	case "Issue":
+		return p.Content.Issue.URL
+	case "PullRequest":
+		return p.Content.PullRequest.URL
 	}
 	return ""
 }
