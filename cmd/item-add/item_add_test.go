@@ -272,7 +272,7 @@ func TestRunAddItem_Me(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query GetIssueOrPullRequest.*",
 			"variables": map[string]interface{}{
-				"url": "https://github.com/cli/go-gh/v2/pull/1",
+				"url": "https://github.com/cli/go-gh/pull/1",
 			},
 		}).
 		Reply(200).
@@ -309,7 +309,7 @@ func TestRunAddItem_Me(t *testing.T) {
 		opts: addItemOpts{
 			userOwner: "@me",
 			number:    1,
-			itemURL:   "https://github.com/cli/go-gh/v2/pull/1",
+			itemURL:   "https://github.com/cli/go-gh/pull/1",
 		},
 		client: client,
 	}
