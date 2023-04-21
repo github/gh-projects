@@ -60,13 +60,26 @@ func NewCmdEditItem(f *cmdutil.Factory, runF func(config editItemConfig) error) 
 		Long: `
 Edit one of a draft issue or a project item. Both require the ID of the item to edit. For non-draft issues, the ID of the project is also required, and only a single field value can be updated per invocation. See the flags for more details.`,
 		Example: `
-# edit a draft issue
-gh projects item-edit --id ID --title "a new title" --body "a new body"
-
-# edit an item
-gh projects item-edit --id ID --project-id PROJECT_ID --text "new text"
-
 # add --format=json to output in JSON format
+
+# edit a draft issue title and body
+gh projects item-edit --id DRAFT_ISSUE_CONTENT_ID --title "a new title" --body "a new body"
+
+# edit an item's text field value
+gh projects item-edit --id ITEM_ID --field-id FIELD_ID --project-id PROJECT_ID --text "new text"
+
+# edit an item's number field value
+gh projects item-edit --id ITEM_ID --field-id FIELD_ID --project-id PROJECT_ID --number 1
+
+# edit an item' date field value
+gh projects item-edit --id ITEM_ID --field-id FIELD_ID --project-id PROJECT_ID --date "2023-01-01"
+
+# edit an item's single-select field value
+# you can retrieve the option ID from the output of the 'field-list --format=json' command
+gh projects item-edit --id ITEM_ID --field-id FIELD_ID --project-id PROJECT_ID --single-select-option-id OPTION_ID
+
+# edit an item's iteration field value
+gh projects item-edit --id ITEM_ID --field-id FIELD_ID --project-id PROJECT_ID --iteration-id ITERATION_ID
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := queries.NewClient()
