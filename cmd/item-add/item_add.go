@@ -6,9 +6,9 @@ import (
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
-	"github.com/cli/go-gh/pkg/api"
-	"github.com/cli/go-gh/pkg/tableprinter"
-	"github.com/cli/go-gh/pkg/term"
+	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/term"
 	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
@@ -27,7 +27,7 @@ type addItemOpts struct {
 
 type addItemConfig struct {
 	tp     tableprinter.TablePrinter
-	client api.GQLClient
+	client *api.GraphQLClient
 	opts   addItemOpts
 }
 
@@ -44,13 +44,13 @@ func NewCmdAddItem(f *cmdutil.Factory, runF func(config addItemConfig) error) *c
 		Use:   "item-add [number]",
 		Example: `
 # add an item to the current user's project 1
-gh projects item-add 1 --user "@me" --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --user "@me" --url https://github.com/cli/go-gh/v2/issues/1
 
 # add an item to user monalisa's project 1
-gh projects item-add 1 --user monalisa --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --user monalisa --url https://github.com/cli/go-gh/v2/issues/1
 
 # add an item to the org github's project 1
-gh projects item-add 1 --org github --url https://github.com/cli/go-gh/issues/1
+gh projects item-add 1 --org github --url https://github.com/cli/go-gh/v2/issues/1
 
 # add --format=json to output in JSON format
 `,

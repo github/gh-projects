@@ -8,8 +8,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/briandowns/spinner"
-	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/shurcooL/githubv4"
 	"github.com/shurcooL/graphql"
 )
@@ -18,7 +17,7 @@ type ClientOptions struct {
 	Timeout time.Duration
 }
 
-func NewClient() (api.GQLClient, error) {
+func NewClient() (*api.GraphQLClient, error) {
 	timeout := 15 * time.Second
 
 	apiOpts := api.ClientOptions{
@@ -26,7 +25,7 @@ func NewClient() (api.GQLClient, error) {
 		Headers: map[string]string{},
 	}
 
-	return gh.GQLClient(&apiOpts)
+	return api.NewGraphQLClient(apiOpts)
 }
 
 const (
@@ -34,7 +33,7 @@ const (
 )
 
 // doQuery wraps calls to client.Query with a spinner
-func doQuery(client api.GQLClient, name string, query interface{}, variables map[string]interface{}) error {
+func doQuery(client *api.GraphQLClient, name string, query interface{}, variables map[string]interface{}) error {
 	// https://github.com/briandowns/spinner#available-character-sets
 	dotStyle := spinner.CharSets[11]
 	sp := spinner.New(dotStyle, 120*time.Millisecond, spinner.WithColor("fgCyan"))
@@ -310,7 +309,7 @@ func (p ProjectItem) URL() string {
 }
 
 // ProjectItems returns the items of a project. If the OwnerType is VIEWER, no login is required.
-func ProjectItems(client api.GQLClient, o *Owner, number int, limit int) (*Project, error) {
+func ProjectItems(client *api.GraphQLClient, o *Owner, number int, limit int) (*Project, error) {
 	project := &Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
@@ -481,7 +480,7 @@ type projectAttribute interface {
 // nodes is the list of attributes that have already been fetched.
 //
 // the return value is a slice of the newly fetched attributes appended to nodes.
-func paginateAttributes[N projectAttribute](client api.GQLClient, p pager[N], variables map[string]any, queryName string, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
+func paginateAttributes[N projectAttribute](client *api.GraphQLClient, p pager[N], variables map[string]any, queryName string, firstKey string, afterKey string, limit int, nodes []N) ([]N, error) {
 	hasNextPage := p.HasNextPage()
 	cursor := p.EndCursor()
 	hasLimit := limit != 0
@@ -578,7 +577,7 @@ func (p ProjectField) Options() []SingleSelectFieldOptions {
 }
 
 // ProjectFields returns a project with fields. If the OwnerType is VIEWER, no login is required.
-func ProjectFields(client api.GQLClient, o *Owner, number int, limit int) (*Project, error) {
+func ProjectFields(client *api.GraphQLClient, o *Owner, number int, limit int) (*Project, error) {
 	project := &Project{}
 	hasLimit := limit != 0
 	// the api limits batches to 100. We want to use the maximum batch size unless the user
@@ -738,7 +737,7 @@ const OrgOwner OwnerType = "ORGANIZATION"
 const ViewerOwner OwnerType = "VIEWER"
 
 // ViewerLoginName returns the login name of the viewer.
-func ViewerLoginName(client api.GQLClient) (string, error) {
+func ViewerLoginName(client *api.GraphQLClient) (string, error) {
 	var query viewerLogin
 	err := doQuery(client, "Viewer", &query, map[string]interface{}{})
 	if err != nil {
@@ -748,7 +747,7 @@ func ViewerLoginName(client api.GQLClient) (string, error) {
 }
 
 // OwnerID returns the ID of an OwnerType. If the OwnerType is VIEWER, no login is required.
-func OwnerID(client api.GQLClient, login string, t OwnerType) (string, error) {
+func OwnerID(client *api.GraphQLClient, login string, t OwnerType) (string, error) {
 	variables := map[string]interface{}{
 		"login": graphql.String(login),
 	}
@@ -782,7 +781,7 @@ type issueOrPullRequest struct {
 }
 
 // IssueOrPullRequestID returns the ID of the issue or pull request from a URL.
-func IssueOrPullRequestID(client api.GQLClient, rawURL string) (string, error) {
+func IssueOrPullRequestID(client *api.GraphQLClient, rawURL string) (string, error) {
 	uri, err := url.Parse(rawURL)
 	if err != nil {
 		return "", err
@@ -846,7 +845,7 @@ type loginTypes struct {
 }
 
 // userOrgLogins gets all the logins of the viewer and the organizations the viewer is a member of.
-func userOrgLogins(client api.GQLClient) ([]loginTypes, error) {
+func userOrgLogins(client *api.GraphQLClient) ([]loginTypes, error) {
 	l := make([]loginTypes, 0)
 	var v viewerLoginOrgs
 	variables := map[string]interface{}{
@@ -885,7 +884,7 @@ func userOrgLogins(client api.GQLClient) ([]loginTypes, error) {
 }
 
 // paginateOrgLogins after cursor and append them to the list of logins.
-func paginateOrgLogins(client api.GQLClient, l []loginTypes, cursor string) ([]loginTypes, error) {
+func paginateOrgLogins(client *api.GraphQLClient, l []loginTypes, cursor string) ([]loginTypes, error) {
 	var v viewerLoginOrgs
 	variables := map[string]interface{}{
 		"after": (graphql.String)(cursor),
@@ -925,7 +924,7 @@ type Owner struct {
 // If orgLogin is not empty, it is used to lookup the org owner
 // If both userLogin and orgLogin are empty, interative mode is used to select an owner
 // from the current viewer and their organizations
-func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) {
+func NewOwner(client *api.GraphQLClient, userLogin, orgLogin string) (*Owner, error) {
 	if userLogin == "@me" {
 		id, err := OwnerID(client, userLogin, ViewerOwner)
 		if err != nil {
@@ -1000,7 +999,7 @@ func NewOwner(client api.GQLClient, userLogin, orgLogin string) (*Owner, error) 
 // if number is 0 it will prompt the user to select a project interactively
 // otherwise it will make a request to get the project by number
 // set `fields“ to true to get the project's field data
-func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Project, error) {
+func NewProject(client *api.GraphQLClient, o *Owner, number int, fields bool) (*Project, error) {
 	if number != 0 {
 		variables := map[string]interface{}{
 			"number":      graphql.Int(number),
@@ -1067,7 +1066,7 @@ func NewProject(client api.GQLClient, o *Owner, number int, fields bool) (*Proje
 }
 
 // Projects returns all the projects for an Owner. If the OwnerType is VIEWER, no login is required.
-func Projects(client api.GQLClient, login string, t OwnerType, limit int, fields bool) ([]Project, int, error) {
+func Projects(client *api.GraphQLClient, login string, t OwnerType, limit int, fields bool) ([]Project, int, error) {
 	projects := make([]Project, 0)
 	cursor := (*githubv4.String)(nil)
 	hasNextPage := false

@@ -3,8 +3,7 @@ package queries
 import (
 	"testing"
 
-	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -50,7 +49,7 @@ func TestProjectItems_DefaultLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
@@ -101,7 +100,7 @@ func TestProjectItems_LowerLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
@@ -155,7 +154,7 @@ func TestProjectItems_NoLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
@@ -206,7 +205,7 @@ func TestProjectFields_LowerLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
@@ -261,7 +260,7 @@ func TestProjectFields_DefaultLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
@@ -315,7 +314,7 @@ func TestProjectFields_NoLimit(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	owner := &Owner{
