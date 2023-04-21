@@ -66,7 +66,7 @@ func TestRunAddItem_User(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query GetIssueOrPullRequest.*",
 			"variables": map[string]interface{}{
-				"url": "https://github.com/cli/go-gh/v2/issues/1",
+				"url": "https://github.com/cli/go-gh/issues/1",
 			},
 		}).
 		Reply(200).
@@ -103,7 +103,7 @@ func TestRunAddItem_User(t *testing.T) {
 		opts: addItemOpts{
 			userOwner: "monalisa",
 			number:    1,
-			itemURL:   "https://github.com/cli/go-gh/v2/issues/1",
+			itemURL:   "https://github.com/cli/go-gh/issues/1",
 		},
 		client: client,
 	}
@@ -171,7 +171,7 @@ func TestRunAddItem_Org(t *testing.T) {
 		JSON(map[string]interface{}{
 			"query": "query GetIssueOrPullRequest.*",
 			"variables": map[string]interface{}{
-				"url": "https://github.com/cli/go-gh/v2/issues/1",
+				"url": "https://github.com/cli/go-gh/issues/1",
 			},
 		}).
 		Reply(200).
@@ -208,7 +208,7 @@ func TestRunAddItem_Org(t *testing.T) {
 		opts: addItemOpts{
 			orgOwner: "github",
 			number:   1,
-			itemURL:  "https://github.com/cli/go-gh/v2/issues/1",
+			itemURL:  "https://github.com/cli/go-gh/issues/1",
 		},
 		client: client,
 	}
