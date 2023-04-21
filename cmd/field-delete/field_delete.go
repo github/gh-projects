@@ -5,9 +5,9 @@ import (
 
 	"github.com/cli/cli/v2/pkg/cmdutil"
 
-	"github.com/cli/go-gh/pkg/api"
-	"github.com/cli/go-gh/pkg/tableprinter"
-	"github.com/cli/go-gh/pkg/term"
+	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/term"
 	"github.com/github/gh-projects/format"
 	"github.com/github/gh-projects/queries"
 	"github.com/shurcooL/githubv4"
@@ -21,7 +21,7 @@ type deleteFieldOpts struct {
 
 type deleteFieldConfig struct {
 	tp     tableprinter.TablePrinter
-	client api.GQLClient
+	client *api.GraphQLClient
 	opts   deleteFieldOpts
 }
 

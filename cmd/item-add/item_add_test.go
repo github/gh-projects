@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/api"
-	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -95,7 +94,7 @@ func TestRunAddItem_User(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
@@ -200,7 +199,7 @@ func TestRunAddItem_Org(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
@@ -301,7 +300,7 @@ func TestRunAddItem_Me(t *testing.T) {
 			},
 		})
 
-	client, err := gh.GQLClient(&api.ClientOptions{AuthToken: "token"})
+	client, err := api.NewGraphQLClient(api.ClientOptions{AuthToken: "token"})
 	assert.NoError(t, err)
 
 	buf := bytes.Buffer{}
