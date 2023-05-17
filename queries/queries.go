@@ -1134,7 +1134,7 @@ func Projects(client *api.GraphQLClient, login string, t OwnerType, limit int, f
 			return projects, totalCount, nil
 		}
 
-		if len(projects)+LimitMax > limit {
+		if hasLimit && len(projects)+LimitMax > limit {
 			first = limit - len(projects)
 			variables["first"] = graphql.Int(first)
 		}
