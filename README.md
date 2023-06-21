@@ -1,5 +1,9 @@
 # CLI extension for Projects
 
+**NOTE: This extension is now part of the GitHub CLI https://cli.github.com/manual/gh_project 🎉**
+
+**All future development and issues will be in https://github.com/cli/cli**
+
 ## Installation
 
 Install the CLI
